@@ -1,0 +1,399 @@
+{% extends "layout_base.html" %} {% block title %}#{{ chamado.protocolo }} -
+HelpHub 4.0{% endblock %} {% block page_title %}
+<div style="display: flex; align-items: center; gap: 1rem">
+  <a href="{{ url_for('chamados.lista') }}" style="color: var(--text-muted)"
+    ><i class="ph ph-arrow-left"></i
+  ></a>
+  <span>Chamado #{{ chamado.protocolo }}</span>
+  <span
+    style="
+      font-size: 0.8rem;
+      background: #e5e7eb;
+      padding: 2px 8px;
+      border-radius: 12px;
+      color: #374151;
+    "
+    >{{ chamado.status }}</span
+  >
+</div>
+{% endblock %} {% block content %}
+<div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem">
+  <!-- Esquerda: Timeline e Detalhes -->
+  <div>
+    <!-- Card Principal do Chamado -->
+    <div
+      class="glass-panel"
+      style="padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem"
+    >
+      <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem">
+        {{ chamado.assunto }}
+      </h2>
+      <div
+        style="
+          display: flex;
+          gap: 1.5rem;
+          margin-bottom: 1rem;
+          font-size: 0.875rem;
+          color: var(--text-muted);
+        "
+      >
+        <span>
+          <i class="ph ph-user"></i>
+          <a
+            href="{{ url_for('clientes.editar', id=chamado.cliente_id) }}"
+            style="color: inherit; text-decoration: none; font-weight: 600"
+            onmouseover="this.style.textDecoration = 'underline'"
+            onmouseout="this.style.textDecoration = 'none'"
+          >
+            {{ chamado.cliente.nome_razao }}
+          </a>
+        </span>
+        <span><i class="ph ph-calendar"></i> {{ chamado.created_at_br }}</span>
+        <span
+          ><i class="ph ph-warning-circle"></i> {{ chamado.prioridade }}</span
+        >
+      </div>
+      <div
+        style="
+          background: #f9fafb;
+          padding: 1rem;
+          border-radius: 6px;
+          border: 1px solid #e5e7eb;
+        "
+      >
+        {{ chamado.descricao }}
+      </div>
+    </div>
+
+    <!-- TIMELINE INTERATIVA -->
+    <h3 style="margin-bottom: 1rem; font-size: 1.1rem">Linha do Tempo</h3>
+    <div
+      style="
+        position: relative;
+        padding-left: 2rem;
+        border-left: 2px solid #e5e7eb;
+      "
+    >
+      {% for andamento in chamado.andamentos %}
+      <div style="position: relative; margin-bottom: 2rem">
+        <!-- Bolinha na linha -->
+        <div
+          class="timeline-dot-{{ andamento.tipo | lower }}"
+          style="
+            position: absolute;
+            left: -2.6rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            border: 2px solid white;
+          "
+        ></div>
+
+        <div
+          class="glass-panel {% if andamento.tipo == 'Evento' %}andamento-evento{% endif %}"
+          style="padding: 1rem; border-radius: 8px"
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 0.5rem;
+            "
+          >
+            <span style="font-weight: 600; font-size: 0.9rem">
+              {% if andamento.tipo == 'Evento' %} Sistema {% else %} {{
+              andamento.usuario.username }} {% endif %}
+            </span>
+            <span style="font-size: 0.75rem; color: var(--text-muted)"
+              >{{ andamento.created_at_br }}</span
+            >
+          </div>
+
+          <div style="color: #374151">{{ andamento.texto }}</div>
+
+          {% if andamento.anexo %}
+          <div style="margin-top: 0.75rem">
+            <a
+              href="{{ url_for('chamados.baixar_anexo', filename=andamento.anexo) }}"
+              target="_blank"
+              class="btn"
+              style="
+                padding: 4px 10px;
+                font-size: 0.8rem;
+                background: #eef2ff;
+                border: 1px solid #c7d2fe;
+                color: var(--primary);
+              "
+            >
+              <i class="ph ph-paperclip"></i> Ver Anexo
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% else %}
+      <p class="text-muted" style="font-style: italic">
+        Nenhuma interação registrada ainda.
+      </p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Direita: Ações -->
+  <div>
+    <div
+      class="glass-panel"
+      style="padding: 1.5rem; border-radius: 8px; position: sticky; top: 80px"
+    >
+      {% if chamado.status == 'Agendado' %} {% set visita_ativa =
+      chamado.visitas | selectattr('status', 'equalto', 'Agendado') | first %}
+      {% if visita_ativa %}
+      <div
+        style="
+          background: #fffbeb;
+          border: 1px solid #fcd34d;
+          border-radius: 8px;
+          padding: 1.25rem;
+          margin-bottom: 2rem;
+        "
+      >
+        <h4
+          style="
+            color: #92400e;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+          "
+        >
+          <i class="ph ph-calendar-check"></i> AGENDAMENTO ATIVO
+        </h4>
+
+        <div style="font-size: 0.85rem; color: #b45309; margin-bottom: 1rem">
+          <div>
+            <span style="font-weight: 600">Data:</span> {{
+            visita_ativa.data_inicio.strftime('%d/%m/%Y %H:%M') }}
+          </div>
+          <div>
+            <span style="font-weight: 600">Técnico:</span> {{
+            visita_ativa.tecnico.username }}
+          </div>
+        </div>
+
+        <form
+          action="{{ url_for('chamados.atualizar_visita', id=visita_ativa.id) }}"
+          method="POST"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <label
+            style="
+              display: block;
+              font-size: 0.75rem;
+              font-weight: 600;
+              color: #92400e;
+              margin-bottom: 0.25rem;
+            "
+            >Instruções Técnicas / Tarefa:</label
+          >
+          <textarea
+            name="instrucoes_tecnicas"
+            rows="4"
+            style="
+              width: 100%;
+              padding: 0.5rem;
+              border: 1px solid #fcd34d;
+              border-radius: 6px;
+              font-size: 0.85rem;
+              font-family: inherit;
+              margin-bottom: 0.75rem;
+            "
+          >
+{{ visita_ativa.instrucoes_tecnicas or '' }}</textarea
+          >
+
+          <button
+            type="submit"
+            class="btn"
+            style="
+              width: 100%;
+              background: #fcd34d;
+              color: #92400e;
+              border: 1px solid #f59e0b;
+              font-weight: 600;
+              font-size: 0.8rem;
+              justify-content: center;
+            "
+          >
+            <i class="ph ph-floppy-disk"></i> Atualizar Tarefa
+          </button>
+        </form>
+      </div>
+      {% endif %} {% endif %}
+
+      <h4
+        style="
+          margin-bottom: 1rem;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 0.5rem;
+        "
+      >
+        Nova Interação
+      </h4>
+
+      <form method="POST" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+
+        <div style="margin-bottom: 1rem">
+          {{ form.texto(placeholder="Escreva uma resposta ou nota interna...",
+          rows=4, style="width: 100%; padding: 0.5rem; border: 1px solid
+          #D1D5DB; border-radius: 6px; font-family: inherit;") }}
+        </div>
+
+        <div x-data="{ status: '' }" style="margin-bottom: 1rem">
+          <label
+            style="
+              display: block;
+              font-size: 0.85rem;
+              font-weight: 500;
+              margin-bottom: 0.25rem;
+            "
+            >Alterar Status</label
+          >
+          {{ form.novo_status(style="width: 100%; padding: 0.5rem; border: 1px
+          solid #D1D5DB; border-radius: 6px;", **{"x-model": "status"}) }}
+
+          <!-- Campos extras se for Agendado -->
+          <div
+            x-show="status === 'Agendado'"
+            x-transition
+            style="
+              margin-top: 1rem;
+              padding: 1rem;
+              background: #fffbeb;
+              border: 1px solid #fcd34d;
+              border-radius: 8px;
+            "
+          >
+            <p
+              style="
+                font-size: 0.75rem;
+                color: #92400e;
+                font-weight: 600;
+                margin-bottom: 0.75rem;
+              "
+            >
+              <i class="ph ph-calendar-plus"></i> DETALHES DO AGENDAMENTO
+            </p>
+            <div style="margin-bottom: 0.75rem">
+              <label
+                style="
+                  display: block;
+                  font-size: 0.75rem;
+                  color: #92400e;
+                  margin-bottom: 0.25rem;
+                "
+                >Início da Visita</label
+              >
+              {{ form.data_inicio(type="datetime-local", style="width: 100%;
+              padding: 0.4rem; border: 1px solid #fcd34d; border-radius: 4px;")
+              }}
+            </div>
+            <div>
+              <label
+                style="
+                  display: block;
+                  font-size: 0.75rem;
+                  color: #92400e;
+                  margin-bottom: 0.25rem;
+                "
+                >Término Estimado</label
+              >
+              {{ form.data_fim(type="datetime-local", style="width: 100%;
+              padding: 0.4rem; border: 1px solid #fcd34d; border-radius: 4px;")
+              }}
+            </div>
+            <div style="margin-top: 1rem">
+              <label
+                style="
+                  display: block;
+                  font-size: 0.75rem;
+                  color: #92400e;
+                  margin-bottom: 0.25rem;
+                "
+                >O que deve ser feito? (Tarefa)</label
+              >
+              {{ form.instrucoes_tecnicas(placeholder="Instruções para o
+              técnico...", rows=3, style="width: 100%; padding: 0.4rem; border:
+              1px solid #fcd34d; border-radius: 4px; font-family: inherit;
+              font-size: 0.8rem;") }}
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 1.5rem">
+          <label
+            style="
+              display: block;
+              font-size: 0.85rem;
+              font-weight: 500;
+              margin-bottom: 0.25rem;
+            "
+            >Anexar Arquivo</label
+          >
+          {{ form.anexo(style="font-size: 0.85rem;") }}
+          <div style="font-size: 0.75rem; color: #6b7280; margin-top: 2px">
+            PDF, Imagens, Docs (Max 100MB)
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          class="btn btn-primary"
+          style="width: 100%; justify-content: center"
+        >
+          <i class="ph ph-paper-plane-right"></i> Enviar
+        </button>
+      </form>
+
+      <!-- Botão para Gerar OS -->
+      <div
+        style="
+          margin-top: 2rem;
+          border-top: 1px solid #e5e7eb;
+          padding-top: 1rem;
+        "
+      >
+        <a
+          href="{{ url_for('agenda.baixar_os', chamado_id=chamado.id) }}"
+          target="_blank"
+          class="btn"
+          style="
+            width: 100%;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            justify-content: center;
+            font-weight: 600;
+          "
+          onmouseover="this.style.background = '#f1f5f9'"
+          onmouseout="this.style.background = '#f8fafc'"
+        >
+          <i class="ph ph-printer"></i> Gerar Ordem de Serviço
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Inicializa Tom Select para o campo de status
+    new TomSelect("#novo_status", {
+      create: false,
+      allowEmptyOption: true,
+    });
+  });
+</script>
+{% endblock %}

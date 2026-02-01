@@ -1,0 +1,212 @@
+{% extends "layout_base.html" %} {% block title %}{{ titulo }} - HelpHub 4.0{%
+endblock %} {% block page_title %}{{ titulo }}{% endblock %} {% block content %}
+<div style="max-width: 600px; margin: 0 auto">
+  <div class="glass-panel" style="padding: 2rem">
+    <div style="margin-bottom: 2rem">
+      <a
+        href="{{ url_for('auth.lista_usuarios') }}"
+        style="
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: var(--text-muted);
+          text-decoration: none;
+          font-size: 0.875rem;
+          margin-bottom: 1rem;
+        "
+      >
+        <i class="ph ph-arrow-left"></i> Voltar para a lista
+      </a>
+      <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-main)">
+        {{ titulo }}
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.875rem">
+        Preencha os dados do membro da sua equipe.
+      </p>
+    </div>
+
+    <form method="POST" action="" class="app-form">
+      {{ form.hidden_tag() }}
+
+      <div class="form-group" style="margin-bottom: 1.5rem">
+        <label
+          class="form-label"
+          style="display: block; margin-bottom: 0.5rem; font-weight: 500"
+          >Nome Completo</label
+        >
+        {{ form.nome(class="form-control", placeholder="Ex: João Silva",
+        style="width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb;
+        border-radius: 8px;") }} {% for error in form.nome.errors %}
+        <span
+          style="
+            color: #ef4444;
+            font-size: 0.75rem;
+            display: block;
+            margin-top: 0.25rem;
+          "
+          >{{ error }}</span
+        >
+        {% endfor %}
+      </div>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+          margin-bottom: 1.5rem;
+        "
+      >
+        <div class="form-group">
+          <label
+            class="form-label"
+            style="display: block; margin-bottom: 0.5rem; font-weight: 500"
+            >Usuário (Login)</label
+          >
+          {{ form.username(class="form-control", placeholder="Ex:
+          joao.atendimento", style="width: 100%; padding: 0.75rem; border: 1px
+          solid #e5e7eb; border-radius: 8px;") }} {% for error in
+          form.username.errors %}
+          <span
+            style="
+              color: #ef4444;
+              font-size: 0.75rem;
+              display: block;
+              margin-top: 0.25rem;
+            "
+            >{{ error }}</span
+          >
+          {% endfor %}
+        </div>
+        <div class="form-group">
+          <label
+            class="form-label"
+            style="display: block; margin-bottom: 0.5rem; font-weight: 500"
+            >Cargo / Nível</label
+          >
+          {{ form.role(class="form-control", style="width: 100%; padding:
+          0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; background:
+          white;") }} {% for error in form.role.errors %}
+          <span
+            style="
+              color: #ef4444;
+              font-size: 0.75rem;
+              display: block;
+              margin-top: 0.25rem;
+            "
+            >{{ error }}</span
+          >
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.5rem">
+        <label
+          class="form-label"
+          style="display: block; margin-bottom: 0.5rem; font-weight: 500"
+          >E-mail</label
+        >
+        {{ form.email(class="form-control", placeholder="joao@empresa.com",
+        style="width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb;
+        border-radius: 8px;") }} {% for error in form.email.errors %}
+        <span
+          style="
+            color: #ef4444;
+            font-size: 0.75rem;
+            display: block;
+            margin-top: 0.25rem;
+          "
+          >{{ error }}</span
+        >
+        {% endfor %}
+      </div>
+
+      <div class="form-group" style="margin-bottom: 1.5rem">
+        <label
+          class="form-label"
+          style="display: block; margin-bottom: 0.5rem; font-weight: 500"
+        >
+          Senha {% if 'Editar' in titulo %}
+          <span
+            style="
+              font-weight: 400;
+              color: var(--text-muted);
+              font-size: 0.75rem;
+            "
+            >(Vazio para manter)</span
+          >
+          {% else %}
+          <span
+            style="
+              font-weight: 400;
+              color: var(--text-muted);
+              font-size: 0.75rem;
+            "
+            >(Padrão: HH123456)</span
+          >
+          {% endif %}
+        </label>
+        {{ form.password(class="form-control", type="password",
+        placeholder="******", style="width: 100%; padding: 0.75rem; border: 1px
+        solid #e5e7eb; border-radius: 8px;") }} {% for error in
+        form.password.errors %}
+        <span
+          style="
+            color: #ef4444;
+            font-size: 0.75rem;
+            display: block;
+            margin-top: 0.25rem;
+          "
+          >{{ error }}</span
+        >
+        {% endfor %}
+      </div>
+
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 2rem;
+          padding: 1rem;
+          background: #f9fafb;
+          border-radius: 8px;
+        "
+      >
+        {{ form.ativo(style="width: 18px; height: 18px;") }}
+        <label
+          class="form-label"
+          style="margin: 0; font-weight: 500; cursor: pointer"
+          >{{ form.ativo.label.text }}</label
+        >
+      </div>
+
+      <div style="display: flex; gap: 1rem">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          style="flex: 2; padding: 0.75rem; font-weight: 600"
+        >
+          Salvar Usuário
+        </button>
+        <a
+          href="{{ url_for('auth.lista_usuarios') }}"
+          class="btn"
+          style="
+            flex: 1;
+            padding: 0.75rem;
+            background: #f3f4f6;
+            color: var(--text-main);
+            text-align: center;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+          "
+        >
+          Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

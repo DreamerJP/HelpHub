@@ -1,0 +1,103 @@
+{% extends "layout_base.html" %} {% block title %}Busca - HelpHub 4.0{% endblock
+%} {% block page_title %}Resultados para "{{ query }}"{% endblock %} {% block
+content %}
+<div style="display: grid; gap: 2rem">
+  <!-- Clientes -->
+  <div class="glass-panel" style="padding: 1.5rem; border-radius: 8px">
+    <h3 style="margin-bottom: 1rem; color: #1f2937">
+      Clientes Encontrados ({{ clientes|length }})
+    </h3>
+    {% if clientes %}
+    <ul style="list-style: none; padding: 0">
+      {% for c in clientes %}
+      <li style="padding: 0.5rem 0; border-bottom: 1px solid #f3f4f6">
+        <a
+          href="{{ url_for('clientes.editar', id=c.id) }}"
+          style="text-decoration: none; color: var(--primary); font-weight: 500"
+        >
+          {{ c.nome_razao }}
+        </a>
+        <span class="text-sm text-muted"> - {{ c.cpf_cnpj }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted">Nenhum cliente.</p>
+    {% endif %}
+  </div>
+
+  <!-- Chamados -->
+  <div class="glass-panel" style="padding: 1.5rem; border-radius: 8px">
+    <h3 style="margin-bottom: 1rem; color: #1f2937">
+      Chamados Encontrados ({{ chamados|length }})
+    </h3>
+    {% if chamados %}
+    <ul style="list-style: none; padding: 0">
+      {% for c in chamados %}
+      <li style="padding: 0.5rem 0; border-bottom: 1px solid #f3f4f6">
+        <a
+          href="{{ url_for('chamados.detalhe', id=c.id) }}"
+          style="text-decoration: none; color: #1f2937; font-weight: 500"
+        >
+          #{{ c.protocolo }} - {{ c.assunto }}
+        </a>
+        <div class="text-sm text-muted">
+          {{ c.status }} - {{ c.cliente.nome_razao }}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted">Nenhum chamado.</p>
+    {% endif %}
+  </div>
+  <!-- Agendamentos -->
+  <div class="glass-panel" style="padding: 1.5rem; border-radius: 8px">
+    <h3 style="margin-bottom: 1rem; color: #1f2937">
+      Agendamentos Encontrados ({{ agendamentos|length }})
+    </h3>
+    {% if agendamentos %}
+    <ul style="list-style: none; padding: 0">
+      {% for a in agendamentos %}
+      <li style="padding: 0.5rem 0; border-bottom: 1px solid #f3f4f6">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          "
+        >
+          <div>
+            <span style="font-weight: 600; color: var(--primary)">
+              {{ a.data_inicio.strftime('%d/%m/%Y %H:%M') }}
+            </span>
+            <span class="text-sm text-muted">
+              - #{{ a.chamado.protocolo }}</span
+            >
+            <div class="text-sm">
+              <strong>Cliente:</strong> {{ a.chamado.cliente.nome_razao }}
+            </div>
+          </div>
+          <a
+            href="{{ url_for('agenda.calendario') }}"
+            class="btn btn-sm"
+            style="
+              background: #eff6ff;
+              color: var(--primary);
+              text-decoration: none;
+              font-size: 0.8rem;
+              padding: 0.25rem 0.5rem;
+            "
+          >
+            Ver na Agenda
+          </a>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="text-muted">Nenhum agendamento encontrado.</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

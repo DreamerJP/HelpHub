@@ -1,0 +1,111 @@
+{% extends "layout_base.html" %} {% from "componentes.html" import
+render_paginacao %} {% block title %}Departamentos - HelpHub 4.0{% endblock %}
+{% block page_title %}Gerenciar Departamentos{% endblock %} {% block content %}
+<div class="glass-panel">
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    "
+  >
+    <p class="text-muted">Configure as áreas de atendimento da empresa.</p>
+    <a href="{{ url_for('departamentos.novo') }}" class="btn btn-primary">
+      <i class="ph ph-plus"></i> Novo Departamento
+    </a>
+  </div>
+
+  <table class="data-table data-table-clickable">
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Email de Notificação</th>
+        <th>Status</th>
+        <th style="text-align: right">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for depto in departamentos %}
+      <tr
+        class="clickable-row"
+        data-href="{{ url_for('departamentos.editar', id=depto.id) }}"
+      >
+        <td style="font-weight: 500">{{ depto.nome }}</td>
+        <td>{{ depto.email_notificacao or '-' }}</td>
+        <td>
+          {% if depto.ativo %}
+          <span class="badge badge-success">Ativo</span>
+          {% else %}
+          <span class="badge badge-danger">Inativo</span>
+          {% endif %}
+        </td>
+        <td style="text-align: right">
+          <a
+            href="{{ url_for('departamentos.editar', id=depto.id) }}"
+            class="btn btn-soft-primary btn-sm"
+            style="margin-right: 0.5rem"
+          >
+            <i class="ph ph-pencil-simple"></i> Editar
+          </a>
+          <a
+            href="{{ url_for('departamentos.excluir', id=depto.id) }}"
+            class="btn btn-soft-danger btn-sm delete-action"
+            data-confirm-message="Tem certeza que deseja excluir o departamento {{ depto.nome }}?"
+          >
+            <i class="ph ph-trash"></i> Excluir
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td
+          colspan="4"
+          style="text-align: center; padding: 3rem"
+          class="text-muted"
+        >
+          Nenhum departamento cadastrado.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  // Event listeners para linhas clicáveis
+  document.addEventListener("DOMContentLoaded", function () {
+    const clickableRows = document.querySelectorAll(".clickable-row");
+
+    clickableRows.forEach((row) => {
+      row.style.cursor = "pointer";
+
+      row.addEventListener("click", function (e) {
+        // Ignora clique se foi em um link ou botão
+        if (e.target.closest("a, button")) {
+          return;
+        }
+
+        const href = this.dataset.href;
+        if (href) {
+          window.location.href = href;
+        }
+      });
+    });
+
+    // Intercepta cliques em botões de exclusão
+    document.querySelectorAll(".delete-action").forEach((link) => {
+      link.addEventListener("click", async function (e) {
+        e.preventDefault();
+        const message =
+          this.dataset.confirmMessage ||
+          "Tem certeza que deseja excluir este item?";
+        const confirmed = await confirmAction(message, "delete");
+        if (confirmed) {
+          window.location.href = this.href;
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

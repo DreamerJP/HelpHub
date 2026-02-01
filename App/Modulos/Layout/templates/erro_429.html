@@ -1,0 +1,26 @@
+{% extends "layout_base.html" %} {% block title %}Muitas Requisições - HelpHub
+4.0{% endblock %} {% block content %}
+<div class="error-viewport error-429-page">
+  <div class="error-scene">
+    <div class="error-glass-card">
+      <h1 class="error-huge-text limit-429">Erro 429</h1>
+
+      <div class="error-info">
+        <h2 class="error-main-title">Calma aí, amigão!</h2>
+        <p class="error-sub-text">
+          Detectamos muitas requisições vindas do seu acesso em um curto período
+          de tempo.<br />
+          Por segurança, pedimos que
+          <strong>aguarde alguns instantes</strong> antes de tentar novamente.
+        </p>
+        <div style="margin-top: 2rem">
+          <i
+            class="ph ph-hourglass ph-spin"
+            style="font-size: 2rem; color: #14b8a6"
+          ></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

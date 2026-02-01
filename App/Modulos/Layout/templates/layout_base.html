@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}HelpHub 4.0{% endblock %}</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      // Modo Conforto (Load Inicial)
+      (function () {
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme === "comfort") {
+          document.documentElement.setAttribute("data-theme", "comfort");
+        }
+      })();
+    </script>
+
+    <!-- Phosphor Icons (SVG) -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- Alpine.js (Core) -->
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+
+    <!-- CSS Global -->
+    <link
+      rel="stylesheet"
+      href="{{ url_for('layout.static', filename='Global.css') }}"
+    />
+
+    <link
+      rel="shortcut icon"
+      href="{{ url_for('layout.static', filename='favicon.ico') }}"
+      type="image/x-icon"
+    />
+
+    <!-- Tom Select (Searchable Selects) -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+
+    {% block head %}{% endblock %}
+  </head>
+  <body x-data="{ sidebarOpen: true }">
+    <div class="layout-container">
+      <!-- Sidebar Fixa -->
+      <aside class="sidebar">
+        <div class="sidebar-header" style="justify-content: center">
+          <img
+            src="{{ url_for('layout.static', filename='img/logo_light.png') }}"
+            alt="HelpHub 4.0"
+            style="height: 45px"
+          />
+        </div>
+
+        <nav class="sidebar-nav">
+          <a href="{{ url_for('layout.index') }}" class="nav-link">
+            <i class="ph ph-squares-four"></i> Principal
+          </a>
+          <a href="{{ url_for('clientes.lista') }}" class="nav-link">
+            <i class="ph ph-users"></i> Clientes
+          </a>
+          <a href="{{ url_for('chamados.lista') }}" class="nav-link">
+            <i class="ph ph-ticket"></i> Chamados
+          </a>
+          <a href="{{ url_for('agenda.calendario') }}" class="nav-link">
+            <i class="ph ph-calendar-check"></i> Agenda
+          </a>
+
+          {% if current_user.is_admin %}
+          <div
+            style="
+              margin-top: 1rem;
+              padding: 0 1.5rem;
+              color: #4b5563;
+              font-size: 0.75rem;
+              text-transform: uppercase;
+              font-weight: 700;
+            "
+          >
+            Admin
+          </div>
+
+          <a href="{{ url_for('departamentos.lista') }}" class="nav-link">
+            <i class="ph ph-buildings"></i> Departamentos
+          </a>
+          <a href="{{ url_for('auth.lista_usuarios') }}" class="nav-link">
+            <i class="ph ph-users-three"></i> Equipe
+          </a>
+          <a href="{{ url_for('admin.logs') }}" class="nav-link">
+            <i class="ph ph-scroll"></i> Logs do Sistema
+          </a>
+          <a href="{{ url_for('admin.backups') }}" class="nav-link">
+            <i class="ph ph-database"></i> Backups
+          </a>
+          <a href="{{ url_for('admin.configuracoes') }}" class="nav-link">
+            <i class="ph ph-gear"></i> Configurações OS
+          </a>
+          {% endif %}
+        </nav>
+
+        <div
+          style="
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 0.75rem">
+            <div
+              style="
+                width: 32px;
+                height: 32px;
+                background: #374151;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+              "
+            >
+              <i class="ph ph-user"></i>
+            </div>
+            <div>
+              <div style="font-weight: 600; font-size: 0.875rem">
+                {% if current_user.is_authenticated %}
+                <a
+                  href="{{ url_for('auth.perfil') }}"
+                  style="
+                    color: inherit;
+                    text-decoration: none;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.25rem;
+                  "
+                >
+                  {{ current_user.username }}
+                  <i
+                    class="ph ph-caret-right"
+                    style="font-size: 0.75rem; color: #9ca3af"
+                  ></i>
+                </a>
+                {% else %} Visitante {% endif %}
+              </div>
+              <a
+                href="{{ url_for('auth.logout') }}"
+                style="
+                  font-size: 0.75rem;
+                  color: #9ca3af;
+                  text-decoration: none;
+                "
+              >
+                Sair do Sistema
+              </a>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="main-content">
+        <!-- Topbar - Busca e Ações Rápidas -->
+        <header class="topbar glass-panel">
+          <h2 style="font-size: 1.125rem; font-weight: 600">
+            {% block page_title %}Dashboard{% endblock %}
+          </h2>
+
+          <div style="display: flex; gap: 1rem; align-items: center">
+            <!-- Busca Global Conectada -->
+            <form
+              action="{{ url_for('layout.buscar') }}"
+              method="get"
+              style="position: relative"
+            >
+              <i
+                class="ph ph-magnifying-glass"
+                style="
+                  position: absolute;
+                  left: 10px;
+                  top: 50%;
+                  transform: translateY(-50%);
+                  color: var(--text-muted);
+                "
+              ></i>
+              <input
+                type="text"
+                name="q"
+                placeholder="Buscar clientes, chamados..."
+                style="
+                  padding: 0.5rem 0.5rem 0.5rem 2.25rem;
+                  border-radius: 6px;
+                  border: 1px solid #e5e7eb;
+                  width: 250px;
+                  font-family: &quot;Inter&quot;;
+                "
+              />
+            </form>
+
+            <!-- Alternar Modo Conforto -->
+            <div
+              x-data="{ 
+                comfortMode: document.documentElement.getAttribute('data-theme') === 'comfort',
+                toggleTheme() {
+                    this.comfortMode = !this.comfortMode;
+                    if(this.comfortMode) {
+                        document.documentElement.setAttribute('data-theme', 'comfort');
+                        localStorage.setItem('theme', 'comfort');
+                    } else {
+                        document.documentElement.removeAttribute('data-theme');
+                        localStorage.removeItem('theme');
+                    }
+                }
+            }"
+            >
+              <button
+                @click="toggleTheme()"
+                class="btn"
+                style="
+                  background: white;
+                  border: 1px solid #e5e7eb;
+                  color: #1f2937;
+                  padding: 0.5rem;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  width: 36px;
+                  height: 36px;
+                "
+                title="Alternar Modo Conforto (Reduz Brilho)"
+              >
+                <i
+                  class="ph ph-sun"
+                  x-show="!comfortMode"
+                  style="font-size: 1.25rem"
+                ></i>
+                <i
+                  class="ph ph-moon-stars"
+                  x-show="comfortMode"
+                  style="font-size: 1.25rem"
+                ></i>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        <!-- Global Notification System (Stacked Toasts) -->
+        <div
+          x-data="notificationSystem"
+          class="flash-container"
+          style="z-index: 9999"
+          @toast.window="add($event.detail.message, $event.detail.type)"
+        >
+          <template x-for="t in toasts" :key="t.id">
+            <div
+              class="flash-message"
+              :class="'flash-' + t.type"
+              x-show="t.show"
+              x-transition:enter="transition ease-out duration-300"
+              x-transition:enter-start="opacity-0 translateX(50px)"
+              x-transition:enter-end="opacity-100 translateX(0)"
+              x-transition:leave="transition ease-in duration-200"
+              x-transition:leave-start="opacity-100 translateX(0)"
+              x-transition:leave-end="opacity-0 translateX(50px)"
+              style="border-left-width: 4px; margin-bottom: 0.5rem"
+            >
+              <i
+                class="ph ph-check-circle"
+                x-show="t.type === 'success'"
+                style="color: var(--success); font-size: 1.25rem"
+              ></i>
+              <i
+                class="ph ph-warning-circle"
+                x-show="t.type === 'error'"
+                style="color: var(--danger); font-size: 1.25rem"
+              ></i>
+              <i
+                class="ph ph-info"
+                x-show="t.type === 'info'"
+                style="color: var(--primary); font-size: 1.25rem"
+              ></i>
+              <span x-text="t.message" style="font-weight: 500"></span>
+            </div>
+          </template>
+
+          <!-- Inicializa mensagens vindas do Flask Flash -->
+          <div
+            x-init="
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  add('{{ message }}', '{{ category }}');
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+          "
+          ></div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">{% block content %}{% endblock %}</div>
+      </main>
+    </div>
+
+    <!-- Modal de Confirmação Global -->
+    <div
+      x-data="confirmModal"
+      x-show="show"
+      x-cloak
+      @keydown.escape.window="cancel()"
+      class="confirm-modal-overlay"
+      x-transition:enter="transition ease-out duration-200"
+      x-transition:enter-start="opacity-0"
+      x-transition:enter-end="opacity-100"
+      x-transition:leave="transition ease-in duration-150"
+      x-transition:leave-start="opacity-100"
+      x-transition:leave-end="opacity-0"
+    >
+      <div
+        @click.away="cancel()"
+        class="confirm-modal-content"
+        x-transition:enter="transition ease-out duration-200"
+        x-transition:enter-start="opacity-0 scale-95"
+        x-transition:enter-end="opacity-100 scale-100"
+        x-transition:leave="transition ease-in duration-150"
+        x-transition:leave-start="opacity-100 scale-100"
+        x-transition:leave-end="opacity-0 scale-95"
+      >
+        <!-- Ícone de Aviso -->
+        <div
+          style="
+            width: 48px;
+            height: 48px;
+            background: #fef2f2;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+          "
+        >
+          <i
+            class="ph ph-warning"
+            style="font-size: 24px; color: var(--danger)"
+          ></i>
+        </div>
+
+        <!-- Título -->
+        <h3
+          style="
+            font-size: 1.25rem;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+          "
+        >
+          Confirmar Ação
+        </h3>
+
+        <!-- Mensagem -->
+        <p
+          x-text="message"
+          style="
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            line-height: 1.5;
+          "
+        ></p>
+
+        <!-- Botões -->
+        <div style="display: flex; gap: 0.75rem">
+          <button
+            @click="cancel()"
+            class="btn"
+            style="
+              flex: 1;
+              background: #f3f4f6;
+              color: var(--text-main);
+              border: 1px solid #e5e7eb;
+            "
+          >
+            Cancelar
+          </button>
+          <button
+            @click="confirm()"
+            class="btn"
+            :style="{
+              flex: 1,
+              background: actionType === 'delete' ? 'var(--danger)' : 'var(--primary)',
+              color: 'white',
+              border: 'none'
+            }"
+            x-text="actionType === 'delete' ? 'Confirmar Exclusão' : 'Confirmar'"
+          ></button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Sistema Global de Confirmação
+      document.addEventListener("alpine:init", () => {
+        Alpine.data("confirmModal", () => ({
+          show: false,
+          message: "",
+          actionType: "confirm", // 'delete' ou 'confirm'
+          resolvePromise: null,
+
+          open(msg, type = "confirm") {
+            this.message = msg;
+            this.actionType = type;
+            this.show = true;
+            return new Promise((resolve) => {
+              this.resolvePromise = resolve;
+            });
+          },
+
+          confirm() {
+            this.show = false;
+            if (this.resolvePromise) this.resolvePromise(true);
+          },
+
+          cancel() {
+            this.show = false;
+            if (this.resolvePromise) this.resolvePromise(false);
+          },
+        }));
+      });
+
+      // Função global para substituir confirm()
+      window.confirmAction = async function (message, type = "confirm") {
+        const modal = Alpine.$data(
+          document.querySelector('[x-data="confirmModal"]'),
+        );
+        return await modal.open(message, type);
+      };
+
+      // Gerenciador de Notificações Global
+      document.addEventListener("alpine:init", () => {
+        Alpine.data("notificationSystem", () => ({
+          toasts: [],
+
+          add(message, type = "info") {
+            const id = Date.now() + Math.random();
+            // Ajusta categorias do Flask para as classes CSS
+            const finalType = type === "message" ? "info" : type;
+
+            this.toasts.push({ id, message, type: finalType, show: true });
+
+            setTimeout(() => {
+              this.toasts = this.toasts.filter((t) => t.id !== id);
+            }, 7000);
+
+            if (this.toasts.length > 3) {
+              this.toasts.shift();
+            }
+          },
+        }));
+      });
+
+      // Função Global para disparar Toasts via JS
+      window.showToast = function (message, type = "success") {
+        window.dispatchEvent(
+          new CustomEvent("toast", {
+            detail: { message, type },
+          }),
+        );
+      };
+    </script>
+
+    <style>
+      [x-cloak] {
+        display: none !important;
+      }
+    </style>
+
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

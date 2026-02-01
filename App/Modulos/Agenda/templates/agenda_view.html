@@ -1,0 +1,786 @@
+{% extends "layout_base.html" %} {% block title %}Agenda - HelpHub 4.0{%
+endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
+<!-- FullCalendar 6 Scheduler -->
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@6.1.10/index.global.min.js"></script>
+<!-- Day.js para manipulação de datas -->
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/locale/pt-br.js"></script>
+
+<style>
+  /* Customização FullCalendar - Corporate Chic */
+  .fc {
+    --fc-border-color: #e5e7eb;
+    --fc-button-bg-color: var(--primary);
+    --fc-button-border-color: var(--primary);
+    --fc-button-hover-bg-color: #1d4ed8;
+    --fc-event-bg-color: var(--primary);
+    --fc-event-border-color: var(--primary);
+    font-family: "Inter", sans-serif;
+    background: white;
+    border-radius: 12px;
+    padding: 0.5rem;
+  }
+
+  .fc-header-toolbar {
+    padding: 0.25rem;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .fc-toolbar-title {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    color: var(--text-main);
+  }
+
+  .fc-event {
+    cursor: pointer;
+    padding: 2px 4px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    transition: transform 0.1s;
+  }
+
+  .fc-event:hover {
+    transform: scale(1.01);
+    filter: brightness(1.05);
+  }
+
+  /* Modal Styles - Padronização HelpHub 4.0 */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .modal-card {
+    background: white;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+
+  .modal-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .modal-body {
+    padding: 1.5rem;
+  }
+
+  .modal-footer {
+    padding: 1.25rem 1.5rem;
+    background: #f9fafb;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  /* Padronização de Itens de Informação */
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-main);
+  }
+
+  .info-item i {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    width: 20px;
+  }
+
+  /* Badges de Status */
+  .badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+  }
+  .badge-primary { background: #dbeafe; color: #1e40af; } /* Azul */
+  .badge-success { background: #d1fae5; color: #065f46; } /* Verde */
+  .badge-warning { background: #fef3c7; color: #92400e; } /* Laranja */
+  .badge-danger { background: #fee2e2; color: #991b1b; }  /* Vermelho */
+
+  /* Padronização de Botões no Modal */
+  .btn-modal {
+    width: 100%;
+    height: 38px;
+    justify-content: center;
+    font-size: 0.875rem;
+    border-radius: 6px;
+    border: 1px solid transparent;
+  }
+
+  .btn-modal-primary {
+    background: var(--primary);
+    color: white;
+  }
+
+  .btn-modal-secondary {
+    background: white;
+    border: 1px solid #d1d5db;
+    color: var(--text-main);
+  }
+
+  .btn-modal-secondary:hover {
+    background: #f9fafb;
+    border-color: #c1c5cb;
+  }
+
+  .btn-modal-ghost {
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    font-size: 0.8rem;
+  }
+
+  .btn-modal-ghost:hover {
+    color: var(--text-main);
+    text-decoration: underline;
+  }
+
+  /* Grid para botões pares */
+  .modal-btn-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  /* Form Elements */
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .form-control-compact {
+    width: 100%;
+    padding: 0.6rem;
+    border-radius: 6px;
+    border: 1px solid #d1d5db;
+    font-family: inherit;
+    font-size: 0.9rem;
+  }
+
+  /* Conteúdo Customizado do Evento */
+  .fc-event-custom-content {
+    padding: 2px 4px;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .fc-event-custom-title {
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+
+  .fc-event-custom-addr {
+    font-size: 0.7rem;
+    opacity: 0.9;
+    margin-top: 1px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  /* Esconde o endereço se o card for muito pequeno */
+  .fc-timegrid-event-short .fc-event-custom-addr {
+    display: none;
+  }
+
+  /* Ajuste para eventos curtos (30 min ou menos) */
+  .fc-timegrid-event-short .fc-event-custom-title {
+    font-size: 0.7rem;
+    white-space: normal; /* Permite quebra se necessário em cards muito finos */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+</style>
+{% endblock %} {% block content %}
+<div x-data="agendaManager">
+  <!-- Barra de Produtividade e Legenda -->
+  <div class="glass-panel" style="padding: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <!-- Resumo de Hoje -->
+    <div style="display: flex; gap: 1.5rem; align-items: center;">
+        <div style="font-weight: 600; color: var(--text-main); font-size: 0.95rem;">
+            <i class="ph ph-chart-bar" style="color: var(--primary); margin-right: 0.5rem;"></i>
+            Resumo da Visão:
+        </div>
+        <div style="font-size: 0.9rem; display: flex; gap: 1rem;">
+            <span title="Total de Visitas"><strong x-text="stats.total">0</strong> Visitas</span>
+            <span style="color: var(--success);" title="Concluídas"><strong x-text="stats.concluidos">0</strong> Concluídas</span>
+            <span style="color: #F59E0B;" title="Atrasadas"><strong x-text="stats.atrasados">0</strong> Em Atraso</span>
+            <span style="color: var(--primary);" title="Agendadas/Pendentes"><strong x-text="stats.pendentes">0</strong> Pendentes</span>
+        </div>
+    </div>
+
+    <!-- Legenda -->
+    <div style="display: flex; gap: 1rem; font-size: 0.8rem; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 0.25rem;">
+            <span style="width: 10px; height: 10px; background-color: #3B82F6; border-radius: 50%; display: inline-block;"></span>
+            Agendado
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.25rem;">
+            <span style="width: 10px; height: 10px; background-color: #10B981; border-radius: 50%; display: inline-block;"></span>
+            Realizado
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.25rem;">
+            <span style="width: 10px; height: 10px; background-color: #F59E0B; border-radius: 50%; display: inline-block;"></span>
+            Atrasado
+        </div>
+    </div>
+  </div>
+
+  <!-- Calendário Principal -->
+  <div class="glass-panel" style="padding: 0.5rem">
+    <div id="calendar"></div>
+  </div>
+
+  <!-- Modal Novo Agendamento -->
+  <div
+    class="modal-overlay"
+    x-show="showAddModal"
+    x-cloak
+    @click.self="showAddModal = false"
+  >
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="margin: 0; font-size: 1.1rem">Nova Visita Técnica</h3>
+        <button
+          @click="showAddModal = false"
+          style="background: none; border: none; cursor: pointer"
+        >
+          <i
+            class="ph ph-x"
+            style="font-size: 20px; color: var(--text-muted)"
+          ></i>
+        </button>
+      </div>
+
+      <form action="{{ url_for('agenda.agendar') }}" method="POST">
+        <div class="modal-body">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+          <div class="form-group">
+            <label class="form-label">Chamado</label>
+            <select
+              name="chamado_id"
+              id="chamado_id_select"
+              required
+              style="width: 100%"
+            >
+              <option value="">Buscar chamado...</option>
+              {% for c in chamados_disponiveis %} {% if c.status != 'Agendado'
+              %}
+              <option value="{{ c.id }}">
+                #{{ c.protocolo }} - {{ c.assunto }} ({{ c.cliente.nome_razao if
+                c.cliente else 'N/A' }})
+              </option>
+              {% endif %} {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Técnico</label>
+            <select
+              name="tecnico_id"
+              class="form-control-compact"
+              required
+              x-model="formData.tecnico_id"
+            >
+              {% for t in tecnicos %}
+              <option value="{{ t.id }}">{{ t.nome }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="modal-btn-grid">
+            <div class="form-group">
+              <label class="form-label">Início</label>
+              <input
+                type="datetime-local"
+                name="data_inicio"
+                x-model="formData.data_inicio"
+                class="form-control-compact"
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Término</label>
+              <input
+                type="datetime-local"
+                name="data_fim"
+                x-model="formData.data_fim"
+                class="form-control-compact"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-modal btn-modal-primary">
+            <i class="ph ph-calendar-plus"></i> Agendar Visita
+          </button>
+          <button
+            type="button"
+            @click="showAddModal = false"
+            class="btn btn-modal btn-modal-secondary"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal Detalhes do Evento -->
+  <template x-if="showDetailModal">
+    <div class="modal-overlay" @click.self="showDetailModal = false">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div>
+            <h3
+              style="margin: 0; font-size: 1.1rem"
+              x-text="'#' + activeEvent.extendedProps.protocolo"
+            ></h3>
+            <span
+              class="badge"
+              :class="{
+                'badge-primary': activeEvent.extendedProps.status === 'Agendado',
+                'badge-warning': activeEvent.extendedProps.status === 'Atrasado',
+                'badge-success': !['Agendado', 'Atrasado'].includes(activeEvent.extendedProps.status)
+              }"
+              x-text="activeEvent.extendedProps.status"
+              style="margin-top: 4px"
+            ></span>
+          </div>
+          <button
+            @click="showDetailModal = false"
+            style="background: none; border: none; cursor: pointer"
+          >
+            <i
+              class="ph ph-x"
+              style="font-size: 20px; color: var(--text-muted)"
+            ></i>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Info List -->
+          <div x-show="!isEditing && !showFinishForm">
+            <div class="info-item">
+              <i class="ph ph-user"></i>
+              <span x-text="activeEvent.extendedProps.cliente"></span>
+            </div>
+            <div class="info-item">
+              <i class="ph ph-map-pin"></i>
+              <span x-text="activeEvent.extendedProps.endereco"></span>
+            </div>
+            <div class="info-item">
+              <i class="ph ph-clock"></i>
+              <span
+                x-text="formatDate(activeEvent.start) + ' - ' + formatTime(activeEvent.end)"
+              ></span>
+            </div>
+            <div class="info-item">
+              <i class="ph ph-identification-card"></i>
+              <span x-text="activeEvent.extendedProps.tecnico"></span>
+            </div>
+          </div>
+
+          <!-- Modo Reagendar -->
+          <div x-show="isEditing" x-transition>
+            <div class="form-group">
+              <label class="form-label">Técnico</label>
+              <select
+                x-model="editData.tecnico_id"
+                class="form-control-compact"
+              >
+                {% for t in tecnicos %}
+                <option value="{{ t.id }}">{{ t.nome }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="modal-btn-grid">
+              <div class="form-group">
+                <label class="form-label">Início</label>
+                <input
+                  type="datetime-local"
+                  x-model="editData.start"
+                  class="form-control-compact"
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fim</label>
+                <input
+                  type="datetime-local"
+                  x-model="editData.end"
+                  class="form-control-compact"
+                />
+              </div>
+            </div>
+            <div class="modal-btn-grid" style="margin-top: 0.5rem">
+              <button
+                @click="isEditing = false"
+                class="btn btn-modal btn-modal-secondary"
+              >
+                Cancelar
+              </button>
+              <button
+                @click="saveManualEdit()"
+                class="btn btn-modal btn-modal-primary"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+
+          <!-- Modo Finalizar -->
+          <div x-show="showFinishForm" x-transition>
+            <form
+              :action="'{{ url_for('agenda.finalizar_visita', id='PLACEHOLDER_ID') }}'.replace('PLACEHOLDER_ID', activeEvent.id)"
+              method="POST"
+            >
+              <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+              />
+              <div class="form-group">
+                <label class="form-label">Relatório da Visita</label>
+                <textarea
+                  name="relatorio"
+                  rows="4"
+                  class="form-control-compact"
+                  placeholder="O que foi feito?"
+                  required
+                ></textarea>
+              </div>
+              <div class="modal-btn-grid">
+                <button
+                  type="button"
+                  @click="showFinishForm = false"
+                  class="btn btn-modal btn-modal-secondary"
+                >
+                  Voltar
+                </button>
+                <button
+                  type="submit"
+                  class="btn btn-modal btn-modal-primary"
+                  style="background: var(--success); border: none"
+                >
+                  Finalizar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="modal-footer" x-show="!isEditing && !showFinishForm">
+          <!-- Ação Principal -->
+          <button
+            x-show="['Agendado', 'Atrasado'].includes(activeEvent.extendedProps.status)"
+            @click="showFinishForm = true"
+            class="btn btn-modal btn-modal-primary"
+          >
+            <i class="ph ph-check-circle"></i> Finalizar Visita
+          </button>
+
+          <!-- Ações Secundárias Lado a Lado -->
+          <div class="modal-btn-grid">
+            <a
+              :href="'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(activeEvent.extendedProps.endereco)"
+              target="_blank"
+              class="btn btn-modal btn-modal-secondary"
+            >
+              <i class="ph ph-map-trifold"></i> Abrir no Maps
+            </a>
+
+            <a
+              :href="'{{ url_for('agenda.baixar_os', chamado_id='PLACEHOLDER_ID') }}'.replace('PLACEHOLDER_ID', activeEvent.extendedProps.chamado_id)"
+              target="_blank"
+              class="btn btn-modal btn-modal-secondary"
+            >
+              <i class="ph ph-file-pdf"></i> Visualizar OS
+            </a>
+
+            <button
+              @click="isEditing = true"
+              class="btn btn-modal btn-modal-secondary"
+              x-show="['Agendado', 'Atrasado'].includes(activeEvent.extendedProps.status)"
+            >
+              <i class="ph ph-pencil"></i> Reagendar
+            </button>
+          </div>
+
+          <!-- Ação Discreta -->
+          <a
+            :href="'{{ url_for('chamados.detalhe', id='PLACEHOLDER_ID') }}'.replace('PLACEHOLDER_ID', activeEvent.extendedProps.chamado_id)"
+            class="btn btn-modal btn-modal-ghost"
+          >
+            Ver Chamado Completo <i class="ph ph-arrow-square-out"></i>
+          </a>
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("alpine:init", () => {
+    Alpine.data("agendaManager", () => ({
+      calendar: null,
+      showAddModal: false,
+      showDetailModal: false,
+      showFinishForm: false,
+      isEditing: false,
+      activeEvent: null,
+
+      editData: {
+        tecnico_id: "",
+        start: "",
+        end: ""
+      },
+
+      formData: {
+        chamado_id: "",
+        data_inicio: "",
+        data_fim: "",
+        tecnico_id: "{{ current_user.id }}",
+      },
+
+      stats: {
+        total: 0,
+        concluidos: 0,
+        atrasados: 0,
+        pendentes: 0
+      },
+
+      updateStats() {
+         if (!this.calendar) return;
+
+         const view = this.calendar.view;
+         const visibleStart = view.activeStart;
+         const visibleEnd = view.activeEnd;
+         const allEvents = this.calendar.getEvents(); // Pega todos eventos carregados (memória)
+
+         let total = 0;
+         let concluidos = 0;
+         let atrasados = 0;
+         let pendentes = 0;
+
+         allEvents.forEach(event => {
+             // Ignora eventos fora do range VISUAL atual
+             if (event.start < visibleStart || event.start >= visibleEnd) {
+                 return;
+             }
+
+             total++;
+             let props = event.extendedProps;
+             
+             // Verde = Realizado (#10B981)
+             // Laranja = Atrasado (#F59E0B)
+             // Azul = Agendado (#3B82F6)
+
+             if (event.backgroundColor === "#10B981") {
+                 concluidos++;
+             } else if (event.backgroundColor === "#F59E0B" || props.is_delayed) {
+                 atrasados++;
+             } else {
+                 pendentes++;
+             }
+         });
+
+         this.stats = { total, concluidos, atrasados, pendentes };
+      },
+
+      init() {
+        dayjs.locale("pt-br");
+        this.renderCalendar();
+        this.$nextTick(() => {
+          new TomSelect("#chamado_id_select", {
+            create: false,
+            placeholder: "Buscar chamado...",
+            allowEmptyOption: true,
+          });
+        });
+      },
+
+      renderCalendar() {
+        const calendarEl = document.getElementById("calendar");
+        this.calendar = new FullCalendar.Calendar(calendarEl, {
+          schedulerLicenseKey: "CC-Attribution-NonCommercial-NoDerivatives",
+          initialView: "resourceTimeGridDay",
+          locale: "pt-br",
+          headerToolbar: {
+            left: "prev,next today",
+            center: "title",
+            right: "resourceTimeGridDay,dayGridWeek,dayGridMonth",
+          },
+          buttonText: {
+            today: "Hoje",
+            resourceTimeGridDay: "Dia",
+            dayGridWeek: "Semana",
+            dayGridMonth: "Mês",
+          },
+          slotMinTime: "06:00:00",
+          slotMaxTime: "22:00:00",
+          allDaySlot: false,
+          editable: true,
+          selectable: true,
+          nowIndicator: true,
+          businessHours: {
+            daysOfWeek: [1, 2, 3, 4, 5, 6],
+            startTime: "08:00",
+            endTime: "18:00",
+          },
+          resources: [
+            {% for t in tecnicos %}
+            { id: "{{ t.id }}", title: "{{ t.nome }}" },
+            {% endfor %}
+          ],
+          events: "{{ url_for('agenda.api_eventos') }}",
+          eventsSet: () => this.updateStats(),  // Quando eventos chegam do backend
+          datesSet: () => this.updateStats(),   // Quando muda a data/visualização (mês -> semana)
+          eventContent: function (arg) {
+            let info = arg.event.extendedProps;
+            let container = document.createElement("div");
+            container.className = "fc-event-custom-content";
+
+            let titleEl = document.createElement("div");
+            titleEl.className = "fc-event-custom-title";
+            titleEl.innerHTML = `<strong>${info.cliente}</strong>`;
+            container.appendChild(titleEl);
+
+            if (info.bairro || info.cidade) {
+              let addrEl = document.createElement("div");
+              addrEl.className = "fc-event-custom-addr";
+              addrEl.innerHTML = `<i class="ph ph-map-pin"></i> ${info.bairro}${info.bairro && info.cidade ? " - " : ""}${info.cidade}`;
+              container.appendChild(addrEl);
+            }
+
+            return { domNodes: [container] };
+          },
+          select: (info) => {
+            this.formData.data_inicio = dayjs(info.start).format("YYYY-MM-DDTHH:mm");
+            this.formData.data_fim = dayjs(info.end).format("YYYY-MM-DDTHH:mm");
+            this.formData.tecnico_id = info.resource ? info.resource.id : "{{ current_user.id }}";
+            this.showAddModal = true;
+          },
+          eventClick: (info) => {
+            this.activeEvent = {
+              id: info.event.id,
+              start: info.event.start,
+              end: info.event.end,
+              extendedProps: info.event.extendedProps,
+            };
+            this.editData.tecnico_id = info.event.getResources()[0].id;
+            this.editData.start = dayjs(info.event.start).format("YYYY-MM-DDTHH:mm");
+            this.editData.end = dayjs(info.event.end).format("YYYY-MM-DDTHH:mm");
+
+            this.isEditing = false;
+            this.showFinishForm = false;
+            this.showDetailModal = true;
+          },
+          eventDrop: (info) => this.handleEventChange(info),
+          eventResize: (info) => this.handleEventChange(info),
+        });
+        this.calendar.render();
+      },
+
+      async saveManualEdit() {
+        const payload = {
+            start: dayjs(this.editData.start).format("YYYY-MM-DDTHH:mm:ss"),
+            end: dayjs(this.editData.end).format("YYYY-MM-DDTHH:mm:ss"),
+            resourceId: this.editData.tecnico_id
+        };
+
+        const response = await fetch(`/agenda/api/reagendar/${this.activeEvent.id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token() }}",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            showToast(result.message, "success");
+            this.calendar.refetchEvents();
+            this.showDetailModal = false;
+        } else {
+            showToast(result.message, "error");
+        }
+      },
+
+      async handleEventChange(info) {
+        if(info.event.extendedProps.status !== 'Agendado') {
+            showToast("Esta visita já foi finalizada.", "error");
+            info.revert();
+            return;
+        }
+
+        const payload = {
+          start: dayjs(info.event.start).format("YYYY-MM-DDTHH:mm:ss"),
+          end: dayjs(info.event.end || info.event.start).format("YYYY-MM-DDTHH:mm:ss"),
+          resourceId: info.newResource ? info.newResource.id : info.event.getResources()[0].id
+        };
+        const response = await fetch(`/agenda/api/reagendar/${info.event.id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token() }}",
+          },
+          body: JSON.stringify(payload),
+        });
+        const result = await response.json();
+        if (result.success) {
+          showToast(result.message, "success");
+        } else {
+          showToast(result.message, "error");
+          info.revert();
+        }
+      },
+
+      formatDate(date) { return dayjs(date).format("DD/MM/YYYY HH:mm"); },
+      formatTime(date) { return dayjs(date).format("HH:mm"); }
+    }));
+  });
+</script>
+{% endblock %}

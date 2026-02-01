@@ -1,0 +1,12 @@
+[tool.pytest.ini_options]
+testpaths = ["."]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+addopts = "--cov=App --cov-report=term-missing --cov-branch --cov-config=tests/pyproject.toml"
+cache_dir = ".pytest_cache"
+asyncio_mode = "strict"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.coverage.run]
+data_file = "tests/.coverage"

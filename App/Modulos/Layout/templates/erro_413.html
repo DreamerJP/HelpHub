@@ -1,0 +1,26 @@
+{% extends "layout_base.html" %} {% block title %}Arquivo muito grande - HelpHub
+4.0{% endblock %} {% block content %}
+<div class="error-viewport error-413-page">
+  <div class="error-scene">
+    <div class="error-glass-card">
+      <h1 class="error-huge-text heavy-413">Erro 413</h1>
+
+      <div class="error-info">
+        <h2 class="error-main-title">Arquivo muito pesado</h2>
+        <p class="error-sub-text">
+          O arquivo que você tentou enviar excede o limite permitido pelo
+          servidor.<br />
+          Tente reduzir o tamanho do arquivo ou compactá-lo antes de enviar.
+        </p>
+        <a
+          href="javascript:history.back()"
+          class="btn btn-primary"
+          style="padding: 0.8rem 2rem; border-radius: 50px"
+        >
+          <i class="ph ph-arrow-left"></i> Voltar e Tentar Novamente
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

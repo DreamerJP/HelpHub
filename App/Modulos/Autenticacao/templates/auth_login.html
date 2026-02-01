@@ -1,0 +1,227 @@
+{% extends "layout_base.html" %} {% block title %}Login - HelpHub 4.0{% endblock
+%} {% block page_title %}Acesso Restrito{% endblock %} {% block head %}
+<style>
+  /* Override para Login Full Screen - Estilo Dark Premium */
+  .layout-container {
+    display: block;
+    height: 100vh;
+    background:
+      linear-gradient(rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.15)),
+      url("{{ url_for('layout.static', filename='img/login-bg.webp') }}");
+    background-size: cover;
+    background-position: center;
+    background-color: #0f172a; /* Fallback */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Esconde elementos de layout padrão */
+  .sidebar,
+  .topbar,
+  .flash-container {
+    display: none !important;
+  }
+
+  .main-content {
+    margin: 0 !important;
+    flex: none;
+    width: 90%;
+    max-width: 600px; /* Mais largo */
+    padding: 0;
+  }
+
+  /* Card Dark Glass */
+  .login-card {
+    background: rgba(31, 41, 55, 0.85); /* Mais transparente */
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 3rem;
+    box-shadow:
+      0 25px 50px -12px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
+    text-align: center;
+    color: white;
+  }
+
+  .login-header {
+    margin-bottom: 2rem;
+  }
+
+  /* Inputs Dark */
+  .form-group {
+    text-align: left;
+    margin-bottom: 1.25rem;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 0.825rem;
+    font-weight: 500;
+    color: #9ca3af; /* Cinza claro */
+    margin-bottom: 0.5rem;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    border: 1px solid #374151; /* Borda escura */
+    background: #111827; /* Fundo input muito escuro */
+    color: white;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .form-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3);
+    background: #0f172a;
+  }
+
+  .form-input::placeholder {
+    color: #4b5563;
+  }
+
+  /* Botão Premium */
+  .btn-login {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    justify-content: center;
+    margin-top: 1.5rem;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    border: none;
+    box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+    transition:
+      transform 0.1s,
+      box-shadow 0.2s;
+  }
+
+  .btn-login:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 12px -2px rgba(37, 99, 235, 0.4);
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  }
+
+  .btn-login:active {
+    transform: translateY(0);
+  }
+
+  /* Links e Extras */
+  .forgot-link {
+    color: #60a5fa; /* Azul claro */
+    font-size: 0.75rem;
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .forgot-link:hover {
+    color: #93c5fd;
+  }
+
+  .footer-text {
+    margin-top: 2rem;
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+
+  /* Flash Messages no contexto Dark */
+  .login-flash {
+    margin-bottom: 1.5rem;
+    text-align: left;
+  }
+  .flash-item {
+    background: rgba(239, 68, 68, 0.1);
+    color: #fca5a5;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="login-card">
+  <div class="login-header">
+    <!-- Usando logo_light.png pois o fundo do card agora é escuro e queremos texto branco -->
+    <img
+      src="{{ url_for('layout.static', filename='img/logo_light.png') }}"
+      alt="HelpHub 4.0"
+      style="height: 80px; margin-bottom: 1rem"
+    />
+    <div style="font-size: 0.875rem; color: #9ca3af; margin-top: 0.5rem">
+      Sistema de Gerenciamento de Chamados
+    </div>
+  </div>
+
+  <!-- Mensagens de Erro -->
+  <div class="login-flash">
+    {% with messages = get_flashed_messages(with_categories=true) %} {% if
+    messages %} {% for category, message in messages %}
+    <div class="flash-item">
+      <i class="ph ph-warning-circle"></i>
+      {{ message }}
+    </div>
+    {% endfor %} {% endif %} {% endwith %}
+  </div>
+
+  <form method="POST" action="">
+    {{ form.hidden_tag() }}
+
+    <div class="form-group">
+      <label class="form-label">Nome de Usuário</label>
+      {{ form.username(class="form-input", placeholder="User", autofocus=true)
+      }}
+    </div>
+
+    <div class="form-group">
+      <label
+        class="form-label"
+        style="display: flex; justify-content: space-between"
+      >
+        Senha de Acesso
+      </label>
+      {{ form.password(class="form-input", placeholder="••••••••") }}
+    </div>
+
+    <div class="form-group" style="margin-bottom: 0.5rem">
+      <label
+        style="
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          cursor: pointer;
+          color: #d1d5db;
+          font-size: 0.875rem;
+        "
+      >
+        {{ form.remember_me() }}
+        <span>Mantenha-me conectado</span>
+      </label>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-login">
+      Acessar Plataforma
+    </button>
+  </form>
+
+  <div class="footer-text">
+    &copy; 2026 HelpHub Tech.
+    <br />
+    Contato: DreamerJPMG@gmail.com
+    <br />
+    <a
+      href="#"
+      class="forgot-link"
+      style="margin-top: 0.5rem; display: inline-block"
+      >Problemas com acesso? (Não implementado)</a
+    >
+  </div>
+</div>
+{% endblock %}

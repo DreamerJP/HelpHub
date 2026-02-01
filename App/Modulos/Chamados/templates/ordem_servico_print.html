@@ -1,0 +1,494 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Ordem de Serviço #{{ chamado.protocolo }}</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+
+      :root {
+        --primary: #2563eb;
+        --text-main: #1f2937;
+        --text-light: #6b7280;
+        --border: #e5e7eb;
+        --bg-gray: #f9fafb;
+      }
+
+      /* Reset Básico de Impressão */
+      * {
+        box-sizing: border-box;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      /* Configuração de Página para Impressora */
+      @page {
+        size: A4;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        color: var(--text-main);
+        font-size: 12px;
+        line-height: 1.5;
+        margin: 0;
+        padding: 0;
+        background: white;
+      }
+
+      /* Layout A4 */
+      .page-container {
+        width: 210mm;
+        min-height: 297mm;
+        padding: 10mm;
+        margin: 0 auto;
+        background: white;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+      }
+
+      @media print {
+        body {
+          margin: 0;
+        }
+        .page-container {
+          width: 100% !important;
+          height: 98vh !important; /* Ocupa a área útil da página sem estourar */
+          min-height: 0 !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          box-shadow: none !important;
+        }
+      }
+
+      /* Cabeçalho */
+      .header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        row-gap: 2px; /* Linhas de texto próximas */
+        border-bottom: 2px solid var(--primary);
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+        line-height: 1.1;
+      }
+
+      .logo-area h1 {
+        font-size: 24px;
+        font-weight: 800;
+        color: var(--primary);
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: -0.5px;
+      }
+      .logo-area span {
+        font-size: 10px;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .os-info {
+        text-align: right;
+      }
+      .os-number {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-main);
+      }
+      .os-date {
+        font-size: 11px;
+        color: var(--text-light);
+      }
+
+      /* Seções */
+      .section {
+        margin-bottom: 12px;
+      }
+      .section-title {
+        font-size: 12px;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: var(--primary);
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 5px;
+        margin-bottom: 8px;
+        letter-spacing: 0.5px;
+      }
+
+      /* Grids de Dados */
+      .data-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
+      .full-width {
+        grid-column: 1 / -1;
+      }
+
+      .field-group {
+        margin-bottom: 5px;
+      }
+      .label {
+        display: block;
+        font-size: 9px;
+        font-weight: 600;
+        color: var(--text-light);
+        text-transform: uppercase;
+        margin-bottom: 2px;
+      }
+      .value {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-main);
+      }
+
+      /* Caixa de Destaque (Descrição/Instruções) */
+      .highlight-box {
+        background-color: var(--bg-gray);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 10px;
+        font-size: 13px;
+        min-height: 50px;
+      }
+
+      /* Área Técnica (Checklist/Materiais) */
+      .tech-area {
+        border: 1px dashed var(--border);
+        border-radius: 6px;
+        padding: 10px;
+        margin-top: 5px;
+        min-height: 80px;
+      }
+      .tech-placeholder {
+        color: #d1d5db;
+        text-align: center;
+        font-size: 10px;
+        margin-top: 25px;
+      }
+
+      /* Rodapé de Assinaturas */
+      .signatures {
+        margin-top: auto;
+        padding-top: 40px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+      }
+      .sign-box {
+        text-align: center;
+      }
+      .sign-line {
+        border-top: 1px solid var(--text-main);
+        margin-bottom: 8px;
+        height: 40px; /* Espaço pra assinar */
+      }
+      .sign-name {
+        font-weight: 600;
+        font-size: 12px;
+      }
+      .sign-role {
+        font-size: 10px;
+        color: var(--text-light);
+      }
+
+      /* Check-in / Check-out */
+      .times-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        gap: 10px;
+        margin-top: 20px;
+        border-top: 1px solid var(--border);
+        padding-top: 15px;
+      }
+      .time-box {
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 8px;
+        text-align: center;
+      }
+      .time-label {
+        font-size: 9px;
+        color: var(--text-light);
+        margin-bottom: 4px;
+      }
+      .time-value {
+        height: 20px;
+        border-bottom: 1px dotted #ccc;
+      }
+
+      /* Footer da Página */
+      .page-footer {
+        position: absolute;
+        bottom: 15mm;
+        left: 15mm;
+        right: 15mm;
+        text-align: center;
+        font-size: 9px;
+        color: #9ca3af;
+        border-top: 1px solid var(--border);
+        padding-top: 10px;
+      }
+
+      /* Botão flutuante (não sai na impressão) */
+      .print-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.2s;
+        z-index: 1000;
+      }
+      .print-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+      }
+      @media print {
+        .print-btn {
+          display: none;
+        }
+        .page-container {
+          width: 100%;
+          margin: 0;
+          padding: 0;
+          box-shadow: none;
+        }
+        body {
+          background: white;
+        }
+      }
+      @media screen {
+        body {
+          background: #f3f4f6;
+          padding: 20px;
+        }
+        .page-container {
+          box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
+        }
+      }
+    </style>
+    <!-- Phosphor Icons para o botão -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  </head>
+  <body>
+    <button onclick="window.print()" class="print-btn">
+      <i class="ph ph-printer"></i> Imprimir OS
+    </button>
+
+    <div class="page-container">
+      <!-- Cabeçalho em Grid -->
+      <header class="header">
+        <!-- Linha 1: Logos -->
+        <div style="align-self: center; padding-bottom: 5px">
+          {% if cfg.empresa_logo %}
+          <img
+            src="{{ url_for('chamados.baixar_anexo', filename=cfg.empresa_logo) }}"
+            style="max-height: 80px; max-width: 250px"
+          />
+          {% else %}
+          <h1>{{ cfg.empresa_nome or 'HelpHub' }}</h1>
+          {% endif %}
+        </div>
+        <div style="text-align: right; align-self: center; padding-bottom: 5px">
+          <img
+            src="{{ url_for('layout.static', filename='img/logo_dark.png') }}"
+            alt="HelpHub System"
+            style="height: 35px; opacity: 0.9"
+          />
+        </div>
+
+        <!-- Linha 2: CNPJ vs Protocolo (Alinhados pela base) -->
+        <div style="align-self: end; font-size: 10px; color: #666">
+          {% if cfg.empresa_cnpj %}CNPJ: {{ cfg.empresa_cnpj }}{% endif %}
+        </div>
+        <div class="os-info" style="align-self: end">
+          <div class="os-number" style="margin: 0; line-height: 1">
+            OS #{{ chamado.protocolo }}
+          </div>
+        </div>
+
+        <!-- Linha 3: Contatos vs Data -->
+        <div style="align-self: end; font-size: 10px; color: #666">
+          {{ cfg.empresa_endereco or '' }}<br />
+          {% if cfg.empresa_telefone %}Tel: {{ cfg.empresa_telefone }}{% endif
+          %} {% if cfg.empresa_email %} | {{ cfg.empresa_email }}{% endif %}
+        </div>
+        <div
+          style="
+            text-align: right;
+            align-self: end;
+            font-size: 11px;
+            color: var(--text-light);
+          "
+        >
+          Gerada em: {{ hoje }}
+        </div>
+      </header>
+
+      <!-- Dados do Cliente -->
+      <section class="section">
+        <h3 class="section-title">Dados do Cliente</h3>
+        <div class="data-grid">
+          <div class="field-group">
+            <span class="label">Cliente / Razão Social</span>
+            <div class="value">{{ chamado.cliente.nome_razao }}</div>
+          </div>
+          <div class="field-group">
+            <span class="label">CPF / CNPJ</span>
+            <div class="value">{{ chamado.cliente.cpf_cnpj }}</div>
+          </div>
+          <div class="field-group full-width">
+            <span class="label">Endereço Completo</span>
+            <!-- Lógica segura pra endereço no template -->
+            {% set end_parts = [] %} {% if chamado.cliente.logradouro %} {% set
+            _ = end_parts.append(chamado.cliente.logradouro) %} {% endif %} {%
+            if chamado.cliente.numero %} {% set _ =
+            end_parts.append(chamado.cliente.numero) %} {% endif %} {% if
+            chamado.cliente.bairro %} {% set _ =
+            end_parts.append(chamado.cliente.bairro) %} {% endif %} {% if
+            chamado.cliente.cidade %} {% set _ =
+            end_parts.append(chamado.cliente.cidade ~ ('/' ~ chamado.cliente.uf
+            if chamado.cliente.uf else '')) %} {% endif %} {% set end =
+            end_parts | join(", ") %}
+            <div class="value">{{ end }}</div>
+          </div>
+          <div class="field-group">
+            <span class="label">Contato (Email)</span>
+            <div class="value">{{ chamado.cliente.email or '-' }}</div>
+          </div>
+          <div class="field-group">
+            <span class="label">Telefone Principal</span>
+            <div class="value">
+              {{ chamado.cliente.telefone_principal or '-' }}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Dados do Serviço -->
+      <section class="section">
+        <h3 class="section-title">Detalhes do Serviço</h3>
+        <div class="data-grid">
+          <div class="field-group">
+            <span class="label">Assunto</span>
+            <div class="value">{{ chamado.assunto }}</div>
+          </div>
+          <div class="field-group">
+            <span class="label">Técnico Responsável</span>
+            {% if chamado.tecnico %}
+            <div class="value">
+              {{ chamado.tecnico.nome or chamado.tecnico.username }}
+            </div>
+            {% else %}
+            <div class="value" style="color: #999">(Não atribuído)</div>
+            {% endif %}
+          </div>
+          <div class="field-group full-width">
+            <span class="label">Descrição da Solicitação</span>
+            <div class="highlight-box">{{ chamado.descricao }}</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Área Técnica (Instruções + Materiais) -->
+      <section class="section">
+        <h3 class="section-title">Relatório Técnico & Materiais</h3>
+        <div class="tech-area">
+          <!-- Se tiver instruções técnicas já cadastradas, exibe. Senão, deixa linha pontilhada -->
+          {% if visita and visita.instrucoes_tecnicas %}
+          <div class="value">{{ visita.instrucoes_tecnicas }}</div>
+          {% else %}
+          <div
+            style="
+              border-bottom: 1px dotted #ccc;
+              height: 25px;
+              margin-bottom: 25px;
+            "
+          ></div>
+          <div
+            style="
+              border-bottom: 1px dotted #ccc;
+              height: 25px;
+              margin-bottom: 25px;
+            "
+          ></div>
+          <div
+            style="
+              border-bottom: 1px dotted #ccc;
+              height: 25px;
+              margin-bottom: 25px;
+            "
+          ></div>
+          <p style="font-size: 10px; color: #666; font-style: italic">
+            Descreva acima o serviço realizado e materiais utilizados.
+          </p>
+          {% endif %}
+        </div>
+      </section>
+
+      <!-- Horários (Check-in) -->
+      <section class="section">
+        <div class="times-grid">
+          <div class="time-box">
+            <div class="time-label">Início Previsto</div>
+            <div class="value">
+              {% if visita and visita.data_inicio %} {{
+              visita.data_inicio.strftime('%d/%m %H:%M') }} {% else %} --/--
+              --:-- {% endif %}
+            </div>
+          </div>
+          <div class="time-box">
+            <div class="time-label">Chegada (Check-in)</div>
+            <div class="time-value"></div>
+          </div>
+          <div class="time-box">
+            <div class="time-label">Saída (Check-out)</div>
+            <div class="time-value"></div>
+          </div>
+          <div class="time-box">
+            <div class="time-label">Status Final</div>
+            <div class="time-value"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Assinaturas -->
+      <div class="signatures">
+        <div class="sign-box">
+          <div class="sign-line"></div>
+          <div class="sign-name">
+            {% if chamado.tecnico %} {{ chamado.tecnico.nome or
+            chamado.tecnico.username }} {% else %} Técnico Responsável {% endif
+            %}
+          </div>
+          <div class="sign-role">Técnico HelpHub</div>
+        </div>
+        <div class="sign-box">
+          <div class="sign-line"></div>
+          <div class="sign-name">{{ chamado.cliente.nome_razao }}</div>
+          <div class="sign-role">Cliente / Responsável</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Opcional: Auto-imprimir se vier parâmetro na URL
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get("print") === "true") {
+        window.print();
+      }
+    </script>
+  </body>
+</html>

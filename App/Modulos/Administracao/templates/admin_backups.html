@@ -1,0 +1,182 @@
+{% extends "layout_base.html" %} {% block title %}Backups - HelpHub 4.0{%
+endblock %} {% block page_title %}Gerenciador de Backups{% endblock %} {% block
+content %}
+<!-- Alerta de Agendador (Apenas para Admin se houver erro) -->
+{% if current_user.is_authenticated and current_user.is_admin and
+SCHEDULER_ERROR %}
+<div
+  style="
+    background: #fffbeb;
+    border-left: 4px solid #f59e0b;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  "
+>
+  <i
+    class="ph ph-warning-diamond"
+    style="color: #f59e0b; font-size: 1.5rem"
+  ></i>
+  <div>
+    <h4
+      style="
+        color: #92400e;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+      "
+    >
+      Aviso: Agendador de Tarefas Inativo
+    </h4>
+    <p style="color: #b45309; font-size: 0.75rem; margin: 0">
+      O sistema detectou que o servidor não permite a execução de tarefas em
+      segundo plano ({{ SCHEDULER_ERROR }}).
+      <strong
+        >Backups automáticos e rotinas diárias não serão executados sozinhos
+        neste ambiente.</strong
+      >
+    </p>
+  </div>
+</div>
+{% endif %}
+
+<!-- Alertas de Tarefas Atrasadas (Servidor offline) -->
+{% if current_user.is_authenticated and current_user.is_admin and
+TAREFAS_ATRASADAS and not SCHEDULER_ERROR %} {% for tarefa in TAREFAS_ATRASADAS
+%} {% if tarefa.id == 'backup_diario' %}
+<div
+  style="
+    background: #ecfdf5;
+    border-left: 4px solid #10b981;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  "
+>
+  <div style="display: flex; align-items: center; gap: 1rem">
+    <i
+      class="ph ph-calendar-plus"
+      style="color: #059669; font-size: 1.5rem"
+    ></i>
+    <div>
+      <h4
+        style="
+          color: #064e3b;
+          font-weight: 600;
+          font-size: 0.875rem;
+          margin-bottom: 0.25rem;
+        "
+      >
+        Backup Agendado Pendente
+      </h4>
+      <p style="color: #065f46; font-size: 0.75rem; margin: 0">
+        O backup das 03:00 de hoje não foi realizado (servidor offline). Deseja
+        executar agora?
+      </p>
+    </div>
+  </div>
+  <a
+    href="{{ url_for('admin.gerar_backup') }}"
+    class="btn btn-primary btn-sm backup-action"
+    data-confirm-message="O sistema pode ficar um pouco lento durante a compressão. Confirmar execução agora?"
+  >
+    <i class="ph ph-play"></i> Executar Agora
+  </a>
+</div>
+{% endif %} {% endfor %} {% endif %}
+
+<div class="glass-panel">
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 2rem;
+      align-items: center;
+    "
+  >
+    <div>
+      <h3 style="margin-bottom: 0.5rem">Cópias de Segurança</h3>
+      <p class="text-muted">
+        Agendamento: Diário às 03:00. Rotação: Mantém os últimos 14 arquivos.
+      </p>
+    </div>
+    <a
+      href="{{ url_for('admin.gerar_backup') }}"
+      class="btn btn-primary backup-action"
+      data-confirm-message="Gerar um backup agora? O sistema pode engasgar por alguns segundos."
+    >
+      <i class="ph ph-database"></i> Gerar Backup Agora
+    </a>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Arquivo</th>
+        <th>Data da Cópia</th>
+        <th>Tamanho</th>
+        <th style="text-align: right">Ação</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in backups %}
+      <tr>
+        <td style="font-family: monospace">
+          {{ b.nome }} {% if '_auto' in b.nome %}
+          <span class="badge badge-info">AUTO</span>
+          {% elif '_manual' in b.nome %}
+          <span class="badge badge-neutral">MANUAL</span>
+          {% endif %}
+        </td>
+        <td>{{ b.data }}</td>
+        <td>{{ b.tamanho }}</td>
+        <td style="text-align: right">
+          <a
+            href="{{ url_for('admin.download_backup', filename=b.nome) }}"
+            class="btn btn-soft-primary btn-sm"
+          >
+            <i class="ph ph-download-simple"></i> Baixar
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td
+          colspan="4"
+          style="text-align: center; padding: 3rem"
+          class="text-muted"
+        >
+          Nenhum backup encontrado. Gere o primeiro!
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Intercepta clique no botão de gerar backup
+    document.querySelectorAll(".backup-action").forEach((link) => {
+      link.addEventListener("click", async function (e) {
+        e.preventDefault();
+        const message =
+          this.dataset.confirmMessage || "Tem certeza que deseja continuar?";
+        const confirmed = await confirmAction(message);
+        if (confirmed) {
+          window.location.href = this.href;
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

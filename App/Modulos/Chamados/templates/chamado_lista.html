@@ -1,0 +1,194 @@
+{% extends "layout_base.html" %} {% from "componentes.html" import
+render_paginacao, badge_status_chamado %} {% block title %}Chamados - HelpHub
+4.0{% endblock %} {% block page_title %}Fila de Chamados{% endblock %} {% block
+content %}
+
+<!-- Sistema de Abas (Filas) -->
+<div class="tab-container" style="margin-bottom: 2rem">
+  <a
+    href="{{ url_for('chamados.lista', status='ativos', q=q) }}"
+    class="tab-link {% if status_filter == 'ativos' %}active{% endif %}"
+  >
+    <i class="ph ph-envelope"></i> Abertos
+  </a>
+  <a
+    href="{{ url_for('chamados.lista', status='abertos', q=q) }}"
+    class="tab-link {% if status_filter == 'abertos' %}active{% endif %}"
+  >
+    <i class="ph ph-envelope-open" style="color: var(--danger)"></i> Triagem
+  </a>
+  <a
+    href="{{ url_for('chamados.lista', status='agendados', q=q) }}"
+    class="tab-link {% if status_filter == 'agendados' %}active{% endif %}"
+  >
+    <i class="ph ph-calendar" style="color: var(--warning)"></i> Visitas
+  </a>
+  <a
+    href="{{ url_for('chamados.lista', status='pendentes', q=q) }}"
+    class="tab-link {% if status_filter == 'pendentes' %}active{% endif %}"
+  >
+    <i class="ph ph-hourglass" style="color: var(--text-muted)"></i> Aguardando
+    Cliente
+  </a>
+  <a
+    href="{{ url_for('chamados.lista', status='escalonados', q=q) }}"
+    class="tab-link {% if status_filter == 'escalonados' %}active{% endif %}"
+  >
+    <i class="ph ph-trend-up" style="color: var(--danger)"></i> Nível Superior
+  </a>
+  <a
+    href="{{ url_for('chamados.lista', status='fechados', q=q) }}"
+    class="tab-link {% if status_filter == 'fechados' %}active{% endif %}"
+  >
+    <i class="ph ph-check-circle" style="color: var(--success)"></i> Finalizados
+  </a>
+</div>
+
+<div class="glass-panel">
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    "
+  >
+    <div style="display: flex; gap: 1rem; align-items: center">
+      <!-- Busca Funcional -->
+      <form
+        action="{{ url_for('chamados.lista') }}"
+        method="get"
+        style="display: flex; gap: 0.5rem; align-items: center"
+      >
+        <input type="hidden" name="status" value="{{ status_filter }}" />
+        <div style="position: relative">
+          <i
+            class="ph ph-funnel"
+            style="
+              position: absolute;
+              left: 10px;
+              top: 50%;
+              transform: translateY(-50%);
+              color: var(--text-muted);
+            "
+          ></i>
+          <input
+            type="text"
+            name="q"
+            value="{{ q or '' }}"
+            placeholder="Protocolo, Assunto ou Cliente..."
+            style="
+              padding: 0.5rem 0.5rem 0.5rem 2rem;
+              border: 1px solid #d1d5db;
+              border-radius: 6px;
+              width: 280px;
+              font-size: 0.85rem;
+            "
+          />
+        </div>
+        {% if q %}
+        <a
+          href="{{ url_for('chamados.lista', status=status_filter) }}"
+          class="btn"
+          style="background: #f3f4f6"
+          title="Limpar busca"
+        >
+          <i class="ph ph-x"></i>
+        </a>
+        {% endif %}
+      </form>
+      <div class="text-muted" style="font-size: 0.85rem">
+        Exibindo {{ chamados.items|length }} de {{ chamados.total }} chamados.
+      </div>
+    </div>
+
+    <a href="{{ url_for('chamados.novo') }}" class="btn btn-primary">
+      <i class="ph ph-plus"></i> Abrir Chamado
+    </a>
+  </div>
+
+  <table class="data-table data-table-clickable">
+    <thead>
+      <tr>
+        <th>Protocolo</th>
+        <th>Assunto</th>
+        <th>Cliente</th>
+        <th>Status</th>
+        <th>Criado em</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in chamados.items %}
+      <tr
+        class="clickable-row"
+        data-href="{{ url_for('chamados.detalhe', id=c.id) }}"
+      >
+        <td style="font-family: monospace; font-weight: 600">
+          {{ c.protocolo }}
+        </td>
+        <td>{{ c.assunto }}</td>
+        <td>
+          <div style="font-weight: 500">{{ c.cliente.nome_razao }}</div>
+          <div class="text-muted" style="font-size: 0.75rem">
+            <i class="ph ph-buildings"></i> {{ c.departamento.nome if
+            c.departamento else 'Triagem' }}
+          </div>
+        </td>
+        <td>{{ badge_status_chamado(c.status) }}</td>
+        <td class="text-sm">{{ c.created_at_br }}</td>
+        <td style="text-align: right">
+          <a
+            href="{{ url_for('chamados.detalhe', id=c.id) }}"
+            class="btn btn-action"
+            style="background: #eff6ff; color: var(--primary)"
+          >
+            <i class="ph ph-arrow-square-out"></i> Abrir
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td
+          colspan="6"
+          style="text-align: center; padding: 3rem"
+          class="text-muted"
+        >
+          <i
+            class="ph ph-ticket"
+            style="font-size: 2rem; display: block; margin-bottom: 0.5rem"
+          ></i>
+          Nenhum chamado encontrado nesta categoria.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {# Uso da Macro de Paginação Padronizada #} {{ render_paginacao(chamados,
+  'chamados.lista', q=q, status=status_filter) }}
+</div>
+
+<script>
+  // Event listeners para linhas clicáveis
+  document.addEventListener("DOMContentLoaded", function () {
+    const clickableRows = document.querySelectorAll(".clickable-row");
+
+    clickableRows.forEach((row) => {
+      row.style.cursor = "pointer";
+
+      row.addEventListener("click", function (e) {
+        // Ignora clique se foi em um link ou botão
+        if (e.target.closest("a, button")) {
+          return;
+        }
+
+        const href = this.dataset.href;
+        if (href) {
+          window.location.href = href;
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,228 @@
+{% extends "layout_base.html" %} {% block title %}{{ titulo }} - HelpHub 4.0{%
+endblock %} {% block page_title %}{{ titulo }}{% endblock %} {% block content %}
+<div style="max-width: 800px">
+  <form
+    method="POST"
+    class="glass-panel"
+    style="padding: 2rem; border-radius: 8px"
+  >
+    {{ form.hidden_tag() }}
+
+    <h4
+      style="
+        margin-bottom: 1rem;
+        color: var(--primary);
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 0.5rem;
+      "
+    >
+      Dados Principais
+    </h4>
+
+    <div
+      style="
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      "
+    >
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+          >Nome / Razão Social</label
+        >
+        {{ form.nome_razao(class="form-input", style="width: 100%; padding:
+        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;") }}
+      </div>
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+          >CPF/CNPJ</label
+        >
+        {{ form.cpf_cnpj(class="form-input", style="width: 100%; padding:
+        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;") }}
+      </div>
+    </div>
+
+    <div
+      style="
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      "
+    >
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+          >Nome Fantasia</label
+        >
+        {{ form.nome_fantasia(class="form-input", style="width: 100%; padding:
+        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;") }}
+      </div>
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+          >Email</label
+        >
+        {{ form.email(class="form-input", style="width: 100%; padding: 0.6rem;
+        border: 1px solid #D1D5DB; border-radius: 6px;") }}
+      </div>
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+          >Telefone</label
+        >
+        {{ form.telefone(class="form-input", style="width: 100%; padding:
+        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;") }}
+      </div>
+    </div>
+
+    <h4
+      style="
+        margin-bottom: 1rem;
+        color: var(--primary);
+        border-bottom: 1px solid #e5e7eb;
+        padding-bottom: 0.5rem;
+      "
+    >
+      Endereço
+    </h4>
+
+    <div
+      style="
+        display: grid;
+        grid-template-columns: 150px 1fr 120px;
+        gap: 1rem;
+        margin-bottom: 1rem;
+      "
+    >
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+          >CEP
+          <i
+            class="ph ph-magnifying-glass"
+            id="loading-cep"
+            style="display: none; animation: spin 1s linear infinite"
+          ></i
+        ></label>
+        {{ form.cep(id="cep", class="form-input", style="width: 100%; padding:
+        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;",
+        placeholder="00000-000") }}
+      </div>
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+          >Logradouro</label
+        >
+        {{ form.logradouro(id="logradouro", class="form-input", style="width:
+        100%; padding: 0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;
+        background-color: #F9FAFB;") }}
+      </div>
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+          >Número</label
+        >
+        {{ form.numero(class="form-input", style="width: 100%; padding: 0.6rem;
+        border: 1px solid #D1D5DB; border-radius: 6px;") }}
+      </div>
+    </div>
+
+    <div
+      style="
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr 80px;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      "
+    >
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+          >Complemento</label
+        >
+        {{ form.complemento(class="form-input", style="width: 100%; padding:
+        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;") }}
+      </div>
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+          >Bairro</label
+        >
+        {{ form.bairro(id="bairro", class="form-input", style="width: 100%;
+        padding: 0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;
+        background-color: #F9FAFB;") }}
+      </div>
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+          >Cidade</label
+        >
+        {{ form.cidade(id="cidade", class="form-input", style="width: 100%;
+        padding: 0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;
+        background-color: #F9FAFB;") }}
+      </div>
+      <div>
+        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+          >UF</label
+        >
+        {{ form.uf(id="uf", class="form-input", style="width: 100%; padding:
+        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px; background-color:
+        #F9FAFB;") }}
+      </div>
+    </div>
+
+    <div style="margin-bottom: 2rem">
+      <label style="display: flex; align-items: center; gap: 0.5rem">
+        {{ form.ativo() }}
+        <span>Cliente Ativo</span>
+      </label>
+    </div>
+
+    <div style="display: flex; gap: 1rem">
+      <button type="submit" class="btn btn-primary">Salvar Cliente</button>
+      <a
+        href="{{ url_for('clientes.lista') }}"
+        class="btn"
+        style="background: #e5e7eb; color: #374151"
+        >Cancelar</a
+      >
+    </div>
+  </form>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const cepInput = document.getElementById("cep");
+
+    cepInput.addEventListener("blur", function () {
+      let cep = this.value.replace(/\D/g, "");
+
+      if (cep.length === 8) {
+        document.getElementById("loading-cep").style.display = "inline-block";
+
+        // ViaCEP API
+        fetch(`https://viacep.com.br/ws/${cep}/json/`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (!data.erro) {
+              document.getElementById("logradouro").value = data.logradouro;
+              document.getElementById("bairro").value = data.bairro;
+              document.getElementById("cidade").value = data.localidade;
+              document.getElementById("uf").value = data.uf;
+
+              // Foca no número para facilitar
+              document.getElementById("numero").focus();
+            } else {
+              alert("CEP não encontrado.");
+            }
+          })
+          .catch((err) => console.error("Erro ao buscar CEP:", err))
+          .finally(() => {
+            document.getElementById("loading-cep").style.display = "none";
+          });
+      }
+    });
+  });
+</script>
+<style>
+  @keyframes spin {
+    100% {
+      -webkit-transform: rotate(360deg);
+      transform: rotate(360deg);
+    }
+  }
+</style>
+{% endblock %}

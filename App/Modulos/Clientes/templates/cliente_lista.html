@@ -1,0 +1,151 @@
+{% extends "layout_base.html" %} {% from "componentes.html" import
+render_paginacao %} {% block title %}Clientes - HelpHub 4.0{% endblock %} {%
+block page_title %}Gerenciar Clientes{% endblock %} {% block content %}
+<div class="glass-panel">
+  <div
+    style="
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    "
+  >
+    <div style="display: flex; gap: 1rem; align-items: center">
+      <!-- Busca Funcional -->
+      <form
+        action="{{ url_for('clientes.lista') }}"
+        method="get"
+        style="display: flex; gap: 0.5rem; align-items: center"
+      >
+        <div style="position: relative">
+          <i
+            class="ph ph-funnel"
+            style="
+              position: absolute;
+              left: 10px;
+              top: 50%;
+              transform: translateY(-50%);
+              color: var(--text-muted);
+            "
+          ></i>
+          <input
+            type="text"
+            name="q"
+            value="{{ q or '' }}"
+            placeholder="Nome, CPF ou CNPJ..."
+            style="
+              padding: 0.5rem 0.5rem 0.5rem 2rem;
+              border: 1px solid #d1d5db;
+              border-radius: 6px;
+              width: 250px;
+              font-size: 0.85rem;
+            "
+          />
+        </div>
+        {% if q %}
+        <a
+          href="{{ url_for('clientes.lista') }}"
+          class="btn"
+          style="background: #f3f4f6"
+          title="Limpar busca"
+        >
+          <i class="ph ph-x"></i>
+        </a>
+        {% endif %}
+      </form>
+      <div class="text-muted" style="font-size: 0.85rem">
+        Total de {{ clientes.total }} clientes.
+      </div>
+    </div>
+
+    <a href="{{ url_for('clientes.novo') }}" class="btn btn-primary">
+      <i class="ph ph-plus"></i> Novo Cliente
+    </a>
+  </div>
+
+  <table class="data-table data-table-clickable">
+    <thead>
+      <tr>
+        <th>Nome / Razão</th>
+        <th>CPF/CNPJ</th>
+        <th>Cidade/UF</th>
+        <th>Status</th>
+        <th style="text-align: right">Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for cliente in clientes.items %}
+      <tr
+        class="clickable-row"
+        data-href="{{ url_for('clientes.editar', id=cliente.id) }}"
+      >
+        <td>
+          <div style="font-weight: 500">{{ cliente.nome_razao }}</div>
+          {% if cliente.nome_fantasia %}
+          <div class="text-muted" style="font-size: 0.75rem">
+            {{ cliente.nome_fantasia }}
+          </div>
+          {% endif %}
+        </td>
+        <td>{{ cliente.cpf_cnpj }}</td>
+        <td>
+          {% if cliente.cidade %}{{ cliente.cidade }}/{{ cliente.uf }}{% else
+          %}-{% endif %}
+        </td>
+        <td>
+          {% if cliente.ativo %}
+          <span class="badge badge-success">Ativo</span>
+          {% else %}
+          <span class="badge badge-neutral">Inativo</span>
+          {% endif %}
+        </td>
+        <td style="text-align: right">
+          <a
+            href="{{ url_for('clientes.editar', id=cliente.id) }}"
+            class="btn btn-soft-primary btn-sm"
+          >
+            <i class="ph ph-eye"></i> Detalhes
+          </a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td
+          colspan="5"
+          style="text-align: center; padding: 3rem"
+          class="text-muted"
+        >
+          Nenhum cliente encontrado.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {# Uso da Macro de Paginação Padronizada #} {{ render_paginacao(clientes,
+  'clientes.lista', q=q) }}
+</div>
+
+<script>
+  // Event listeners para linhas clicáveis
+  document.addEventListener("DOMContentLoaded", function () {
+    const clickableRows = document.querySelectorAll(".clickable-row");
+
+    clickableRows.forEach((row) => {
+      row.style.cursor = "pointer";
+
+      row.addEventListener("click", function (e) {
+        // Ignora clique se foi em um link ou botão
+        if (e.target.closest("a, button")) {
+          return;
+        }
+
+        const href = this.dataset.href;
+        if (href) {
+          window.location.href = href;
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}

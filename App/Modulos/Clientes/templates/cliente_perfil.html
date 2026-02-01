@@ -1,0 +1,930 @@
+{% extends "layout_base.html" %} {% from "componentes.html" import
+badge_status_chamado %} {% block title %}Perfil: {{ cliente.nome_razao }} -
+HelpHub 4.0{% endblock %} {% block page_title %}
+<div style="display: flex; align-items: center; gap: 1rem">
+  <a href="{{ url_for('clientes.lista') }}" style="color: var(--text-muted)"
+    ><i class="ph ph-arrow-left"></i
+  ></a>
+  <span>Perfil do Cliente</span>
+  <span
+    class="badge {% if cliente.ativo %}badge-success{% else %}badge-neutral{% endif %}"
+    style="font-size: 0.75rem"
+  >
+    {{ 'Ativo' if cliente.ativo else 'Inativo' }}
+  </span>
+</div>
+{% endblock %} {% block content %}
+<div
+  x-data="{ editing: false }"
+  class="profile-container"
+  style="
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 2rem;
+    align-items: start;
+  "
+>
+  <!-- Esquerda: Dados do Cliente -->
+  <div class="main-column">
+    <form
+      method="POST"
+      class="glass-panel"
+      style="padding: 2.5rem; border-radius: 12px; position: relative"
+    >
+      {{ form.hidden_tag() }}
+
+      <div
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 2.5rem;
+          border-bottom: 2px solid #f3f4f6;
+          padding-bottom: 1.5rem;
+        "
+      >
+        <h3
+          style="
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+          "
+        >
+          <i
+            class="ph ph-identification-card"
+            style="color: var(--primary)"
+          ></i>
+          Informações do Cadastro
+        </h3>
+
+        <div style="display: flex; gap: 0.5rem">
+          <template x-if="!editing">
+            <button
+              type="button"
+              @click="editing = true"
+              class="btn"
+              style="
+                background: #eff6ff;
+                color: var(--primary);
+                border: 1px solid #dbeafe;
+                padding: 0.6rem 1.2rem;
+              "
+            >
+              <i class="ph ph-pencil-simple"></i> Editar Perfil
+            </button>
+          </template>
+          <template x-if="editing">
+            <div style="display: flex; gap: 0.5rem">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                style="padding: 0.6rem 1.2rem"
+              >
+                <i class="ph ph-check"></i> Salvar
+              </button>
+              <button
+                type="button"
+                @click="editing = false"
+                class="btn"
+                style="
+                  background: #f3f4f6;
+                  color: var(--text-muted);
+                  padding: 0.6rem 1.2rem;
+                "
+              >
+                Cancelar
+              </button>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <!-- Grid de Campos Principais -->
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 2fr 1fr;
+          gap: 1.5rem;
+          margin-bottom: 1.5rem;
+        "
+      >
+        <div
+          class="form-group"
+          style="border-left: 3px solid var(--primary); padding-left: 1rem"
+        >
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: var(--text-muted);
+              font-size: 0.7rem;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            "
+            >Nome / Razão Social</label
+          >
+          <div
+            x-show="!editing"
+            class="view-value"
+            style="
+              font-size: 1.25rem;
+              font-weight: 700;
+              color: var(--text-main);
+              margin-top: 0.5rem;
+            "
+          >
+            {{ cliente.nome_razao }}
+          </div>
+          <div x-show="editing">
+            {{ form.nome_razao(class="form-input", style="width: 100%; padding:
+            0.6rem; border: 1px solid #d1d5db; border-radius: 6px;") }}
+          </div>
+        </div>
+        <div
+          class="form-group"
+          style="border-left: 3px solid #6366f1; padding-left: 1rem"
+        >
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: var(--text-muted);
+              font-size: 0.7rem;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            "
+            >CPF / CNPJ</label
+          >
+          <div
+            x-show="!editing"
+            class="view-value"
+            style="
+              font-size: 1.25rem;
+              font-weight: 700;
+              color: var(--text-main);
+              margin-top: 0.5rem;
+            "
+          >
+            {{ cliente.cpf_cnpj }}
+          </div>
+          <div x-show="editing">
+            {{ form.cpf_cnpj(class="form-input", style="width: 100%; padding:
+            0.6rem; border: 1px solid #d1d5db; border-radius: 6px;") }}
+          </div>
+        </div>
+      </div>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 2fr 1fr;
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+        "
+      >
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem">
+          <div
+            class="form-group"
+            style="border-left: 3px solid #e5e7eb; padding-left: 1rem"
+          >
+            <label
+              class="form-label"
+              style="
+                font-weight: 600;
+                color: var(--text-muted);
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+              "
+              >Nome Fantasia</label
+            >
+            <div
+              x-show="!editing"
+              class="view-value"
+              style="font-weight: 500; margin-top: 0.5rem; min-height: 1.5rem"
+            >
+              {{ cliente.nome_fantasia or '-' }}
+            </div>
+            <div x-show="editing">
+              {{ form.nome_fantasia(class="form-input", style="width: 100%;") }}
+            </div>
+          </div>
+          <div
+            class="form-group"
+            style="border-left: 3px solid #e5e7eb; padding-left: 1rem"
+          >
+            <label
+              class="form-label"
+              style="
+                font-weight: 600;
+                color: var(--text-muted);
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+              "
+              >E-mail</label
+            >
+            <div
+              x-show="!editing"
+              class="view-value"
+              style="
+                font-weight: 500;
+                color: var(--primary);
+                margin-top: 0.5rem;
+                min-height: 1.5rem;
+              "
+            >
+              {{ cliente.email or '-' }}
+            </div>
+            <div x-show="editing">
+              {{ form.email(class="form-input", style="width: 100%;") }}
+            </div>
+          </div>
+        </div>
+        <div
+          class="form-group"
+          style="border-left: 3px solid var(--success); padding-left: 1rem"
+        >
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: var(--text-muted);
+              font-size: 0.7rem;
+              text-transform: uppercase;
+              letter-spacing: 0.05em;
+            "
+            >Telefone</label
+          >
+          <div
+            x-show="!editing"
+            class="view-value"
+            style="font-weight: 500; margin-top: 0.5rem; min-height: 1.5rem"
+          >
+            {{ cliente.telefone or '-' }}
+          </div>
+          <div x-show="editing">
+            {{ form.telefone(class="form-input", style="width: 100%;") }}
+          </div>
+        </div>
+      </div>
+
+      <h4
+        style="
+          margin: 3rem 0 1.5rem;
+          color: #6b7280;
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          border-bottom: 2px solid #f3f4f6;
+          padding-bottom: 0.75rem;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+        "
+      >
+        Endereço
+      </h4>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 140px 1fr 100px 1fr;
+          gap: 1.5rem;
+          margin-bottom: 1.5rem;
+        "
+      >
+        <div
+          class="form-group"
+          style="border-left: 3px solid #e5e7eb; padding-left: 1rem"
+        >
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: var(--text-muted);
+              font-size: 0.7rem;
+              letter-spacing: 0.05em;
+            "
+            >CEP</label
+          >
+          <div
+            x-show="!editing"
+            class="view-value"
+            style="font-weight: 500; margin-top: 0.5rem; min-height: 1.5rem"
+          >
+            {{ cliente.cep or '-' }}
+          </div>
+          <div x-show="editing">
+            {{ form.cep(id="cep", class="form-input", style="width: 100%;") }}
+          </div>
+        </div>
+        <div
+          class="form-group"
+          style="border-left: 3px solid #e5e7eb; padding-left: 1rem"
+        >
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: var(--text-muted);
+              font-size: 0.7rem;
+              letter-spacing: 0.05em;
+            "
+            >Logradouro</label
+          >
+          <div
+            x-show="!editing"
+            class="view-value"
+            style="font-weight: 500; margin-top: 0.5rem; min-height: 1.5rem"
+          >
+            {{ cliente.logradouro or '-' }}
+          </div>
+          <div x-show="editing">
+            {{ form.logradouro(id="logradouro", class="form-input",
+            style="width: 100%;") }}
+          </div>
+        </div>
+        <div
+          class="form-group"
+          style="border-left: 3px solid #e5e7eb; padding-left: 1rem"
+        >
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: var(--text-muted);
+              font-size: 0.7rem;
+              letter-spacing: 0.05em;
+            "
+            >Número</label
+          >
+          <div
+            x-show="!editing"
+            class="view-value"
+            style="font-weight: 500; margin-top: 0.5rem; min-height: 1.5rem"
+          >
+            {{ cliente.numero or '-' }}
+          </div>
+          <div x-show="editing">
+            {{ form.numero(class="form-input", style="width: 100%;") }}
+          </div>
+        </div>
+        <div
+          class="form-group"
+          style="border-left: 3px solid #e5e7eb; padding-left: 1rem"
+        >
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: var(--text-muted);
+              font-size: 0.7rem;
+              letter-spacing: 0.05em;
+            "
+            >Complemento</label
+          >
+          <div
+            x-show="!editing"
+            class="view-value"
+            style="font-weight: 500; margin-top: 0.5rem; min-height: 1.5rem"
+          >
+            {{ cliente.complemento or '-' }}
+          </div>
+          <div x-show="editing">
+            {{ form.complemento(class="form-input", style="width: 100%;") }}
+          </div>
+        </div>
+      </div>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 140px 1fr 100px 1fr;
+          gap: 1.5rem;
+          align-items: end;
+        "
+      >
+        <div
+          class="form-group"
+          style="border-left: 3px solid #e5e7eb; padding-left: 1rem"
+        >
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: var(--text-muted);
+              font-size: 0.7rem;
+              letter-spacing: 0.05em;
+            "
+            >Bairro</label
+          >
+          <div
+            x-show="!editing"
+            class="view-value"
+            style="font-weight: 500; margin-top: 0.5rem; min-height: 1.5rem"
+          >
+            {{ cliente.bairro or '-' }}
+          </div>
+          <div x-show="editing">
+            {{ form.bairro(id="bairro", class="form-input", style="width:
+            100%;") }}
+          </div>
+        </div>
+        <div
+          class="form-group"
+          style="border-left: 3px solid #e5e7eb; padding-left: 1rem"
+        >
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: var(--text-muted);
+              font-size: 0.7rem;
+              letter-spacing: 0.05em;
+            "
+            >Cidade</label
+          >
+          <div
+            x-show="!editing"
+            class="view-value"
+            style="font-weight: 500; margin-top: 0.5rem; min-height: 1.5rem"
+          >
+            {{ cliente.cidade or '-' }}
+          </div>
+          <div x-show="editing">
+            {{ form.cidade(id="cidade", class="form-input", style="width:
+            100%;") }}
+          </div>
+        </div>
+        <div
+          class="form-group"
+          style="border-left: 3px solid #e5e7eb; padding-left: 1rem"
+        >
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: var(--text-muted);
+              font-size: 0.7rem;
+              letter-spacing: 0.05em;
+            "
+            >UF</label
+          >
+          <div
+            x-show="!editing"
+            class="view-value"
+            style="font-weight: 500; margin-top: 0.5rem; min-height: 1.5rem"
+          >
+            {{ cliente.uf or '-' }}
+          </div>
+          <div x-show="editing">
+            {{ form.uf(id="uf", class="form-input", style="width: 100%;") }}
+          </div>
+        </div>
+        <div
+          class="form-group"
+          style="border-left: 3px solid var(--success); padding-left: 1rem"
+        >
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: var(--text-muted);
+              font-size: 0.7rem;
+              letter-spacing: 0.05em;
+              display: block;
+              margin-bottom: 0.5rem;
+            "
+            >Ativo</label
+          >
+          <div
+            x-show="!editing"
+            style="
+              display: flex;
+              align-items: center;
+              min-height: 1.5rem;
+              margin-top: 0.5rem;
+            "
+          >
+            {% if cliente.ativo %}
+            <i
+              class="ph ph-check-circle"
+              style="color: var(--success); font-size: 1.5rem"
+            ></i>
+            {% else %}
+            <i
+              class="ph ph-x-circle"
+              style="color: var(--danger); font-size: 1.5rem"
+            ></i>
+            {% endif %}
+          </div>
+          <div x-show="editing" style="display: flex; align-items: center">
+            {{ form.ativo() }}
+          </div>
+        </div>
+      </div>
+
+      <h4
+        style="
+          margin: 3rem 0 1.5rem;
+          color: #6b7280;
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          border-bottom: 2px solid #f3f4f6;
+          padding-bottom: 0.75rem;
+          font-weight: 700;
+          letter-spacing: 0.05em;
+        "
+      >
+        Anotações do Cliente
+      </h4>
+
+      <div class="form-group" style="margin-bottom: 1.5rem">
+        <div
+          x-show="!editing"
+          class="view-value"
+          style="
+            background: #fefce8;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px dashed #fde68a;
+            min-height: 100px;
+            color: #854d0e;
+            white-space: pre-wrap;
+            font-style: italic;
+          "
+        >
+          {{ cliente.observacoes or 'Nenhuma anotação registrada para este
+          cliente.' }}
+        </div>
+        <div x-show="editing">
+          {{ form.observacoes(class="form-input", style="width: 100%;
+          min-height: 150px; font-family: inherit; font-size: 0.9rem;",
+          placeholder="Anotações do cliente...") }}
+        </div>
+      </div>
+
+      {% if form.errors %}
+      <div
+        style="
+          margin-top: 2rem;
+          padding: 1rem;
+          background: #fee2e2;
+          border-radius: 8px;
+          color: #b91c1c;
+          font-size: 0.85rem;
+        "
+      >
+        <strong>Erro ao validar:</strong>
+        <ul style="margin: 0.5rem 0 0 1.2rem">
+          {% for field, errors in form.errors.items() %} {% for error in errors
+          %}
+          <li>{{ error }}</li>
+          {% endfor %} {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </form>
+  </div>
+
+  <!-- Direita: Histórico de Chamados e Documentos -->
+  <div class="side-column">
+    <div
+      class="glass-panel"
+      style="padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem"
+    >
+      <h4
+        style="
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 1rem;
+        "
+      >
+        <i
+          class="ph ph-clock-counter-clockwise"
+          style="color: var(--primary)"
+        ></i>
+        Chamados Recentes
+      </h4>
+
+      <div style="display: flex; flex-direction: column; gap: 1rem">
+        {% for chamado in chamados %}
+        <div
+          style="
+            padding: 0.75rem;
+            background: #f9fafb;
+            border-radius: 8px;
+            border: 1px solid #f3f4f6;
+            transition: all 0.2s;
+            cursor: pointer;
+          "
+          @click="window.location.href='{{ url_for('chamados.detalhe', id=chamado.id) }}'"
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 0.25rem;
+            "
+          >
+            <span
+              style="
+                font-weight: 700;
+                font-family: monospace;
+                color: var(--primary);
+                font-size: 0.9rem;
+              "
+              >#{{ chamado.protocolo }}</span
+            >
+            <span style="font-size: 0.7rem; color: var(--text-muted)"
+              >{{ chamado.created_at.strftime('%d/%m/%Y') }}</span
+            >
+          </div>
+          <div
+            style="
+              font-size: 0.85rem;
+              color: var(--text-main);
+              margin-bottom: 0.5rem;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              font-weight: 500;
+            "
+          >
+            {{ chamado.assunto }}
+          </div>
+          {{ badge_status_chamado(chamado.status) }}
+        </div>
+        {% else %}
+        <div
+          style="
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+          "
+        >
+          Nenhum chamado registrado.
+        </div>
+        {% endfor %}
+      </div>
+
+      {% if total_chamados > 0 %}
+      <a
+        href="{{ url_for('chamados.lista', q=cliente.nome_razao) }}"
+        class="btn"
+        style="
+          width: 100%;
+          margin-top: 1rem;
+          background: transparent;
+          border: 1px dashed #d1d5db;
+          color: var(--text-muted);
+          justify-content: center;
+          font-size: 0.8rem;
+        "
+      >
+        Ver todos os chamados
+      </a>
+      {% endif %}
+    </div>
+
+    <!-- Gestor de Documentos do Cliente (Nova Central Centralizada) -->
+    <div
+      class="glass-panel"
+      style="padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem"
+    >
+      <h4
+        style="
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 1.25rem;
+        "
+      >
+        <i class="ph ph-folder-open" style="color: var(--warning)"></i>
+        Documentos e Contratos
+      </h4>
+
+      <div
+        style="
+          display: flex;
+          flex-direction: column;
+          gap: 0.75rem;
+          margin-bottom: 1.5rem;
+        "
+      >
+        {% for doc in cliente.documentos %}
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem;
+            background: #fff;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 0.85rem;
+          "
+        >
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 0.5rem;
+              overflow: hidden;
+            "
+          >
+            <i
+              class="ph ph-file-text"
+              style="font-size: 1.25rem; color: var(--text-muted)"
+            ></i>
+            <span
+              style="
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              "
+              title="{{ doc.nome_original }}"
+            >
+              {{ doc.nome_original }}
+            </span>
+          </div>
+          <div style="display: flex; gap: 0.25rem">
+            <a
+              href="{{ url_for('chamados.baixar_anexo', filename=doc.caminho) }}"
+              target="_blank"
+              class="btn btn-soft-primary btn-sm"
+              style="padding: 0.25rem 0.5rem"
+              title="Visualizar"
+            >
+              <i class="ph ph-eye"></i>
+            </a>
+            <a
+              href="{{ url_for('clientes.excluir_documento', id=doc.id) }}"
+              class="btn btn-soft-danger btn-sm delete-doc"
+              style="padding: 0.25rem 0.5rem"
+              title="Remover"
+              data-confirm-message="Deseja realmente excluir o documento: {{ doc.nome_original }}?"
+            >
+              <i class="ph ph-trash"></i>
+            </a>
+          </div>
+        </div>
+        {% else %}
+        <div
+          style="
+            text-align: center;
+            padding: 1rem;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            border: 1px dashed #d1d5db;
+            border-radius: 6px;
+          "
+        >
+          Nenhum documento anexado.
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Formulário de Upload Rápido -->
+      <form
+        action="{{ url_for('clientes.upload_documento', id=cliente.id) }}"
+        method="POST"
+        enctype="multipart/form-data"
+        x-data="{ uploading: false }"
+      >
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <label
+          class="btn"
+          style="
+            width: 100%;
+            justify-content: center;
+            background: #f9fafb;
+            border: 1px solid #d1d5db;
+            color: var(--text-main);
+            cursor: pointer;
+          "
+        >
+          <input
+            type="file"
+            name="arquivo"
+            style="display: none"
+            @change="uploading = true; $el.form.submit()"
+          />
+          <i class="ph ph-upload-simple" x-show="!uploading"></i>
+          <span x-text="uploading ? 'Enviando...' : 'Anexar Documento'"></span>
+        </label>
+      </form>
+    </div>
+
+    <!-- Card de Status Financeiro / Resumo -->
+    <div
+      class="glass-panel"
+      style="
+        padding: 1.5rem;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary) 0%, #1e40af 100%);
+        color: white;
+        box-shadow: 0 10px 15px -3px rgba(30, 64, 175, 0.3);
+      "
+    >
+      <div
+        style="
+          font-size: 0.8rem;
+          opacity: 0.8;
+          margin-bottom: 0.25rem;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          font-weight: 600;
+        "
+      >
+        Total de Chamados
+      </div>
+      <div style="font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem">
+        {{ total_chamados }}<span
+          style="
+            font-size: 1rem;
+            font-weight: 400;
+            opacity: 0.7;
+            margin-left: 0.25rem;
+          "
+          >registros</span
+        >
+      </div>
+
+      <div
+        style="
+          font-size: 0.75rem;
+          border-top: 1px solid rgba(255, 255, 255, 0.2);
+          padding-top: 1rem;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        "
+      >
+        <span>Ativo no Sistema desde</span>
+        <span style="font-weight: 600"
+          >{{ cliente.created_at.strftime('%m/%Y') if cliente.created_at else
+          '01/2026' }}</span
+        >
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const cepInput = document.getElementById("cep");
+    if (cepInput) {
+      cepInput.addEventListener("blur", function () {
+        let cep = this.value.replace(/\D/g, "");
+        if (cep.length === 8) {
+          fetch(`https://viacep.com.br/ws/${cep}/json/`)
+            .then((res) => res.json())
+            .then((data) => {
+              if (!data.erro) {
+                document.getElementById("logradouro").value = data.logradouro;
+                document.getElementById("bairro").value = data.bairro;
+                document.getElementById("cidade").value = data.localidade;
+                document.getElementById("uf").value = data.uf;
+                document.getElementById("numero").focus();
+              }
+            });
+        }
+      });
+    }
+
+    // Intercepta cliques em botões de exclusão de documentos
+    document.querySelectorAll(".delete-doc").forEach((link) => {
+      link.addEventListener("click", async function (e) {
+        e.preventDefault();
+        const message =
+          this.dataset.confirmMessage || "Deseja excluir este documento?";
+        const confirmed = await confirmAction(message, "delete");
+        if (confirmed) {
+          window.location.href = this.href;
+        }
+      });
+    });
+  });
+</script>
+<style>
+  /* Correção para o Alpine.js não mostrar campos de edição antes do tempo */
+  [x-cloak] {
+    display: none !important;
+  }
+  .profile-container .form-input {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    background: #fff;
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "layout_base.html" %} {% block title %}{{ titulo }} - HelpHub 4.0{%
+endblock %} {% block page_title %}{{ titulo }}{% endblock %} {% block content %}
+<div style="max-width: 600px">
+  <form
+    method="POST"
+    class="glass-panel"
+    style="padding: 2rem; border-radius: 8px"
+  >
+    {{ form.hidden_tag() }}
+
+    <div style="margin-bottom: 1.5rem">
+      <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+        >Nome do Departamento</label
+      >
+      {{ form.nome(style="width: 100%; padding: 0.5rem; border: 1px solid
+      #D1D5DB; border-radius: 6px;") }}
+    </div>
+
+    <div style="margin-bottom: 1.5rem">
+      <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+        >Email de Notificação</label
+      >
+      {{ form.email_notificacao(style="width: 100%; padding: 0.5rem; border: 1px
+      solid #D1D5DB; border-radius: 6px;") }}
+      <small style="color: #6b7280">Receberá alertas de novos chamados.</small>
+    </div>
+
+    <div style="margin-bottom: 1.5rem">
+      <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
+        >Descrição</label
+      >
+      {{ form.descricao(style="width: 100%; padding: 0.5rem; border: 1px solid
+      #D1D5DB; border-radius: 6px;") }}
+    </div>
+
+    <div style="margin-bottom: 2rem">
+      <label style="display: flex; align-items: center; gap: 0.5rem">
+        {{ form.ativo() }}
+        <span>Departamento Acessível para Novos Chamados</span>
+      </label>
+    </div>
+
+    <div style="display: flex; gap: 1rem">
+      <button type="submit" class="btn btn-primary">Salvar</button>
+      <a
+        href="{{ url_for('departamentos.lista') }}"
+        class="btn"
+        style="background: #e5e7eb; color: #374151"
+        >Cancelar</a
+      >
+    </div>
+  </form>
+</div>
+{% endblock %}
