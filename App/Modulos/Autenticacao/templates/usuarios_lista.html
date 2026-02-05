@@ -1,163 +1,110 @@
-{% extends "layout_base.html" %} {% block title %}Equipe - HelpHub 4.0{%
-endblock %} {% block page_title %}Gerenciar Equipe{% endblock %} {% block
-content %}
-<div class="glass-panel">
-  <div
-    style="
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-    "
+{% extends "layout_base.html" %} {% from "componentes.html" import
+render_paginacao, render_layout_erp, th_ordenavel, badge_perfil_usuario,
+badge_status_cliente %} {% block title %}Equipe - HelpHub 4.0{% endblock %} {%
+block page_title %} Gestão de Equipe
+<span class="erp-subtitle hidden lg:inline-block"
+  >Controle de acesso e usuários do sistema</span
+>
+{% endblock %} {% block content %} {% set toolbar_html %}
+<div
+  x-show="activeTab === 'ativos'"
+  x-cloak
+  class="flex items-center gap-2 w-full"
+>
+  <a href="{{ url_for('auth.novo_usuario') }}" class="erp-btn erp-btn-primary">
+    <i class="ph ph-user-plus text-lg"></i> Novo Usuário
+  </a>
+
+  <div class="erp-separator"></div>
+
+  <a
+    :href="selectedItem ? '{{ url_for('auth.editar_usuario', id=0) }}'.replace('0', selectedItem.id) : '#'"
+    :class="selectedItem ? '' : 'disabled'"
+    class="erp-btn erp-btn-neutral"
   >
-    <div>
-      <h3 style="font-size: 1.25rem; font-weight: 600; color: var(--text-main)">
-        Membros da Equipe
-      </h3>
-      <p style="color: var(--text-muted); font-size: 0.875rem">
-        Controle quem acessa o sistema e seus níveis de permissão.
-      </p>
-    </div>
-    <a href="{{ url_for('auth.novo_usuario') }}" class="btn btn-primary">
-      <i class="ph ph-user-plus"></i>
-      Novo Membro
-    </a>
+    <i class="ph ph-pencil-simple text-blue-600"></i> Editar
+  </a>
+
+  <!-- Botão Toggle Status -->
+  <a
+    :href="selectedItem ? '{{ url_for('auth.toggle_usuario', id=0) }}'.replace('0', selectedItem.id) : '#'"
+    :class="selectedItem ? '' : 'disabled'"
+    class="erp-btn erp-btn-neutral text-gray-700"
+  >
+    <i class="ph ph-toggle-left"></i> Ativar/Inativar
+  </a>
+
+  <div class="flex items-center gap-2 ml-auto">
+    <div class="erp-badge-count">Total: {{ usuarios|length }} membros</div>
   </div>
+</div>
+{% endset %} {# --- LAYOUT ERP --- #} {% call render_layout_erp(
+titulo="Equipe", abas=[ {'id': 'ativos', 'label': 'Usuários Ativos', 'icon':
+'ph-users'}, {'id': 'placeholder', 'label': 'ADD NOVA ABA', 'icon':
+'ph-plus-circle'} ], toolbar_buttons=toolbar_html ) %}
 
-  <div class="table-responsive">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th style="width: 30%">Usuário</th>
-          <th style="width: 25%">E-mail</th>
-          <th style="width: 15%">Cargo</th>
-          <th style="width: 15%">Status</th>
-          <th style="text-align: right; width: 15%">Ações</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for user in usuarios %}
-        <tr {% if not user.ativo %}class="row-inactive" {% endif %}>
-          <td>
-            <div style="display: flex; align-items: center; gap: 0.75rem">
-              <div class="user-avatar">{{ user.username[0] | upper }}</div>
-              <div
-                style="
-                  overflow: hidden;
-                  text-overflow: ellipsis;
-                  white-space: nowrap;
-                "
-              >
-                <div style="font-weight: 600; color: var(--text-main)">
-                  {{ user.nome }}
-                </div>
-                <div style="font-size: 0.75rem; color: var(--text-muted)">
-                  @{{ user.username }}
-                </div>
-              </div>
-            </div>
-          </td>
-          <td><span class="text-xs">{{ user.email }}</span></td>
-          <td>
-            <span
-              class="badge {{ 'badge-info' if user.role == 'Admin' else 'badge-neutral' }}"
-            >
-              {{ user.role }}
-            </span>
-          </td>
-          <td>
-            {% if user.ativo %}
-            <div class="status-indicator status-active">
-              <i class="ph ph-check-circle"></i> Ativo
-            </div>
-            {% else %}
-            <div class="status-indicator status-inactive">
-              <i class="ph ph-prohibit"></i> Inativo
-            </div>
-            {% endif %}
-          </td>
-          <td style="text-align: right">
-            <div style="display: flex; gap: 0.5rem; justify-content: flex-end">
-              <a
-                href="{{ url_for('auth.editar_usuario', id=user.id) }}"
-                class="btn btn-soft-primary btn-sm"
-                title="Editar"
-              >
-                <i class="ph ph-pencil-simple"></i> Editar
-              </a>
+<!-- Grid de Dados -->
+<div x-show="activeTab === 'ativos'" class="erp-grid-content">
+  <table class="erp-table">
+    <thead>
+      <tr>
+        <th style="width: 50px">#</th>
+        {{ th_ordenavel('Nome Completo', 'nome', request.args.get('sort'),
+        request.args.get('order')) }}
+        <th>Usuário (Login)</th>
+        <th>Email</th>
+        <th>Perfil</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for usuario in usuarios %}
+      <tr
+        class="group cursor-pointer select-none"
+        :class="{'selected': selectedItem && selectedItem.id == '{{ usuario.id }}'}"
+        @click="toggleSelection({
+                        id: '{{ usuario.id }}', 
+                        nome: '{{ usuario.username }}'
+                    })"
+        @dblclick="window.location.href = '{{ url_for('auth.editar_usuario', id=usuario.id) }}'"
+      >
+        <td class="text-center text-gray-400 font-mono text-xs">
+          {{ usuario.id }}
+        </td>
 
-              {% if user.id != current_user.id %}
-              <a
-                href="{{ url_for('auth.toggle_usuario', id=user.id) }}"
-                class="btn {{ 'btn-soft-danger' if user.ativo else 'btn-soft-success' }} btn-sm toggle-action"
-                title="{{ 'Desativar' if user.ativo else 'Ativar' }}"
-                data-confirm-message="Deseja realmente {{ 'DESATIVAR' if user.ativo else 'ATIVAR' }} o acesso do usuário {{ user.nome }}?"
-              >
-                <i
-                  class="ph {{ 'ph-user-minus' if user.ativo else 'ph-user-plus' }}"
-                ></i>
-                {{ 'Desativar' if user.ativo else 'Ativar' }}
-              </a>
-              {% endif %}
-            </div>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+        <td class="font-semibold text-gray-700">
+          {{ usuario.nome_completo or usuario.username }}
+        </td>
+
+        <td class="font-mono text-blue-700">{{ usuario.username }}</td>
+
+        <td class="text-gray-500">{{ usuario.email or '-' }}</td>
+
+        <td>{{ badge_perfil_usuario(usuario.role) }}</td>
+        <td>{{ badge_status_cliente(usuario.ativo) }}</td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" class="text-center py-12 text-muted">
+          Nenhum usuário encontrado.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="erp-footer justify-end text-xs">
+    Total: {{ usuarios|length }} membros
   </div>
 </div>
 
-<script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // Intercepta cliques para confirmação de status de usuário
-    document.querySelectorAll(".toggle-action").forEach((link) => {
-      link.addEventListener("click", async function (e) {
-        e.preventDefault();
-        const message = this.dataset.confirmMessage;
-        const confirmed = await confirmAction(message, "confirm");
-        if (confirmed) {
-          window.location.href = this.href;
-        }
-      });
-    });
-  });
-</script>
+<!-- Placeholder -->
+<div
+  x-show="activeTab === 'placeholder'"
+  class="p-12 text-center text-gray-400"
+>
+  <i class="ph ph-plus-circle text-3xl mb-3 block opacity-50"></i>
+  <p>Espaço reservado para novas funcionalidades.</p>
+</div>
 
-<style>
-  /* Estilos Específicos da Página de Equipe para evitar logic inline no HTML */
-  .row-inactive {
-    opacity: 0.6;
-  }
-
-  .user-avatar {
-    width: 36px;
-    height: 36px;
-    min-width: 36px;
-    background: #e5e7eb;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    color: #4b5563;
-  }
-
-  .status-indicator {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.85rem;
-    font-weight: 500;
-  }
-  .status-active {
-    color: var(--success);
-  }
-  .status-inactive {
-    color: var(--text-muted);
-  }
-  .status-active i {
-    font-size: 1rem;
-  }
-</style>
-{% endblock %}
+{% endcall %} {% endblock %}

@@ -6,8 +6,12 @@ class Cliente(BaseModel):
     __tablename__ = "clientes"
 
     # Dados Pessoais / Empresariais
-    nome_razao = db.Column(db.String(100), nullable=False, index=True)
-    nome_fantasia = db.Column(db.String(100), nullable=True)  # Opcional se for PF
+    nome_razao = db.Column(
+        db.String(100, collation="NOCASE"), nullable=False, index=True
+    )
+    nome_fantasia = db.Column(
+        db.String(100, collation="NOCASE"), nullable=True
+    )  # Opcional se for PF
     cpf_cnpj = db.Column(db.String(20), unique=True, nullable=False, index=True)
 
     # Contato

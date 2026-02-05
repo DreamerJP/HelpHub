@@ -1,6 +1,4 @@
 import os
-import shutil
-import pytest
 import time
 from App.Modulos.Administracao.servicos import executar_backup_banco
 
@@ -63,6 +61,8 @@ def test_backup_falha_sem_banco(app, tmp_path):
 
     with app.app_context():
         app.config["BASE_DIR"] = str(temp_root)
+        # Invalidamos o DB_PATH para forçar a busca pelo arquivo banco.db (que não existe)
+        app.config["DB_PATH"] = None
         # Não criamos o banco.db aqui
 
         sucesso, msg = executar_backup_banco()

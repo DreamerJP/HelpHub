@@ -1,7 +1,7 @@
 import os
 import shutil
 import glob
-from datetime import datetime
+from datetime import datetime, timezone
 from flask import current_app
 
 MAX_BACKUPS = 14
@@ -14,7 +14,8 @@ def executar_backup_banco(origem_manual=False, usuario=None):
     base_dir = current_app.config["BASE_DIR"]
     data_dir = os.path.join(base_dir, "Data")
     backup_dir = os.path.join(data_dir, "Backups")
-    db_file = os.path.join(data_dir, "banco.db")
+    # Tenta pegar DB_PATH da config, senão usa o padrão banco.db
+    db_file = current_app.config.get("DB_PATH") or os.path.join(data_dir, "banco.db")
 
     if not os.path.exists(backup_dir):
         os.makedirs(backup_dir)
@@ -25,7 +26,7 @@ def executar_backup_banco(origem_manual=False, usuario=None):
 
     try:
         # 1. Gerar o Backup
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         suffix = "manual" if origem_manual else "auto"
         filename = f"banco_{timestamp}_{suffix}.db"
         dest_path = os.path.join(backup_dir, filename)
@@ -51,7 +52,7 @@ def executar_backup_banco(origem_manual=False, usuario=None):
             from .modelo import Configuracao
 
             cfg = Configuracao.get_config()
-            cfg.ultimo_backup_auto = datetime.now()
+            cfg.ultimo_backup_auto = datetime.now(timezone.utc)
             cfg.save()
             current_app.config["BACKUP_ATRASADO"] = False
         except Exception as e:

@@ -1,54 +1,92 @@
-{% extends "layout_base.html" %} {% block title %}{{ titulo }} - HelpHub 4.0{%
+{% extends "layout_base.html" %} {% from "componentes.html" import
+render_layout_erp, erp_banner %} {% block title %}{{ titulo }} - HelpHub 4.0{%
 endblock %} {% block page_title %}{{ titulo }}{% endblock %} {% block content %}
-<div style="max-width: 600px">
+{# Toolbar: Único local para botões conforme padrão ERP #} {% set toolbar_html
+%}
+<div x-show="activeTab === 'depto'" x-cloak class="flex items-center gap-2">
+  <button type="submit" form="form-depto" class="erp-btn erp-btn-primary">
+    <i class="ph ph-check-circle text-lg"></i> Salvar Departamento
+  </button>
+  <div class="erp-separator"></div>
+  <a
+    href="{{ url_for('departamentos.lista') }}"
+    class="erp-btn erp-btn-neutral"
+  >
+    <i class="ph ph-x-circle text-lg"></i> Cancelar
+  </a>
+</div>
+{% endset %} {% call render_layout_erp( titulo="Departamento", abas=[{'id':
+'depto', 'label': 'Configurações', 'icon': 'ph-buildings'}],
+toolbar_buttons=toolbar_html, active_tab_id='depto' ) %}
+
+<div style="padding: 2rem; min-height: 400px">
   <form
     method="POST"
-    class="glass-panel"
-    style="padding: 2rem; border-radius: 8px"
+    id="form-depto"
+    class="flex flex-col gap-10"
+    style="max-width: 800px"
   >
-    {{ form.hidden_tag() }}
+    {{ form.hidden_tag() }} {% call erp_banner(tipo='info', titulo='Fila de
+    Atendimento', icon='ph-info') %} Departamentos organizam a triagem de
+    tickets e as notificações para os técnicos responsáveis. {% endcall %}
 
-    <div style="margin-bottom: 1.5rem">
-      <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-        >Nome do Departamento</label
+    <section class="flex flex-col gap-6">
+      <h4
+        style="
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          color: var(--primary);
+          font-weight: 800;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 0.5rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        "
       >
-      {{ form.nome(style="width: 100%; padding: 0.5rem; border: 1px solid
-      #D1D5DB; border-radius: 6px;") }}
-    </div>
+        <i class="ph ph-folders"></i> Definição do Setor
+      </h4>
 
-    <div style="margin-bottom: 1.5rem">
-      <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-        >Email de Notificação</label
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem">
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm"
+            >Nome do Departamento</label
+          >
+          {% set depto_placeholder = "Ex: Suporte Técnico" %} {{
+          form.nome(class="form-control", placeholder=depto_placeholder) }}
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm"
+            >Email de Notificação</label
+          >
+          {% set email_placeholder = "suporte@empresa.com" %} {{
+          form.email_notificacao(class="form-control",
+          placeholder=email_placeholder) }}
+          <span class="text-xs text-gray-400"
+            >Receberá alertas automáticos de novos chamados</span
+          >
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1">
+        <label class="font-semibold text-gray-700 text-sm"
+          >Breve Descrição / Objetivo</label
+        >
+        {% set desc_placeholder = "Descreva a finalidade deste departamento..."
+        %} {{ form.descricao(class="form-control", placeholder=desc_placeholder)
+        }}
+      </div>
+
+      <div
+        class="flex items-center gap-2 mt-4 p-4 bg-gray-50 rounded-lg border border-gray-100"
       >
-      {{ form.email_notificacao(style="width: 100%; padding: 0.5rem; border: 1px
-      solid #D1D5DB; border-radius: 6px;") }}
-      <small style="color: #6b7280">Receberá alertas de novos chamados.</small>
-    </div>
-
-    <div style="margin-bottom: 1.5rem">
-      <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-        >Descrição</label
-      >
-      {{ form.descricao(style="width: 100%; padding: 0.5rem; border: 1px solid
-      #D1D5DB; border-radius: 6px;") }}
-    </div>
-
-    <div style="margin-bottom: 2rem">
-      <label style="display: flex; align-items: center; gap: 0.5rem">
-        {{ form.ativo() }}
-        <span>Departamento Acessível para Novos Chamados</span>
-      </label>
-    </div>
-
-    <div style="display: flex; gap: 1rem">
-      <button type="submit" class="btn btn-primary">Salvar</button>
-      <a
-        href="{{ url_for('departamentos.lista') }}"
-        class="btn"
-        style="background: #e5e7eb; color: #374151"
-        >Cancelar</a
-      >
-    </div>
+        {{ form.ativo(class="form-checkbox h-4 w-4 text-primary rounded
+        border-gray-300") }}
+        <label class="font-semibold text-gray-700 text-sm cursor-pointer"
+          >Departamento Disponível na Triagem de Novos Chamados</label
+        >
+      </div>
+    </section>
   </form>
 </div>
-{% endblock %}
+{% endcall %} {% endblock %}

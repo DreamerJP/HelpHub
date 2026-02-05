@@ -1,111 +1,111 @@
-{% extends "layout_base.html" %} {% from "componentes.html" import
-render_paginacao %} {% block title %}Departamentos - HelpHub 4.0{% endblock %}
-{% block page_title %}Gerenciar Departamentos{% endblock %} {% block content %}
-<div class="glass-panel">
-  <div
-    style="
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    "
-  >
-    <p class="text-muted">Configure as áreas de atendimento da empresa.</p>
-    <a href="{{ url_for('departamentos.novo') }}" class="btn btn-primary">
-      <i class="ph ph-plus"></i> Novo Departamento
-    </a>
-  </div>
+{% extends "layout_base.html" %} 
+{% from "componentes.html" import render_paginacao, render_layout_erp, th_ordenavel, badge_status_cliente %} 
 
-  <table class="data-table data-table-clickable">
-    <thead>
-      <tr>
-        <th>Nome</th>
-        <th>Email de Notificação</th>
-        <th>Status</th>
-        <th style="text-align: right">Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for depto in departamentos %}
-      <tr
-        class="clickable-row"
-        data-href="{{ url_for('departamentos.editar', id=depto.id) }}"
-      >
-        <td style="font-weight: 500">{{ depto.nome }}</td>
-        <td>{{ depto.email_notificacao or '-' }}</td>
-        <td>
-          {% if depto.ativo %}
-          <span class="badge badge-success">Ativo</span>
-          {% else %}
-          <span class="badge badge-danger">Inativo</span>
-          {% endif %}
-        </td>
-        <td style="text-align: right">
-          <a
-            href="{{ url_for('departamentos.editar', id=depto.id) }}"
-            class="btn btn-soft-primary btn-sm"
-            style="margin-right: 0.5rem"
-          >
-            <i class="ph ph-pencil-simple"></i> Editar
-          </a>
-          <a
-            href="{{ url_for('departamentos.excluir', id=depto.id) }}"
-            class="btn btn-soft-danger btn-sm delete-action"
-            data-confirm-message="Tem certeza que deseja excluir o departamento {{ depto.nome }}?"
-          >
+{% block title %}Departamentos - HelpHub 4.0{% endblock %} 
+
+
+{% block page_title %}
+    Departamentos & Setores 
+    <span class="erp-subtitle hidden lg:inline-block">Estrutura organizacional da empresa</span>
+{% endblock %}
+
+{% block content %}
+{% set toolbar_html %}
+    <div x-show="activeTab === 'lista'" x-cloak class="flex items-center gap-2 w-full">
+        <a href="{{ url_for('departamentos.novo') }}" class="erp-btn erp-btn-primary">
+            <i class="ph ph-plus-circle text-lg"></i> Novo Departamento
+        </a>
+
+        <div class="erp-separator"></div>
+
+        <!-- Ações que dependem da seleção -->
+        <a :href="selectedItem ? '{{ url_for('departamentos.editar', id=0) }}'.replace('0', selectedItem.id) : '#'"
+           :class="selectedItem ? '' : 'disabled'"
+           class="erp-btn erp-btn-neutral">
+            <i class="ph ph-pencil-simple text-blue-600"></i> Editar
+        </a>
+
+        <button :class="selectedItem ? '' : 'disabled'"
+                class="erp-btn erp-btn-neutral text-red-600"
+                @click="if(selectedItem && await confirmAction('Remover o departamento ' + selectedItem.nome + '?', 'danger')) { alert('Ação de exclusão em breve'); }">
             <i class="ph ph-trash"></i> Excluir
-          </a>
-        </td>
-      </tr>
-      {% else %}
-      <tr>
-        <td
-          colspan="4"
-          style="text-align: center; padding: 3rem"
-          class="text-muted"
-        >
-          Nenhum departamento cadastrado.
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-</div>
+        </button>
 
-<script>
-  // Event listeners para linhas clicáveis
-  document.addEventListener("DOMContentLoaded", function () {
-    const clickableRows = document.querySelectorAll(".clickable-row");
+        <div class="flex items-center gap-2 ml-auto">
+            <div class="erp-badge-count">Total: {{ departamentos|length }}</div>
+        </div>
+    </div>
+{% endset %}
 
-    clickableRows.forEach((row) => {
-      row.style.cursor = "pointer";
+{# --- RENDERIZAÇÃO ERP --- #}
+{% call render_layout_erp(
+    titulo="Departamentos & Setores",
+    subtitulo="Estrutura organizacional da empresa.",
+    abas=[
+        {'id': 'lista', 'label': 'Departamentos Ativos', 'icon': 'ph-buildings'},
+        {'id': 'placeholder', 'label': 'ADD NOVA ABA', 'icon': 'ph-plus-circle'}
+    ],
+    toolbar_buttons=toolbar_html
+) %}
 
-      row.addEventListener("click", function (e) {
-        // Ignora clique se foi em um link ou botão
-        if (e.target.closest("a, button")) {
-          return;
-        }
+    <!-- Grid de Dados -->
+    <div x-show="activeTab === 'lista'" class="erp-grid-content">
+        <table class="erp-table">
+            <thead>
+                <tr>
+                    <th style="width: 50px;">#</th>
+                    {{ th_ordenavel('Departamento', 'nome', request.args.get('sort'), request.args.get('order')) }}
+                    <th>Email de Notificação</th>
+                    <th>Responsável</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for depto in departamentos %}
+                <tr class="group cursor-pointer select-none"
+                    :class="{'selected': selectedItem && selectedItem.id == '{{ depto.id }}'}"
+                    @click="toggleSelection({
+                        id: '{{ depto.id }}', 
+                        nome: '{{ depto.nome | replace("'", "\\'") }}'
+                    })"
+                    @dblclick="window.location.href = '{{ url_for('departamentos.editar', id=depto.id) }}'">
+                    
+                    <td class="text-center text-gray-400 font-mono text-xs">{{ depto.id }}</td>
+                    <td class="font-semibold text-gray-700">{{ depto.nome }}</td>
+                    <td class="text-gray-600"><i class="ph ph-envelope-simple mr-1"></i> {{ depto.email_notificacao or '-' }}</td>
+                    <td>-</td> <!-- Placeholder para Responsável -->
+                    <td>
+                        {{ badge_status_cliente(depto.ativo) }}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center py-12 text-muted">Nenhum departamento cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 
-        const href = this.dataset.href;
-        if (href) {
-          window.location.href = href;
-        }
-      });
-    });
+        <!-- Paginação -->
+        <!-- NOTA: Se 'departamentos' for uma lista pura e não query PAGINADA, precisamos tratar isso -->
+        <!-- Assumindo que departments pode não ser paginado ainda no backend antigo, ocultamos a paginação por segurança se não tiver pages -->
+        {% if departamentos.pages is defined %}
+        <div class="erp-footer sticky bottom-0">
+             {{ render_paginacao(departamentos, 'departamentos.lista') }}
+        </div>
+        {% else %}
+        <div class="erp-footer text-xs justify-end">
+            Total: {{ departamentos|length }}
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Aba Placeholder -->
+    <div x-show="activeTab === 'placeholder'" class="p-12 text-center text-gray-400">
+        <i class="ph ph-plus-circle text-3xl mb-3 block opacity-50"></i>
+        <p>Espaço reservado para novas funcionalidades.</p>
+    </div>
 
-    // Intercepta cliques em botões de exclusão
-    document.querySelectorAll(".delete-action").forEach((link) => {
-      link.addEventListener("click", async function (e) {
-        e.preventDefault();
-        const message =
-          this.dataset.confirmMessage ||
-          "Tem certeza que deseja excluir este item?";
-        const confirmed = await confirmAction(message, "delete");
-        if (confirmed) {
-          window.location.href = this.href;
-        }
-      });
-    });
-  });
-</script>
+{% endcall %}
+
 {% endblock %}

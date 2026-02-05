@@ -1,7 +1,7 @@
 from flask_apscheduler import APScheduler
 import arrow
 from functools import wraps
-from .Modulos.Administracao.modelo import TarefaMonitor
+from ..Modulos.Administracao.modelo import TarefaMonitor
 
 scheduler = APScheduler()
 
@@ -12,10 +12,10 @@ def configurar_agendamento(app):
     """
     with app.app_context():
         # Evita registrar o job duplicado caso o Flask recarregue
-        if not scheduler.get_job("backup_diario_auto"):
+        if not scheduler.get_job("auto_backup_diario"):
             # Agenda para rodar todo dia às 03:00 da manhã
             scheduler.add_job(
-                id="backup_diario_auto",
+                id="auto_backup_diario",
                 func=rotina_backup_diario,
                 trigger="cron",
                 hour=3,
@@ -41,23 +41,25 @@ def monitorar_tarefa(tarefa_id, nome):
     def decorator(f):
         @wraps(f)
         def decorated_function(app, *args, **kwargs):
-            try:
-                # Se for backup, registra o próximo vencimento (amanhã às 03:00)
-                # (Isso pode ser expandido depois conforme a tarefa)
-                resultado = f(app, *args, **kwargs)
+            with app.app_context():
+                try:
+                    resultado = f(app, *args, **kwargs)
 
-                msg = "Executada com sucesso."
-                if isinstance(resultado, tuple) and len(resultado) == 2:
-                    msg = str(resultado[1])
-                elif isinstance(resultado, int):
-                    msg = f"Processados {resultado} itens."
+                    msg = "Executada com sucesso."
+                    if isinstance(resultado, tuple) and len(resultado) == 2:
+                        msg = str(resultado[1])
+                    elif isinstance(resultado, int):
+                        msg = f"Processados {resultado} itens."
 
-                TarefaMonitor.atualizar(tarefa_id, nome, "Sucesso", msg)
-                return resultado
-            except Exception as e:
-                app.logger.error(f"Erro na tarefa {nome}: {e}")
-                TarefaMonitor.atualizar(tarefa_id, nome, "Erro", str(e))
-                raise e
+                    TarefaMonitor.atualizar(tarefa_id, nome, "Sucesso", msg)
+                    return resultado
+                except Exception as e:
+                    app.logger.error(f"Erro na tarefa {nome}: {e}")
+                    try:
+                        TarefaMonitor.atualizar(tarefa_id, nome, "Erro", str(e))
+                    except Exception as le:
+                        app.logger.error(f"Erro ao registrar falha no monitor: {le}")
+                    raise e
 
         return decorated_function
 
@@ -101,12 +103,11 @@ def rotina_backup_diario(app):
     """
     Wrapper para rodar o backup dentro do contexto da aplicação.
     """
-    with app.app_context():
-        from .Modulos.Administracao.servicos import executar_backup_banco
+    from ..Modulos.Administracao.servicos import executar_backup_banco
 
-        app.logger.info("Iniciando rotina de backup automático agendado.")
-        sucesso, msg = executar_backup_banco(origem_manual=False)
-        return sucesso, msg
+    app.logger.info("Iniciando rotina de backup automático agendado.")
+    sucesso, msg = executar_backup_banco(origem_manual=False)
+    return sucesso, msg
 
 
 @monitorar_tarefa("fechar_pendentes", "Fechamento de Chamados por Inatividade")
@@ -114,11 +115,8 @@ def rotina_fechamento_automatico(app):
     """
     Wrapper para rodar o encerramento automático dentro do contexto da aplicação.
     """
-    with app.app_context():
-        from .Modulos.Chamados.servicos import encerrar_chamados_pendentes_excedidos
+    from ..Modulos.Chamados.servicos import encerrar_chamados_pendentes_excedidos
 
-        app.logger.info(
-            "Iniciando rotina de fechamento automático de chamados pendentes."
-        )
-        count = encerrar_chamados_pendentes_excedidos()
-        return count
+    app.logger.info("Iniciando rotina de fechamento automático de chamados pendentes.")
+    count = encerrar_chamados_pendentes_excedidos()
+    return count

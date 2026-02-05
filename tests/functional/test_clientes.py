@@ -135,8 +135,7 @@ def test_lista_clientes_busca(client, admin_user):
     assert b"Busca Alfa" in response.data
     assert b"Busca Beta" not in response.data
 
-    # Verifica botão 'Detalhes'
-    assert b"Detalhes" in response.data
+    # Verifica se a URL de edição (via dblclick) está presente
     assert url_for("clientes.editar", id=cliente1.id) in response.data.decode()
 
 

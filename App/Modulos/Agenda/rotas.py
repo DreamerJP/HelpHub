@@ -1,8 +1,7 @@
 from flask import Blueprint, render_template, jsonify, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from App.Modulos.Agenda.modelo import Agendamento
-from App.Modulos.Chamados.modelo import Chamado, Andamento
-from App.Modulos.Agenda.agenda_logica import verificar_conflito
+from App.Modulos.Chamados.modelo import Chamado
 from App.Modulos.Autenticacao.modelo import Usuario
 from App.banco import db
 from sqlalchemy.orm import joinedload
@@ -107,182 +106,105 @@ def api_eventos():
 @agenda_bp.route("/agenda/agendar", methods=["POST"])
 @login_required
 def agendar():
+    from App.Modulos.Chamados.servicos import ChamadoService
+
     chamado_id = request.form.get("chamado_id")
     inicio_str = request.form.get("data_inicio")
     fim_str = request.form.get("data_fim")
+    tecnico_id = request.form.get("tecnico_id") or current_user.id
+    instrucoes = request.form.get("instrucoes_tecnicas")
 
     if not all([chamado_id, inicio_str, fim_str]):
         flash("Dados incompletos para agendamento.", "error")
         return redirect(url_for("agenda.calendario"))
 
-    tecnico_id = request.form.get("tecnico_id") or current_user.id
+    # Normalização de Datas
+    inicio = arrow.get(inicio_str).replace(second=0, microsecond=0).naive
+    fim = arrow.get(fim_str).replace(second=0, microsecond=0).naive
 
-    inicio = arrow.get(inicio_str).datetime
-    fim = arrow.get(fim_str).datetime
-
-    # Verificar se o chamado já possui agendamento ativo
-    agendamento_existente = (
-        Agendamento.query.filter_by(chamado_id=chamado_id)
-        .filter(Agendamento.status != "Cancelado")
-        .first()
-    )
-
-    if agendamento_existente:
-        flash("Este chamado já possui um agendamento ativo.", "error")
-        return redirect(url_for("agenda.calendario"))
-
-    # Verificar conflito
-    tecnico = db.session.get(Usuario, tecnico_id)
-    if verificar_conflito(tecnico_id, inicio, fim):
-        flash(
-            f"Conflito de horário detectado para o técnico {tecnico.nome if tecnico else ''}.",
-            "error",
-        )
-        return redirect(url_for("agenda.calendario"))
-
-    # Criar Agendamento
-    novo_agendamento = Agendamento(
+    success, msg = ChamadoService.agendar_visita(
         chamado_id=chamado_id,
         tecnico_id=tecnico_id,
-        data_inicio=inicio,
-        data_fim=fim,
-        created_by=current_user.id,
+        inicio=inicio,
+        fim=fim,
+        usuario_id=current_user.id,
+        instrucoes=instrucoes,
     )
 
-    # Atualizar Chamado para "Agendado"
-    chamado = db.session.get(Chamado, chamado_id)
-    if chamado:
-        chamado.status = "Agendado"
+    if success:
+        flash(msg, "success")
+    else:
+        flash(msg, "error")
 
-        # Registrar na Timeline
-        evento = Andamento(
-            chamado_id=chamado.id,
-            usuario_id=current_user.id,
-            texto=f"Visita agendada para {inicio.strftime('%d/%m/%Y %H:%M')}.",
-            tipo="Evento",
-        )
-        db.session.add(evento)
-
-    db.session.add(novo_agendamento)
-    db.session.commit()
-
-    flash("Visita agendada com sucesso!", "success")
     return redirect(url_for("agenda.calendario"))
 
 
 @agenda_bp.route("/agenda/finalizar/<id>", methods=["POST"])
 @login_required
 def finalizar_visita(id):
-    agendamento = db.get_or_404(Agendamento, id)
     relatorio = request.form.get("relatorio")
 
     if not relatorio:
         flash("O relatório da visita é obrigatório.", "error")
         return redirect(url_for("agenda.calendario"))
 
-    # 1. Finalizar Agendamento
-    agendamento.status = "Realizado"
+    from App.Modulos.Chamados.servicos import ChamadoService
 
-    # 2. Registrar Relatório na Timeline
-    andamento = Andamento(
-        chamado_id=agendamento.chamado_id,
-        usuario_id=current_user.id,
-        texto=f"RELATÓRIO DE VISITA: {relatorio}",
-        tipo="Resposta",
+    success, msg = ChamadoService.finalizar_visita(
+        agendamento_id=id, usuario_id=current_user.id, relatorio=relatorio
     )
-    db.session.add(andamento)
 
-    # 3. Finalizar Chamado (Combo)
-    chamado = agendamento.chamado
-    chamado.status = "Fechado"
+    if success:
+        flash("Visita e Chamado finalizados com sucesso!", "success")
+    else:
+        flash(f"Erro ao finalizar: {msg}", "error")
 
-    # Evento de encerramento automático
-    evento_fim = Andamento(
-        chamado_id=chamado.id,
-        usuario_id=current_user.id,
-        texto="Chamado encerrado automaticamente após conclusão da visita técnica.",
-        tipo="Evento",
-    )
-    db.session.add(evento_fim)
-
-    db.session.commit()
-
-    flash("Visita e Chamado finalizados com sucesso!", "success")
     return redirect(url_for("agenda.calendario"))
 
 
 @agenda_bp.route("/agenda/api/reagendar/<id>", methods=["POST"])
 @login_required
 def api_reagendar(id):
-    agendamento = db.session.get(Agendamento, id)
-    if not agendamento:
-        return jsonify({"success": False, "message": "Agendamento não encontrado"}), 404
-
-    if agendamento.status != "Agendado":
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "message": f"Não é possível reagendar uma visita com status: {agendamento.status}",
-                }
-            ),
-            400,
-        )
+    from App.Modulos.Chamados.servicos import ChamadoService
 
     data = request.get_json()
     if not data or "start" not in data or "end" not in data:
         return jsonify({"success": False, "message": "Dados inválidos"}), 400
 
-    nova_data_inicio = arrow.get(data["start"]).datetime
-    nova_data_fim = arrow.get(data["end"]).datetime
+    # Normalização
+    nova_dt_inicio = arrow.get(data["start"]).replace(second=0, microsecond=0).naive
+    nova_dt_fim = arrow.get(data["end"]).replace(second=0, microsecond=0).naive
 
+    # Se trocar de coluna (técnico) no Drag & Drop
     resource_id = data.get("resourceId")
-    tecnico_id = resource_id if resource_id else agendamento.tecnico_id
 
-    # Verificar conflito
-    if verificar_conflito(tecnico_id, nova_data_inicio, nova_data_fim, ignorar_id=id):
-        return (
-            jsonify(
-                {
-                    "success": False,
-                    "message": "Conflito de horário detectado para o técnico selecionado.",
-                }
-            ),
-            400,
-        )
-
-    # Identificar se houve troca de técnico para log
-    trocou_tecnico = False
-    if tecnico_id != agendamento.tecnico_id:
-        trocou_tecnico = True
-        novo_tecnico = db.session.get(Usuario, tecnico_id)
-
-    # Atualizar Agendamento
-    agendamento.data_inicio = nova_data_inicio
-    agendamento.data_fim = nova_data_fim
-    agendamento.tecnico_id = tecnico_id
-
-    # Registrar na Timeline
-    texto_log = f"Visita REAGENDADA para {nova_data_inicio.strftime('%d/%m/%Y %H:%M')}."
-    if trocou_tecnico:
-        texto_log += f" Técnico alterado para: {novo_tecnico.nome}."
-
-    andamento = Andamento(
-        chamado_id=agendamento.chamado_id,
+    success, msg = ChamadoService.reagendar_visita(
+        agendamento_id=id,
+        nova_data_inicio=nova_dt_inicio,
+        nova_data_fim=nova_dt_fim,
+        tecnico_id=resource_id,  # Se for None, o serviço manterá o atual no banco
         usuario_id=current_user.id,
-        texto=texto_log,
-        tipo="Evento",
-        created_by=current_user.id,
     )
-    db.session.add(andamento)
 
-    try:
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"success": False, "message": f"Erro ao salvar: {str(e)}"}), 500
+    if success:
+        return jsonify({"success": True, "message": msg})
+    else:
+        return jsonify({"success": False, "message": msg}), 400
 
-    return jsonify({"success": True, "message": texto_log})
+
+@agenda_bp.route("/agenda/api/cancelar/<id>", methods=["POST"])
+@login_required
+def api_cancelar(id):
+    from App.Modulos.Chamados.servicos import ChamadoService
+
+    success, msg = ChamadoService.anular_visita(
+        agendamento_id=id, usuario_id=current_user.id
+    )
+
+    if success:
+        return jsonify({"success": True, "message": msg})
+    else:
+        return jsonify({"success": False, "message": msg}), 400
 
 
 @agenda_bp.route("/gerar_os/<chamado_id>")
@@ -292,12 +214,23 @@ def baixar_os(chamado_id):
     from App.Modulos.Agenda.modelo import Agendamento
 
     chamado = db.get_or_404(Chamado, chamado_id)
-    # Tenta pegar o último agendamento vinculado, se houver
+    # Prioriza a visita ATIVA (Agendado ou Em Andamento)
     visita = (
-        Agendamento.query.filter_by(chamado_id=chamado_id)
+        Agendamento.query.filter(
+            Agendamento.chamado_id == chamado_id,
+            Agendamento.status.in_(["Agendado", "Em Andamento"])
+        )
         .order_by(Agendamento.data_inicio.desc())
         .first()
     )
+
+    # Se não houver ativa (ex: chamado já fechado), pega a última registrada
+    if not visita:
+        visita = (
+            Agendamento.query.filter_by(chamado_id=chamado_id)
+            .order_by(Agendamento.data_inicio.desc())
+            .first()
+        )
 
     hoje = arrow.now().format("DD/MM/YYYY HH:mm")
 

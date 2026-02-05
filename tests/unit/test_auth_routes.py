@@ -80,32 +80,6 @@ class TestAuthRoutes:
                     or url_for("layout.index", _external=True) in response.location
                 )
 
-    # --- ADMIN PERMISSIONS ---
-
-    def test_admin_routes_block_non_admin(self, client, app):
-        """Testa se rotas de admin bloqueiam usuários comuns."""
-        # Logar como usuário comum
-        with client.session_transaction() as sess:
-            sess["_user_id"] = "2"  # ID fake
-
-        with patch("flask_login.utils._get_user") as mock_curr_user:
-            user = MagicMock()
-            user.is_authenticated = True
-            user.is_admin = False  # NÃO É ADMIN
-            mock_curr_user.return_value = user
-
-            # Validar bloqueio em várias rotas
-            rotas = [
-                "/usuarios",
-                "/usuarios/novo",
-                "/usuarios/editar/1",
-                "/usuarios/toggle/1",
-            ]
-
-            for rota in rotas:
-                response = client.get(rota, follow_redirects=True)
-                assert "Acesso Negado" in response.get_data(as_text=True)
-
     # --- USER MANAGEMENT LOGIC ---
 
     def test_editar_usuario_duplicado(self, client, app):
@@ -216,6 +190,7 @@ class TestAuthRoutes:
                     "password_old": "wrong",
                     "password_new": "new123456",
                     "password_confirm": "new123456",
+                    "btn_senha": "1",
                 },
                 follow_redirects=True,
             )

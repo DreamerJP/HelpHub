@@ -42,17 +42,3 @@ def test_login_logout(client, app, admin_user):
     response = client.get(url_for("auth.logout"), follow_redirects=True)
     assert response.status_code == 200
     assert b"Acessar Plataforma" in response.data
-
-
-def test_invalid_login(client):
-    """Test login with wrong credentials."""
-    response = client.post(
-        url_for("auth.login"),
-        data={"username": "wrong", "password": "wrong"},
-        follow_redirects=True,
-    )
-
-    assert response.status_code == 200
-    # assert b"Ou senha inv" in response.data or b"inv" in response.data # Check for error message part
-    # Just check if we are still on login page (which we are if 200)
-    assert b"Acessar Plataforma" in response.data

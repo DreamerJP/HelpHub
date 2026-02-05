@@ -1,14 +1,17 @@
-/* Global.css - HelpHub 4.0 */
+/* Global.css - HelpHub 4.1 */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
 
 :root {
   /* Cores Corporativas (Corporate Chic) */
-  --bg-body: #f3f4f6; /* Cinza Muito Claro */
+  --bg-body: #f3f4f6;
+  /* Cinza Muito Claro */
   --bg-card: #ffffff;
-  --text-main: #1f2937; /* Cinza Escuro */
+  --text-main: #1f2937;
+  /* Cinza Escuro */
   --text-muted: #6b7280;
 
-  --primary: #2563eb; /* Azul Institucional */
+  --primary: #2563eb;
+  /* Azul Institucional */
   --primary-hover: #1d4ed8;
 
   --success: #10b981;
@@ -45,7 +48,8 @@ body {
   font-family: "Inter", sans-serif;
   background-color: var(--bg-body);
   color: var(--text-main);
-  font-size: 0.925rem; /* Densidade Compacta */
+  font-size: 0.925rem;
+  /* Densidade Compacta */
   line-height: 1.5;
   overflow-x: hidden;
 }
@@ -78,7 +82,8 @@ body {
 /* Sidebar Fixa */
 .sidebar {
   width: var(--sidebar-width);
-  background: #111827; /* Dark Sidebar para contraste */
+  background: #111827;
+  /* Dark Sidebar para contraste */
   color: white;
   height: 100vh;
   position: fixed;
@@ -154,116 +159,6 @@ body {
   padding: 2rem;
 }
 
-/* Tabelas Padronizadas */
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-}
-
-.data-table thead tr {
-  text-align: left;
-  border-bottom: 2px solid #e5e7eb;
-  color: var(--text-muted);
-}
-
-.data-table th {
-  padding: 0.75rem;
-  font-weight: 600;
-}
-
-.data-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #f3f4f6;
-  vertical-align: middle;
-}
-
-/* Linhas Clicáveis (UX Enhancement) */
-.data-table .clickable-row {
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.data-table .clickable-row:hover {
-  background-color: #f0f9ff !important;
-  transform: translateX(2px);
-  outline: 2px solid #3b82f6;
-  outline-offset: -1px;
-  z-index: 1;
-}
-
-/* Remove a borda inferior da linha anterior quando hover */
-.data-table .clickable-row:hover + .clickable-row td {
-  border-top-color: transparent;
-}
-
-/* Remove a própria borda inferior durante hover */
-.data-table .clickable-row:hover td {
-  border-bottom-color: transparent;
-}
-
-.data-table .clickable-row:active {
-  background-color: #dbeafe !important;
-  transform: translateX(0);
-  outline: 2px solid #2563eb;
-  outline-offset: -1px;
-  z-index: 1;
-}
-
-/* Evita que o botão de ação mude o hover da linha */
-.data-table .clickable-row .btn-action:hover {
-  transform: scale(1.05);
-}
-
-/* Paginação */
-.pagination {
-  margin-top: 1.5rem;
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.5rem;
-}
-
-.pagination .btn {
-  background: white;
-  border: 1px solid #d1d5db;
-  color: var(--text-main);
-}
-
-/* Badges de Status */
-.badge {
-  padding: 2px 8px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  display: inline-block;
-}
-
-.badge-success {
-  background: #d1fae5;
-  color: #065f46;
-}
-.badge-info {
-  background: #dbeafe;
-  color: #1e40af;
-}
-.badge-warning {
-  background: #fef3c7;
-  color: #92400e;
-}
-.badge-danger {
-  background: #fee2e2;
-  color: #991b1b;
-}
-.badge-neutral {
-  background: #f3f4f6;
-  color: #374151;
-}
-.badge-escalonado {
-  background: #f5f3ff;
-  color: #5b21b6;
-}
-
 /* Utilitários */
 .btn {
   display: inline-flex;
@@ -296,6 +191,7 @@ body {
   color: var(--primary);
   border: 1px solid #dbeafe;
 }
+
 .btn-soft-primary:hover {
   background: #dbeafe;
 }
@@ -305,6 +201,7 @@ body {
   color: #059669;
   border: 1px solid #d1fae5;
 }
+
 .btn-soft-success:hover {
   background: #d1fae5;
 }
@@ -314,6 +211,7 @@ body {
   color: #c2410c;
   border: 1px solid #ffedd5;
 }
+
 .btn-soft-warning:hover {
   background: #ffedd5;
 }
@@ -323,6 +221,7 @@ body {
   color: #dc2626;
   border: 1px solid #fee2e2;
 }
+
 .btn-soft-danger:hover {
   background: #fee2e2;
 }
@@ -344,6 +243,7 @@ body {
   border: 1px solid #d1d5db;
   color: var(--text-muted);
 }
+
 .btn-outline:hover {
   background: #f9fafb;
   color: var(--text-main);
@@ -353,6 +253,7 @@ body {
 .text-sm {
   font-size: 0.875rem;
 }
+
 .text-muted {
   color: var(--text-muted);
 }
@@ -379,23 +280,27 @@ body {
   gap: 0.75rem;
   min-width: 300px;
 }
+
 .flash-success {
   border-left-color: var(--success);
 }
+
 .flash-error {
   border-left-color: var(--danger);
 }
 
 /* Modal de Confirmação Global */
 .confirm-modal-overlay {
-  position: fixed !important; /* Necessário para sobrescrever possíveis conflitos */
+  position: fixed !important;
+  /* Necessário para sobrescrever possíveis conflitos */
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   width: 100vw;
   height: 100vh;
-  z-index: 9999 !important; /* Necessário para ficar acima de tudo */
+  z-index: 9999 !important;
+  /* Necessário para ficar acima de tudo */
   align-items: center;
   justify-content: center;
   background: rgba(0, 0, 0, 0.5);
@@ -414,47 +319,217 @@ body {
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
 }
 
-/* Classes de Status Semânticas */
-.border-status-aberto {
-  border-left: 4px solid var(--danger) !important;
+/* Banners de Alerta e Avisos ERP */
+.erp-banner {
+  padding: 0.75rem;
+  border-radius: 8px;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  border: 1px solid transparent;
 }
-.border-status-agendado {
-  border-left: 4px solid var(--warning) !important;
+
+.erp-banner-warning {
+  background-color: #fff7ed;
+  border-color: #fbbf24;
+  border-left-width: 4px;
+  color: #9a3412;
 }
-.border-status-pendente {
-  border-left: 4px solid var(--primary) !important;
+
+.erp-banner-warning i {
+  color: var(--warning);
+  font-size: 1.5rem;
 }
-.border-status-fechado {
-  border-left: 4px solid var(--success) !important;
+
+.erp-banner-danger {
+  background-color: #fef2f2;
+  border-color: #f87171;
+  border-left-width: 4px;
+  color: #991b1b;
 }
-.border-status-escalonado {
-  border-left: 4px solid #8b5cf6 !important;
+
+.erp-banner-danger i {
+  color: var(--danger);
+  font-size: 1.5rem;
+}
+
+.erp-banner-info {
+  background-color: #eff6ff;
+  border-color: #60a5fa;
+  border-left-width: 4px;
+  color: #1e40af;
+}
+
+.erp-banner-info i {
+  color: var(--primary);
+  font-size: 1.5rem;
+}
+
+.erp-banner-success {
+  background-color: #f0fdf4;
+  border-color: #34d399;
+  border-left-width: 4px;
+  color: #166534;
+}
+
+.erp-banner-success i {
+  color: var(--success);
+  font-size: 1.5rem;
+}
+
+.erp-banner-title {
+  font-weight: 700;
+  font-size: 0.875rem;
+  margin-bottom: 0.2rem;
+  display: block;
+}
+
+.erp-banner-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.erp-banner-description {
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+/* Badges e Status */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Formulários */
+.form-control {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--text-main);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.form-control::placeholder {
+  color: #9ca3af;
+}
+
+textarea.form-control {
+  min-height: 80px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.badge-danger {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fee2e2;
+}
+
+.badge-warning {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #ffedd5;
+}
+
+.badge-info {
+  background: #eff6ff;
+  color: #2563eb;
+  border: 1px solid #dbeafe;
+}
+
+.badge-success {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #dcfce7;
+}
+
+.badge-escalonado {
+  background: #f5f3ff;
+  color: #7c3aed;
+  border: 1px solid #ede9fe;
+}
+
+.badge-neutral {
+  background: #f3f4f6;
+  color: #4b5563;
+  border: 1px solid #e5e7eb;
 }
 
 /* Variação para cards de chamados (borda mais fina) */
 .card-status-aberto {
   border-left: 3px solid var(--danger) !important;
 }
+
 .card-status-agendado {
   border-left: 3px solid var(--warning) !important;
 }
+
 .card-status-pendente {
   border-left: 3px solid var(--primary) !important;
 }
+
 .card-status-fechado {
   border-left: 3px solid var(--success) !important;
 }
+
 .card-status-escalonado {
   border-left: 3px solid #8b5cf6 !important;
 }
 
 /* Timeline e Andamentos */
+.andamento-card {
+  padding: 1.25rem;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s;
+}
+
+.andamento-body {
+  color: #4b5563;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  white-space: pre-line;
+  overflow-wrap: break-word;
+  /* Força quebra de palavras gigantes */
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.andamento-retratado {
+  opacity: 0.6;
+  background: #f9fafb;
+}
+
+.andamento-retratado .andamento-body {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
 .timeline-dot-evento {
   background: #9ca3af;
 }
+
 .timeline-dot-resposta {
   background: var(--primary);
 }
+
 .timeline-dot-nota {
   background: var(--warning);
 }
@@ -478,6 +553,15 @@ body {
     border-color 0.2s,
     box-shadow 0.2s !important;
 }
+
+/* Reset de borda quando usado com form-control para evitar "caixa sobre caixa" */
+.ts-wrapper.form-control {
+  border: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
 
 .ts-control:focus {
   border-color: var(--primary) !important;
@@ -505,41 +589,6 @@ body {
 
 .ts-control .item {
   font-weight: 500 !important;
-}
-
-/* --- Tab Navigation (Filas) --- */
-.tab-container {
-  display: flex;
-  gap: 1.5rem;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 1.5rem;
-}
-
-.tab-link {
-  padding: 0.75rem 0.25rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  text-decoration: none;
-  position: relative;
-  transition: color 0.2s;
-}
-
-.tab-link:hover {
-  color: var(--text-main);
-}
-
-.tab-link.active {
-  color: var(--primary);
-}
-
-.tab-link.active::after {
-  content: "";
-  position: absolute;
-  bottom: -1px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--primary);
 }
 
 /* --- Error Pages High-End --- */
@@ -579,7 +628,7 @@ body {
 
 .error-404-page .error-glass-card {
   background: rgba(79, 70, 229, 0.03);
-  box-shadow: 
+  box-shadow:
     inset 0 0 80px rgba(79, 70, 229, 0.08),
     0 20px 40px rgba(0, 0, 0, 0.08);
   border-color: rgba(79, 70, 229, 0.2);
@@ -587,7 +636,7 @@ body {
 
 .error-500-page .error-glass-card {
   background: rgba(239, 68, 68, 0.04);
-  box-shadow: 
+  box-shadow:
     inset 0 0 80px rgba(239, 68, 68, 0.08),
     0 20px 40px rgba(0, 0, 0, 0.08);
   border-color: rgba(239, 68, 68, 0.2);
@@ -595,7 +644,7 @@ body {
 
 .error-403-page .error-glass-card {
   background: rgba(245, 158, 11, 0.04);
-  box-shadow: 
+  box-shadow:
     inset 0 0 80px rgba(245, 158, 11, 0.08),
     0 20px 40px rgba(0, 0, 0, 0.08);
   border-color: rgba(245, 158, 11, 0.2);
@@ -603,7 +652,7 @@ body {
 
 .error-413-page .error-glass-card {
   background: rgba(139, 92, 246, 0.04);
-  box-shadow: 
+  box-shadow:
     inset 0 0 80px rgba(139, 92, 246, 0.08),
     0 20px 40px rgba(0, 0, 0, 0.08);
   border-color: rgba(139, 92, 246, 0.2);
@@ -611,7 +660,7 @@ body {
 
 .error-429-page .error-glass-card {
   background: rgba(20, 184, 166, 0.04);
-  box-shadow: 
+  box-shadow:
     inset 0 0 80px rgba(20, 184, 166, 0.08),
     0 20px 40px rgba(0, 0, 0, 0.08);
   border-color: rgba(20, 184, 166, 0.2);
@@ -623,7 +672,9 @@ body {
   line-height: 0.8;
   margin: 0;
   letter-spacing: -5px;
-  background: linear-gradient(180deg, var(--primary) 0%, rgba(79, 70, 229, 0.2) 100%);
+  background: linear-gradient(180deg,
+      var(--primary) 0%,
+      rgba(79, 70, 229, 0.2) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -632,7 +683,9 @@ body {
 }
 
 .glitch-500 {
-  background: linear-gradient(180deg, var(--danger) 0%, rgba(239, 68, 68, 0.2) 100%);
+  background: linear-gradient(180deg,
+      var(--danger) 0%,
+      rgba(239, 68, 68, 0.2) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -640,7 +693,9 @@ body {
 }
 
 .warning-403 {
-  background: linear-gradient(180deg, var(--warning) 0%, rgba(245, 158, 11, 0.2) 100%);
+  background: linear-gradient(180deg,
+      var(--warning) 0%,
+      rgba(245, 158, 11, 0.2) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -661,8 +716,17 @@ body {
 }
 
 @keyframes error-pulse {
-  0%, 100% { transform: scale(1); opacity: 0.8; }
-  50% { transform: scale(1.02); opacity: 1; }
+
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  50% {
+    transform: scale(1.02);
+    opacity: 1;
+  }
 }
 
 .error-main-title {
@@ -688,6 +752,736 @@ body {
 }
 
 @keyframes ph-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* --- HELP HUB ERP SYSTEM (v4.1 Standard) --- */
+
+/* 1. Container Principal (O "Papel" do Fichário) */
+.erp-panel {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0 8px 8px 8px;
+  /* Canto superior esquerdo reto para colar na aba */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  min-height: 300px;
+  /* Altura mínima reduzida para evitar espaços vazios */
+  position: relative;
+  z-index: 10;
+}
+
+/* 2. Abas de Topo (Estilo Fichário/Pasta) */
+.erp-tab-container {
+  display: flex;
+  padding-left: 2px;
+  margin-bottom: -1px;
+  /* Para sobrepor a borda do painel */
+  position: relative;
+  z-index: 5;
+  overflow-x: auto;
+  gap: 4px;
+  /* Esconde Scrollbar (mas permite rolar) */
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+  /* IE and Edge */
+}
+
+.erp-tab-container::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
+}
+
+.erp-tab {
+  padding: 0.6rem 1.25rem;
+  background: #f3f4f6;
+  /* Cinza fundo */
+  border: 1px solid transparent;
+  border-radius: 8px 8px 0 0;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.85rem;
+  font-family: "Inter", sans-serif !important;
+  /* Força Fonte Correta */
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none !important;
+  /* Remove sublinhado */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  top: 1px;
+  /* Empurra levemente para baixo */
+}
+
+.erp-tab:hover {
+  background: #e5e7eb;
+  color: var(--text-main);
+  text-decoration: none !important;
+}
+
+.erp-tab.active {
+  background: white;
+  color: var(--primary);
+  border-color: #e5e7eb;
+  border-bottom-color: white;
+  /* Conecta visualmente com o painel */
+  font-weight: 600;
+  z-index: 20;
+}
+
+/* 3. Toolbar (Barra de Ferramentas Estável) */
+.erp-toolbar {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  /* Cinza bem leve */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: nowrap;
+  /* Evita quebra de linha indesejada */
+  overflow-x: auto;
+  /* Scroll horizontal se tela for muito pequena */
+  font-family: "Inter", sans-serif;
+}
+
+.erp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  /* Um pouco mais largo */
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  text-decoration: none !important;
+  /* Remove sublinhado de links */
+  font-family: "Inter", sans-serif !important;
+  /* Força Fonte */
+  line-height: 1.2;
+}
+
+/* Botões Padrão da Toolbar (neutros) */
+.erp-btn-neutral {
+  color: var(--text-main);
+  background: white;
+  border-color: #d1d5db;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.erp-btn-neutral:hover {
+  background: #f3f4f6;
+  border-color: #9ca3af;
+}
+
+/* Botão Primário (Novo) */
+.erp-btn-primary {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary-hover);
+}
+
+.erp-btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+/* Estado Desabilitado (Dimmed) */
+.erp-btn[disabled],
+.erp-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+  background: #f3f4f6;
+  color: #9ca3af;
+  border-color: #e5e7eb;
+  box-shadow: none;
+}
+
+/* Separador Vertical na Toolbar */
+.erp-separator {
+  width: 1px;
+  height: 24px;
+  background: #d1d5db;
+  margin: 0 4px;
+}
+
+/* 4. Grid de Dados (Tabela Compacta ERP) */
+.erp-grid-container {
+  flex: 1;
+  overflow: auto;
+  /* Scroll em ambas direções se necessário */
+  position: relative;
+  background: white;
+}
+
+.erp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.825rem;
+  /* Fonte ligeiramente menor para densidade */
+  white-space: nowrap;
+  /* Evita quebra de linha (padrão ERP) */
+}
+
+.erp-table thead th {
+  background: #f9fafb;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 8px 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-align: left;
+  border-bottom: 2px solid #e5e7eb;
+  border-right: 1px solid #f3f4f6;
+  /* Separador sutil de coluna */
+}
+
+.erp-table tbody td {
+  padding: 6px 12px;
+  /* Menos padding vertical */
+  border-bottom: 1px solid #f3f4f6;
+  border-right: 1px solid #f9fafb;
+  color: var(--text-main);
+  transition: none;
+  /* Desktop apps são instantâneos */
+}
+
+/* Linha Selecionada (Destaque Forte) */
+.erp-table tr.selected td {
+  background-color: #e0f2fe !important;
+  /* Azul claro sólido */
+  color: #0c4a6e;
+  border-bottom-color: #bae6fd;
+}
+
+.erp-table tr:hover td {
+  background-color: #f3f4f6;
+}
+
+/* Utilitários Extras */
+.erp-footer {
+  padding: 0.5rem 1rem;
+  border-top: 1px solid #e5e7eb;
+  background: #f9fafb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* --- UTILITÁRIOS ESSENCIAIS --- */
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.items-end {
+  align-items: flex-end;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.justify-end {
+  justify-content: flex-end;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.gap-1 {
+  gap: 0.25rem;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-3 {
+  gap: 0.75rem;
+}
+
+.gap-4 {
+  gap: 1rem;
+}
+
+.gap-6 {
+  gap: 1.5rem;
+}
+
+.w-full {
+  width: 100%;
+}
+
+.h-full {
+  height: 100%;
+}
+
+.ml-auto {
+  margin-left: auto;
+}
+
+.mt-auto {
+  margin-top: auto;
+}
+
+.mb-4 {
+  margin-bottom: 1rem;
+}
+
+.mr-2 {
+  margin-right: 0.5rem !important;
+}
+
+.px-1 {
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+.py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}
+
+.p-2 {
+  padding: 0.5rem !important;
+}
+
+.pl-4 {
+  padding-left: 1rem !important;
+}
+
+.min-w-fit {
+  min-width: fit-content !important;
+}
+
+.text-xs {
+  font-size: 0.75rem !important;
+}
+
+.text-sm {
+  font-size: 0.875rem !important;
+}
+
+.text-lg {
+  font-size: 1.125rem !important;
+}
+
+.text-xl {
+  font-size: 1.25rem !important;
+}
+
+.font-bold {
+  font-weight: 700 !important;
+}
+
+.font-medium {
+  font-weight: 500 !important;
+}
+
+.text-gray-400 {
+  color: #9ca3af !important;
+}
+
+.text-gray-500 {
+  color: #6b7280 !important;
+}
+
+.text-gray-800 {
+  color: #1f2937 !important;
+}
+
+.bg-gray-50 {
+  background-color: #f9fafb !important;
+}
+
+.bg-gray-100 {
+  background-color: #f3f4f6 !important;
+}
+
+.sticky {
+  position: sticky !important;
+}
+
+.bottom-0 {
+  bottom: 0 !important;
+}
+
+.top-0 {
+  top: 0 !important;
+}
+
+.z-30 {
+  z-index: 30 !important;
+}
+
+.border-t {
+  border-top-width: 1px !important;
+}
+
+.border-gray-200 {
+  border-color: #e5e7eb !important;
+}
+
+.cursor-pointer {
+  cursor: pointer !important;
+}
+
+.select-none {
+  user-select: none !important;
+}
+
+.list-none {
+  list-style: none !important;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.block {
+  display: block !important;
+}
+
+.md\:block {
+  display: block !important;
+}
+
+/* Simplificação responsiva */
+.relative {
+  position: relative !important;
+}
+
+.overflow-hidden {
+  overflow: hidden !important;
+}
+
+/* --- Loading Overlay para AJAX Grid --- */
+.erp-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(2px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0 0 8px 8px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.erp-loader-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #e5e7eb;
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* --- Busca ERP & Contadores --- */
+.erp-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
+}
+
+.erp-search-box i {
+  position: absolute;
+  left: 10px;
+  pointer-events: none;
+  font-size: 1.1rem;
+  color: #9ca3af;
+}
+
+.erp-search-input {
+  padding: 6px 12px 6px 36px !important;
+  /* Espaço p/ ícone */
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  outline: none;
+  transition: all 0.2s;
+  width: 220px;
+  background: white;
+  font-family: "Inter", sans-serif;
+}
+
+.erp-search-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.erp-badge-count {
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  color: #4b5563;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  white-space: nowrap;
+  font-family: "Inter", sans-serif;
+}
+
+/* --- Títulos e Subtítulos ERP (Topo da Pág) --- */
+.erp-subtitle {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  border-left: 1px solid #d1d5db;
+  padding-left: 10px;
+  margin-left: 10px;
+  font-weight: 400;
+  display: inline-block;
+}
+
+/* --- Container de Conteúdo da Grid (Evita h-full manual) --- */
+.erp-grid-content {
+  display: flex;
+  flex-direction: column;
+  /* Altura automática para não forçar espaço branco */
+}
+
+/* --- HELP HUB FORM SYSTEM --- */
+.modern-form .form-group {
+  margin-bottom: 1.5rem;
+}
+
+/* Layout Premium com Espaçamento Estendido */
+.form-layout-premium {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  /* 32px - Ajustado para equilíbrio visual */
+  width: 100%;
+}
+
+.modern-form .form-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 0.5rem;
+  display: block;
+  color: var(--text-main);
+}
+
+.modern-form .form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  background: white;
+  font-family: inherit;
+  font-size: 0.9rem;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.modern-form .form-input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  outline: none;
+}
+
+/* --- LOGS & TERMINAL SYSTEM --- */
+.erp-terminal {
+  background: #0f172a;
+  color: #e2e8f0;
+  padding: 1.25rem;
+  border-radius: 10px;
+  font-family: "Fira Code", monospace;
+  font-size: 0.8rem;
+  height: 600px;
+  overflow-y: auto;
+  border: 1px solid #1e293b;
+  box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.erp-terminal-line {
+  margin-bottom: 2px;
+  padding: 4px 8px;
+  border-bottom: 1px solid #1e293b;
+  line-height: 1.2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.erp-terminal-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.erp-pill-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 20px;
+  padding: 0.4rem 1.25rem;
+  font-size: 0.85rem;
+  border: none;
+  transition: all 0.2s;
+  cursor: pointer;
+  text-decoration: none !important;
+}
+
+.erp-pill-filter.active {
+  color: white;
+}
+
+.erp-pill-filter.inactive {
+  background: #64748b;
+  color: #e2e8f0;
+}
+
+/* --- HELP HUB ERP - QUICK ACTION PANELS --- */
+/* Padroniza painéis de contexto como o Agendamento Rápido */
+.erp-quick-panel {
+  margin-top: 1rem;
+  padding: 1.25rem;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 10px;
+}
+
+.erp-quick-panel label {
+  display: block;
+  font-size: 0.75rem;
+  color: #4338ca;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.erp-quick-panel .erp-field-group {
+  margin-bottom: 0.75rem;
+}
+
+
+/* Integração de Inputs e TomSelect no Painel Rápido */
+.erp-quick-panel .form-control,
+.erp-quick-panel .ts-control {
+  background: white !important;
+  border-color: #c7d2fe !important;
+  font-size: 0.85rem !important;
+  box-shadow: none !important;
+}
+
+/* Reset de borda do wrapper dentro do painel rápido */
+.erp-quick-panel .ts-wrapper.form-control {
+  border: none !important;
+  background: transparent !important;
+}
+
+.erp-quick-panel .ts-control {
+  padding: 0.5rem 0.75rem !important;
+  min-height: auto !important;
+}
+
+
+.erp-quick-panel .erp-quick-header {
+  font-size: 0.75rem;
+  color: var(--primary);
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* --- HELP HUB ERP - VISIT CARDS --- */
+.erp-visit-card {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.erp-visit-card .visit-header {
+  color: #92400e;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.erp-visit-card .visit-info-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.erp-visit-card .visit-label {
+  color: #b45309;
+}
+
+.erp-visit-card .visit-value {
+  font-weight: 700;
+  color: #92400e;
+}
+
+.erp-visit-card label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #92400e;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.erp-visit-card textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-family: inherit;
+  background: white;
+  resize: none;
 }

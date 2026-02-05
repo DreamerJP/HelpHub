@@ -1,0 +1,94 @@
+{% extends "layout_base.html" %} {% from "componentes.html" import
+render_layout_erp, badge_status_cliente %} {% block title %}Central de
+Integrações - HelpHub 4.0{% endblock %} {% block page_title %} Central de
+Integrações
+<span class="erp-subtitle hidden lg:inline-block"
+  >Conectadores e canais de comunicação</span
+>
+{% endblock %} {% block content %} {# --- TOOLBAR (PADRÃO V4) --- #} {% set
+toolbar_html %}
+<!-- Toolbar da Aba Lista -->
+<div
+  x-show="activeTab === 'lista'"
+  x-cloak
+  class="flex items-center gap-2 w-full"
+>
+  <a
+    :href="selectedItem ? '{{ url_for('admin.notificacao_editar', provedor='0') }}'.replace('0', selectedItem.id) : '#'"
+    :class="selectedItem ? '' : 'disabled'"
+    class="erp-btn erp-btn-neutral"
+  >
+    <i class="ph ph-pencil-simple text-blue-600 font-bold"></i> Editar
+  </a>
+
+  <div class="flex items-center gap-2 ml-auto">
+    <div class="erp-badge-count">{{ provedores|length }} reg.</div>
+  </div>
+</div>
+
+<!-- Toolbar da Aba Placeholder (Vazia no momento) -->
+<div
+  x-show="activeTab === 'placeholder'"
+  x-cloak
+  class="flex items-center gap-2"
+>
+  <!-- Botões específicos para a aba de ADD NOVA ABA podem ser colocados aqui futuramente -->
+</div>
+{% endset %} {# --- LAYOUT ERP (Ajustado para eliminar vácuo) --- #} {% call
+render_layout_erp( titulo="Integrações", abas=[ {'id': 'lista', 'label': 'Canais
+de Comunicação', 'icon': 'ph-list-bullets'}, {'id': 'placeholder', 'label': 'ADD
+NOVA ABA', 'icon': 'ph-plus-circle'} ], toolbar_buttons=toolbar_html ) %}
+
+<!-- Grid de Dados (PADRÃO CORRIGIDO SEGUINDO READ_ME.md) -->
+<div
+  x-show="activeTab === 'lista'"
+  class="erp-grid-content h-full"
+  style="min-height: 100%; display: flex; flex-direction: column"
+>
+  <table class="erp-table">
+    <thead>
+      <tr>
+        <th style="width: 50px">#</th>
+        <th>Provedor / Canal</th>
+        <th>Descrição do Serviço</th>
+        <th style="width: 150px">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in provedores %}
+      <tr
+        class="group cursor-pointer select-none"
+        :class="{'selected': selectedItem && selectedItem.id == '{{ p.id }}'}"
+        @click="toggleSelection({id: '{{ p.id }}', nome: '{{ p.nome }}'})"
+        @dblclick="window.location.href = '{{ url_for('admin.notificacao_editar', provedor=p.id) }}'"
+      >
+        <td class="text-center text-gray-400 font-mono text-xs">
+          {{ p.uuid }}
+        </td>
+
+        <td class="font-semibold text-gray-700">{{ p.nome }}</td>
+
+        <td class="text-gray-500">{{ p.descricao }}</td>
+
+        <td>{{ badge_status_cliente(p.ativo) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Rodapé colado no fundo do painel conforme Padrão V4 -->
+  <div class="erp-footer mt-auto justify-end text-xs">
+    Total: {{ provedores|length }} itens
+  </div>
+</div>
+
+<!-- Placeholder (PADRÃO V4) -->
+<div
+  x-show="activeTab === 'placeholder'"
+  class="p-12 text-center text-gray-400"
+>
+  <i class="ph ph-plus-circle text-3xl mb-3 block opacity-50 mx-auto"></i>
+  <p>Espaço reservado para novas funcionalidades.</p>
+</div>
+
+{% endcall %} {% endblock %}

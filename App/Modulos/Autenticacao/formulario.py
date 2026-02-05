@@ -1,4 +1,4 @@
-from wtforms import StringField, PasswordField, BooleanField, SelectField
+from wtforms import StringField, PasswordField, BooleanField, SelectField, FileField
 from wtforms.validators import DataRequired, Email, Length, EqualTo, Optional
 from App.base_form import AppBaseForm
 
@@ -38,3 +38,11 @@ class AlterarSenhaForm(AppBaseForm):
             EqualTo("password_new", message="As senhas devem ser iguais."),
         ],
     )
+
+
+class PerfilForm(AppBaseForm):
+    nome = StringField(
+        "Nome Completo", validators=[DataRequired(), Length(min=3, max=100)]
+    )
+    email = StringField("E-mail", validators=[DataRequired(), Email(), Length(max=120)])
+    avatar = FileField("Foto de Perfil (JPG, PNG)", validators=[Optional()])

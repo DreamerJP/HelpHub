@@ -1,4 +1,4 @@
-from App.utils import get_real_ip
+from App.servicos.utils import get_real_ip
 from flask import Flask
 
 

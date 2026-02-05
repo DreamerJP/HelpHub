@@ -1,182 +1,296 @@
-{% extends "layout_base.html" %} {% block title %}Backups - HelpHub 4.0{%
-endblock %} {% block page_title %}Gerenciador de Backups{% endblock %} {% block
-content %}
-<!-- Alerta de Agendador (Apenas para Admin se houver erro) -->
-{% if current_user.is_authenticated and current_user.is_admin and
-SCHEDULER_ERROR %}
-<div
-  style="
-    background: #fffbeb;
-    border-left: 4px solid #f59e0b;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  "
+{% extends "layout_base.html" %} {% from "componentes.html" import
+render_layout_erp, th_ordenavel, erp_banner %} {% block title %}Backups -
+HelpHub 4.0{% endblock %} {% block page_title %} Backups do Sistema
+<span class="erp-subtitle hidden lg:inline-block"
+  >Cópias de segurança e restauração de dados</span
 >
-  <i
-    class="ph ph-warning-diamond"
-    style="color: #f59e0b; font-size: 1.5rem"
-  ></i>
-  <div>
-    <h4
-      style="
-        color: #92400e;
-        font-weight: 600;
-        font-size: 0.875rem;
-        margin-bottom: 0.25rem;
-      "
-    >
-      Aviso: Agendador de Tarefas Inativo
-    </h4>
-    <p style="color: #b45309; font-size: 0.75rem; margin: 0">
-      O sistema detectou que o servidor não permite a execução de tarefas em
-      segundo plano ({{ SCHEDULER_ERROR }}).
-      <strong
-        >Backups automáticos e rotinas diárias não serão executados sozinhos
-        neste ambiente.</strong
-      >
-    </p>
-  </div>
-</div>
-{% endif %}
-
-<!-- Alertas de Tarefas Atrasadas (Servidor offline) -->
-{% if current_user.is_authenticated and current_user.is_admin and
-TAREFAS_ATRASADAS and not SCHEDULER_ERROR %} {% for tarefa in TAREFAS_ATRASADAS
-%} {% if tarefa.id == 'backup_diario' %}
-<div
-  style="
-    background: #ecfdf5;
-    border-left: 4px solid #10b981;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  "
->
-  <div style="display: flex; align-items: center; gap: 1rem">
-    <i
-      class="ph ph-calendar-plus"
-      style="color: #059669; font-size: 1.5rem"
-    ></i>
-    <div>
-      <h4
-        style="
-          color: #064e3b;
-          font-weight: 600;
-          font-size: 0.875rem;
-          margin-bottom: 0.25rem;
-        "
-      >
-        Backup Agendado Pendente
-      </h4>
-      <p style="color: #065f46; font-size: 0.75rem; margin: 0">
-        O backup das 03:00 de hoje não foi realizado (servidor offline). Deseja
-        executar agora?
-      </p>
-    </div>
-  </div>
+{% endblock %} {% block content %} {# --- ALERTA SCHEDULER --- #} {% if
+current_user.is_authenticated and current_user.is_admin and SCHEDULER_ERROR %}
+{% call erp_banner(tipo='warning', titulo='Aviso: Agendador de Tarefas Inativo',
+icon='ph-warning-diamond') %} O servidor bloqueou threads background ({{
+SCHEDULER_ERROR }}).
+<strong>Backups automáticos não serão gerados.</strong> Execute manualmente. {%
+endcall %} {% endif %} {# --- TOOLBAR --- #} {% set toolbar_html %}
+<div x-show="activeTab === 'lista'" x-cloak class="flex items-center gap-2">
   <a
     href="{{ url_for('admin.gerar_backup') }}"
-    class="btn btn-primary btn-sm backup-action"
-    data-confirm-message="O sistema pode ficar um pouco lento durante a compressão. Confirmar execução agora?"
+    class="erp-btn erp-btn-primary backup-action"
+    data-confirm-message="Gerar um backup agora? O sistema pode travar por alguns segundos."
   >
-    <i class="ph ph-play"></i> Executar Agora
+    <i class="ph ph-database text-lg"></i> Gerar Novo Backup
   </a>
-</div>
-{% endif %} {% endfor %} {% endif %}
 
-<div class="glass-panel">
-  <div
-    style="
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 2rem;
-      align-items: center;
-    "
+  <div class="erp-separator"></div>
+
+  <button
+    :class="selectedItem ? '' : 'disabled'"
+    class="erp-btn erp-btn-neutral text-blue-600"
+    @click="if(selectedItem) window.location.href = '{{ url_for('admin.download_backup', filename='') }}' + selectedItem.nome"
   >
-    <div>
-      <h3 style="margin-bottom: 0.5rem">Cópias de Segurança</h3>
-      <p class="text-muted">
-        Agendamento: Diário às 03:00. Rotação: Mantém os últimos 14 arquivos.
-      </p>
-    </div>
-    <a
-      href="{{ url_for('admin.gerar_backup') }}"
-      class="btn btn-primary backup-action"
-      data-confirm-message="Gerar um backup agora? O sistema pode engasgar por alguns segundos."
+    <i class="ph ph-download-simple"></i> Baixar
+  </button>
+
+  <button
+    :class="selectedItem ? '' : 'disabled'"
+    class="erp-btn erp-btn-neutral text-red-600"
+    @click="if(selectedItem && await confirmAction('Restaurar este backup DESTRUIRÁ os dados atuais. Certeza?', 'danger')) { alert('Restauração segura indisponível nesta versão web.'); }"
+  >
+    <i class="ph ph-clock-counter-clockwise"></i> Restaurar
+  </button>
+</div>
+
+<div
+  x-show="activeTab === 'servicos'"
+  x-cloak
+  class="flex items-center gap-2 w-full"
+>
+  <button
+    :class="selectedItem && selectedItem.type === 'job' ? '' : 'disabled'"
+    class="erp-btn erp-btn-neutral text-green-600"
+    @click="if(selectedItem) loadUrl('{{ url_for('admin.executar_tarefa', id='') }}' + selectedItem.id)"
+  >
+    <i class="ph ph-play-circle"></i> Executar Agora
+  </button>
+
+  <div class="erp-separator"></div>
+
+  <!-- Botão Pausar (Mostra se NÃO estiver pausado) -->
+  <template
+    x-if="selectedItem && selectedItem.type === 'job' && !selectedItem.pausado"
+  >
+    <button
+      class="erp-btn erp-btn-neutral text-amber-600"
+      @click="loadUrl('{{ url_for('admin.pausar_tarefa', id='') }}' + selectedItem.id)"
     >
-      <i class="ph ph-database"></i> Gerar Backup Agora
-    </a>
+      <i class="ph ph-pause-circle"></i> Pausar Tarefa
+    </button>
+  </template>
+
+  <!-- Botão Retomar (Mostra se ESTIVER pausado) -->
+  <template
+    x-if="selectedItem && selectedItem.type === 'job' && selectedItem.pausado"
+  >
+    <button
+      class="erp-btn erp-btn-neutral text-blue-600"
+      @click="loadUrl('{{ url_for('admin.retomar_tarefa', id='') }}' + selectedItem.id)"
+    >
+      <i class="ph ph-caret-circle-right"></i> Retomar Agendamento
+    </button>
+  </template>
+
+  <div class="flex items-center gap-2 ml-auto">
+    <button class="erp-btn erp-btn-neutral" @click="window.location.reload()">
+      <i class="ph ph-arrows-counter-clockwise"></i> Atualizar Status
+    </button>
+    <div class="erp-badge-count">{{ jobs|length }} tarefas</div>
+  </div>
+</div>
+{% endset %} {# --- LAYOUT ERP --- #} {% call render_layout_erp(
+titulo="Backups", abas=[ {'id': 'lista', 'label': 'Arquivos Disponíveis',
+'icon': 'ph-hard-drives'}, {'id': 'servicos', 'label': 'Agendador de Tarefas',
+'icon': 'ph-timer'} ], toolbar_buttons=toolbar_html,
+persistir_aba=True, storage_type='local' ) %}
+
+<!-- Aba 1: Lista de Arquivos -->
+<div class="erp-grid-content" x-show="activeTab === 'lista'">
+  <div
+    class="erp-banner erp-banner-info"
+    style="padding: 0.5rem 1rem; margin-bottom: 0.5rem; border-radius: 0"
+  >
+    <i class="ph ph-info" style="font-size: 1.1rem"></i>
+    <div class="erp-banner-description" style="font-size: 0.75rem">
+      Rotação automática: O sistema mantém os últimos 14 arquivos e deleta os
+      mais antigos.
+    </div>
   </div>
 
-  <table class="data-table">
+  <table class="erp-table">
     <thead>
       <tr>
-        <th>Arquivo</th>
+        <th style="width: 50px">#</th>
+        <th>Nome do Arquivo</th>
+        <th>Tipo</th>
         <th>Data da Cópia</th>
         <th>Tamanho</th>
-        <th style="text-align: right">Ação</th>
       </tr>
     </thead>
     <tbody>
       {% for b in backups %}
-      <tr>
-        <td style="font-family: monospace">
-          {{ b.nome }} {% if '_auto' in b.nome %}
-          <span class="badge badge-info">AUTO</span>
+      <tr
+        class="group cursor-pointer select-none"
+        :class="{'selected': selectedItem && selectedItem.id == '{{ b.nome }}'}"
+        @click="toggleSelection({
+                        id: '{{ b.nome }}', 
+                        nome: '{{ b.nome }}',
+                        type: 'file'
+                    })"
+      >
+        <td class="text-center text-gray-400 font-mono text-xs">
+          {{ loop.index }}
+        </td>
+
+        <td class="font-mono font-semibold text-gray-700">{{ b.nome }}</td>
+
+        <td>
+          {% if '_auto' in b.nome %}
+          <span class="badge badge-info">Automático</span>
           {% elif '_manual' in b.nome %}
-          <span class="badge badge-neutral">MANUAL</span>
+          <span class="badge badge-neutral">Manual</span>
+          {% else %}
+          <span class="text-xs text-muted">-</span>
           {% endif %}
         </td>
-        <td>{{ b.data }}</td>
-        <td>{{ b.tamanho }}</td>
-        <td style="text-align: right">
-          <a
-            href="{{ url_for('admin.download_backup', filename=b.nome) }}"
-            class="btn btn-soft-primary btn-sm"
-          >
-            <i class="ph ph-download-simple"></i> Baixar
-          </a>
-        </td>
+
+        <td class="text-gray-600">{{ b.data }}</td>
+        <td class="font-mono text-xs">{{ b.tamanho }}</td>
       </tr>
       {% else %}
       <tr>
-        <td
-          colspan="4"
-          style="text-align: center; padding: 3rem"
-          class="text-muted"
-        >
+        <td colspan="5" class="text-center py-12 text-muted">
+          <i class="ph ph-database text-3xl mb-2 block opacity-20"></i>
           Nenhum backup encontrado. Gere o primeiro!
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+
+  <div class="erp-footer justify-end text-xs">
+    {{ backups|length }} arquivos armazenados (Local)
+  </div>
 </div>
+
+<!-- Aba 2: Agendador de Tarefas -->
+<div
+  class="erp-grid-content"
+  x-show="activeTab === 'servicos'"
+  style="display: none"
+>
+  <div
+    class="erp-banner erp-banner-info"
+    style="padding: 0.5rem 1rem; margin-bottom: 0.5rem; border-radius: 0"
+  >
+    <i class="ph ph-info" style="font-size: 1.1rem"></i>
+    <div class="erp-banner-description" style="font-size: 0.75rem">
+      O agendador roda em background. Refresh manual necessário para ver
+      progressão.
+    </div>
+  </div>
+
+  <table class="erp-table">
+    <thead>
+      <tr>
+        <th style="width: 50px">#</th>
+        <th>Tarefa</th>
+        <th>Próxima Execução</th>
+        <th>Último Status</th>
+        <th>Última Execução</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in jobs %}
+      <tr
+        class="group cursor-pointer select-none"
+        :class="{'selected': selectedItem && selectedItem.id == '{{ job.id }}'}"
+        @click="toggleSelection({
+                        id: '{{ job.id }}', 
+                        nome: '{{ job.id_amigavel }}',
+                        type: 'job',
+                        pausado: {{ 'true' if job.pausado else 'false' }}
+                    })"
+      >
+        <td class="text-center text-gray-400 font-mono text-xs">
+          {{ job.monitor.id if job.monitor else job.id }}
+        </td>
+
+        <td>
+          <div class="flex flex-col">
+            <span class="font-semibold text-gray-700"
+              >{{ job.id_amigavel }}</span
+            >
+            <span class="text-xs text-gray-400 font-mono">{{ job.id }}</span>
+          </div>
+        </td>
+        <td>
+          {% if job.pausado %}
+          <span class="badge badge-neutral">Pausado</span>
+          {% else %}
+          <span class="text-gray-600">{{ job.proxima_execucao }}</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if job.monitor %} {% if job.monitor.status == 'Sucesso' %}
+          <span class="badge badge-success"
+            ><i class="ph ph-check-circle mr-1"></i> Sucesso</span
+          >
+          {% elif job.monitor.status == 'Erro' %}
+          <span class="badge badge-danger" title="{{ job.monitor.mensagem }}"
+            ><i class="ph ph-warning-octagon mr-1"></i> Erro</span
+          >
+          {% else %}
+          <span class="badge badge-warning">{{ job.monitor.status }}</span>
+          {% endif %} {% else %}
+          <span class="text-gray-400 text-xs italic">Sem registros</span>
+          {% endif %}
+        </td>
+        <td>
+          <span class="text-gray-500 text-xs">
+            {{ job.monitor.ultima_execucao.strftime('%d/%m/%Y %H:%M') if
+            job.monitor and job.monitor.ultima_execucao else '-' }}
+          </span>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" class="text-center py-12 text-muted">
+          <i class="ph ph-clock-countdown text-3xl mb-2 block opacity-20"></i>
+          Nenhuma tarefa agendada encontrada.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="erp-footer justify-end text-xs">
+    <span>{{ jobs|length }} tarefas configuradas</span>
+  </div>
+</div>
+
+{% endcall %}
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // Intercepta clique no botão de gerar backup
+    // Intercepta clique no botão de gerar backup (Toolbar)
     document.querySelectorAll(".backup-action").forEach((link) => {
       link.addEventListener("click", async function (e) {
         e.preventDefault();
-        const message =
-          this.dataset.confirmMessage || "Tem certeza que deseja continuar?";
-        const confirmed = await confirmAction(message);
+        const message = this.dataset.confirmMessage || "Tem certeza?";
+        const confirmed = await confirmAction(message, "warning");
         if (confirmed) {
+          // Usa o loadUrl do componente Alpine se disponível, ou redireciona
+          const alpineData = document.querySelector('[x-data="erpNavigation"]');
+          if (alpineData && alpineData.__x && alpineData.__x.$data) {
+            alpineData.__x.$data.loadUrl(this.href);
+          } else {
+            window.location.href = this.href;
+          }
+        }
+      });
+    });
+
+    // Intercepta ações do agendador (Play/Pause/Resume)
+    document.querySelectorAll(".job-action").forEach((link) => {
+      link.addEventListener("click", function (e) {
+        e.preventDefault();
+        const alpineData = document.querySelector('[x-data="erpNavigation"]');
+        if (alpineData && alpineData.__x && alpineData.__x.$data) {
+          alpineData.__x.$data.loadUrl(this.href);
+        } else {
           window.location.href = this.href;
         }
       });
     });
   });
 </script>
+
 {% endblock %}

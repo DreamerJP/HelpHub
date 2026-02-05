@@ -1,11 +1,19 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import (
+    Blueprint,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    send_from_directory,
+    current_app,
+)
 from flask_login import login_required
 from sqlalchemy import or_
 from App.Modulos.Chamados.modelo import Chamado
 from App.Modulos.Clientes.modelo import Cliente
 from App.Modulos.Agenda.modelo import Agendamento
 from App.banco import db
-from datetime import datetime
+from datetime import datetime, timezone
 
 layout_bp = Blueprint(
     "layout",
@@ -22,7 +30,7 @@ def index():
     from datetime import timedelta
     from App.Modulos.Departamentos.modelo import Departamento
 
-    hoje = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    hoje = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Métricas principais
     total_abertos = Chamado.query.filter_by(status="Aberto").count()
@@ -175,6 +183,26 @@ def buscar():
     )
 
 
+@layout_bp.route("/sync/check")
+@login_required
+def sync_check():
+    """
+    ENDPOINT DE SINCRONIZAÇÃO SILENCIOSA
+    O frontend chama esta rota periodicamente para saber se algo mudou no banco.
+    --- UPGRADE PATH (Pusher / WebSocket) ---
+    Ao mudar para sincronização por milissegundos, este endpoint torna-se obsoleto,
+    pois o servidor 'avisaria' o frontend via socket em vez do frontend 'perguntar'.
+    """
+    from App.Modulos.Administracao.modelo import SyncControl
+
+    return {
+        "chamados": SyncControl.get_versao("chamados"),
+        "clientes": SyncControl.get_versao("clientes"),
+        "usuarios": SyncControl.get_versao("usuarios"),
+        "departamentos": SyncControl.get_versao("departamentos"),
+    }
+
+
 # Tratamento de Erros
 @layout_bp.app_errorhandler(403)
 def erro_403(e):
@@ -199,3 +227,10 @@ def erro_404(e):
 @layout_bp.app_errorhandler(500)
 def erro_500(e):
     return render_template("erro_500.html"), 500
+
+
+@layout_bp.route("/uploads/<path:filename>")
+@login_required
+def servir_upload(filename):
+    """Rota global para servir arquivos da pasta Data/Uploads"""
+    return send_from_directory(current_app.config["UPLOAD_FOLDER"], filename)

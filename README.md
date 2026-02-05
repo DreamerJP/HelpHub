@@ -1,214 +1,281 @@
-# HelpHub 4.0 - Sistema de Gestão de Chamados e Assistência Técnica
+# HelpHub 4.1 - Sistema de Gestão de Chamados e Assistência Técnica
 
-![HelpHub Banner](https://img.shields.io/badge/HelpHub-4.0-blue?style=for-the-badge&logo=flask)
+![HelpHub Banner](https://img.shields.io/badge/HelpHub-4.1-blue?style=for-the-badge&logo=flask)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://www.python.org/)
 [![Flask 3.0.0](https://img.shields.io/badge/Flask-3.0.0-green.svg)](https://flask.palletsprojects.com/)
 [![License Non-Commercial](https://img.shields.io/badge/License-Non--Commercial-orange.svg)](LICENSE)
-[![Tests Passing](https://img.shields.io/badge/Tests-25%20Files-success)](tests/)
+[![Tests Passing](https://img.shields.io/badge/Tests-135%20Passados-success)](tests/)
 
-O **HelpHub 4.0** é uma plataforma corporativa de alto desempenho para gestão de tickets, assistência técnica e planejamento logístico. Projetado com foco em **Segurança**, **Escalabilidade Modular** e **UX Premium**, o sistema oferece controle total sobre o ciclo de vida do atendimento ao cliente.
-
----
-
-## Arquitetura e Core do Sistema
-
-O sistema utiliza o padrão **Application Factory** com arquitetura baseada em **Blueprints**, garantindo isolamento total entre módulos e facilidade de manutenção.
-
-### Estrutura de Camadas (Blueprint)
-
-| Camada        | Escopo     | Responsabilidade Técnica                                              |
-| :------------ | :--------- | :-------------------------------------------------------------------- |
-| **01. BOOT**  | `App/`     | Inicialização do Flask, Registro de Blueprints e Engine de Logs.      |
-| **02. LOGIC** | `Modulos/` | Core de Negócio: Regras de Chamados, Agendas, Clientes e Auth.        |
-| **03. INFRA** | `Engine/`  | Gerenciamento de Uploads, Tarefas Cron (AWS/APScheduler) e Auditoria. |
-
-### Ciclo de Vida de uma Solicitação
-
-Para cada requisição do usuário, o sistema percorre este fluxo de proteção e execução:
-
-1.  **Escudo:** `seguranca.py` (Validação de Rate-Limit e Proteção CSRF).
-2.  **Identidade:** `Autenticacao` (Filtro de permissões RBAC e Gestão de Sessão).
-3.  **Processamento:** `Chamados` / `Agenda` (Execução da regra de negócio solicitada).
-4.  **Auditoria:** `BaseModel` (Registro automático de autor, timestamp e IP Real).
-5.  **Persistência:** `SQLAlchemy` (Escrita segura e íntegra na base de dados).
+Plataforma corporativa de alto desempenho para gestão de tickets, assistência técnica e planejamento logístico. Construída com foco em segurança, escalabilidade modular e experiência premium do usuário.
 
 ---
 
-## Segurança de Nível Corporativo (Layer Hard)
+## Arquitetura
 
-O HelpHub 4.0 implementa múltiplas camadas de proteção independentes para garantir a integridade e a segurança dos dados em todos os níveis da aplicação:
+**Application Factory** com **Screaming Architecture** - Estrutura modular baseada em Blueprints que revela a intenção do sistema e facilita manutenção em larga escala.
 
-- **Validação de Integridade Binária:** O `UploadManager` ignora a extensão do arquivo e realiza uma inspeção profunda nos **Magic Numbers** (assinatura real do arquivo via `filetype`). Isso impede que scripts maliciosos sejam camuflados como imagens.
-- **Escudo Anti-BruteForce:** Proteção ativa via `Flask-Limiter` com rastreamento de **IP Real** (através de headers de proxy). Limites rigorosos são aplicados em rotas de autenticação e APIs críticas.
-- **Ofuscação de Dados (UUIDv4):** IDs sequenciais foram abolidos. O uso de identificadores universais únicos (UUID) impede ataques de enumeração direta e exposição estratégica de volume de dados por URL.
-- **Isolamento Físico de Ativos:** Arquivos sensíveis do sistema (Logs e Backups) residem em diretórios fisicamente isolados da pasta de uploads de clientes, impedindo o acesso indevido a arquivos através da exploração de caminhos de diretórios.
-- **Autorização Granular (RBAC):** Controle de acesso baseado em funções com decoradores `@admin_required` protegendo todas as endpoints de infraestrutura e governança.
+### Estrutura de Camadas
 
----
+| Camada         | Escopo        | Responsabilidade                                                          |
+|:---------------|:--------------|:--------------------------------------------------------------------------|
+| **BOOT**       | `App/`        | Inicialização do Flask, Registro de Blueprints e Engine de Logs          |
+| **LOGIC**      | `Modulos/`    | Core de Negócio: Chamados, Agendas, Clientes e Autenticação (RBAC)       |
+| **SERVICE**    | `servicos/`   | Motores de Notificação, Criptografia (AES-256), Segurança e Uploads      |
+| **INFRA**      | `Data/`       | Persistência (SQLite/MySQL), Logs de Auditoria e Repositório de Arquivos |
 
-## 🛠️ Tecnologias Utilizadas
+### Ciclo de Vida da Requisição
 
-O HelpHub 4.0 foi construído com ferramentas modernas que garantem rapidez, segurança e um visual profissional:
+```
+Escudo (Rate-Limit/CSRF) → Autenticação (RBAC) → Processamento (Lógica de Negócio) 
+→ Auditoria (Logs com IP Real) → Persistência (SQLAlchemy)
+```
 
-### ⚙️ Backend (O Coração do Sistema)
+### Gestão de Migrations
 
-- **Flask:** Estrutura principal que sustenta todo o sistema.
-- **SQLAlchemy:** Responsável por organizar e salvar todas as informações no banco de dados.
-- **Segurança Pró-Ativa:** Ferramentas para controle de acesso, proteção de sessões e limites contra tentativas de invasão.
-- **APScheduler:** O "robô" que executa tarefas automáticas, como backups e fechamento de chamados.
-- **Arrow & Filetype:** Controle preciso de horários e verificação rigorosa de arquivos enviados.
+Sistema de versionamento do banco de dados que permite evoluir a estrutura sem perda de dados:
 
-### 🎨 Frontend (Interface e Visual)
+```bash
+# Detectar mudanças
+flask db migrate -d App/migrations -m "descrição da mudança"
 
-- **Jinja2:** Sistema que organiza as páginas do site de forma eficiente.
-- **Alpine.js:** Permite que o sistema responda instantaneamente aos comandos, sem precisar recarregar a página.
-- **ApexCharts:** Gera os gráficos interativos para acompanhamento de resultados.
-- **FullCalendar:** Calendário completo para organização das visitas técnicas.
-- **Design Moderno:** Visual elegante que se adapta a computadores e celulares, com foco na facilidade de uso.
-
----
-
-## 🤖 Agendador de Tarefas e Automação (Deep Dive)
-
-Seu agendador de tarefas (`APScheduler`), que opera de forma autônoma e resiliente:
-
-### 🕒 Rotinas Automatizadas
-
-- **Backup Diário (03:00 AM):** Geração automática de dump do banco SQLite com rotação inteligente (mantém apenas os últimos 14 backups para economizar disco).
-- **Zelador de Chamados (03:05 AM):** Varredura de tickets em status "Pendente". Chamados sem interação por mais de 48 horas são encerrados automaticamente com assinatura de sistema.
-
-### 🛡️ Monitoramento e Resiliência
-
-- **Decorador `@monitorar_tarefa`:** Registra o status de sucesso ou erro, tempo de execução e mensagens de retorno de cada rotina no banco de dados.
-- **Detecção de Servidor Offline:** Caso o servidor tenha ficado desligado durante o horário das tarefas (ex: manutenção de infra), o sistema detecta a falha no próximo boot e apresenta um **Alerta Crítico** no Dashboard para o administrador.
+# Aplicar ao banco
+flask db upgrade -d App/migrations
+```
 
 ---
 
-## 📋 Principais Módulos do Sistema
+## Recursos Principais
 
-### 📊 Painel de Controle e Estatísticas
+### HelpHub Live Sync
 
-- **Indicadores Instantâneos:** Visualização imediata da quantidade de clientes e do status de todos os chamados (abertos, agendados e pendentes).
-- **Histórico de Atendimentos:** Gráfico dinâmico que mostra a evolução dos registros ao longo do tempo, com recursos de zoom e navegação detalhada.
-- **Distribuição por Status:** Gráfico de Pizza dinâmico que permite filtrar a listagem de chamados com um clique.
-- **Volume por Departamento:** Gráfico de Barras horizontais para identificação de gargalos operacionais.
-- **Agenda de Hoje:** Visualização rápida do progresso das visitas técnicas programadas para o dia atual.
+Sistema de sincronização passiva que mantém dashboards e grids atualizados automaticamente:
 
-### 🎫 Gestão de Atendimentos
+- **Backend:** Tabela `SyncControl` com versões incrementais por entidade
+- **Frontend:** Heartbeat a cada 30s via AJAX verificando mudanças
+- **Dashboard:** Recarregamento automático ao detectar alterações
+- **Grids:** Refresh suave com notificação Toast ao usuário
 
-- **Linha do Tempo de Interações:** Histórico detalhado que separa mensagens do técnico, do cliente e registros automáticos do sistema.
-- **Número de Protocolo:** Gerado automaticamente para facilitar o rastreio (ex: `YYYYMMDD-XXXX`).
-- **Transferência entre Níveis:** Permite mover chamados entre diferentes equipes ou níveis de suporte técnico.
-- **Impressão de Ordem de Serviço:** Gerador de documento em formato A4 personalizado, com campos para assinatura e anotações de campo.
+### Central de Integrações (Multi-Canal)
 
-### 📅 Agenda Técnica
+Hub centralizado para comunicação e alertas automáticos com foco em segurança:
 
-- **Prevenção de Conflitos:** O sistema impede automaticamente que dois serviços sejam agendados para o mesmo técnico no mesmo horário.
-- **Avisos de Atraso:** Destaque visual em cores para identificar rapidamente visitas que estão fora do horário previsto.
-- **Flexibilidade de Horários:** Facilidade para reorganizar visitas com atualização imediata no histórico do chamado.
-- **Ordem de Serviço Pronta para Imprimir:** Documento formatado para impressão rápida com os dados do cliente e do serviço.
+- **Canais:** Suporte nativo para Telegram Bot, E-mail (SMTP) e WhatsApp Business (API Evolution)
+- **Criptografia AES-256:** Todas as credenciais e tokens são armazenados encriptados no banco de dados
+- **Testes em Tempo Real:** Painel administrativo para validação de conectividade antes do deploy
+- **Notificações Inteligentes:** Disparo automático de alertas para técnicos e administradores
 
-### 👥 Perfil 360º de Clientes
+### Gestão de Tickets
 
-- **Repositório Contratual:** Upload e gestão de documentos (PDF/Imagens) com isolamento físico por UUID.
-- **Dashboard do Cliente:** Visualização instantânea de métricas de chamados, última visita e histórico financeiro/técnico.
-- **Busca Global Cruzada:** Localização ultrarápida por Nome, Fantasia ou CPF/CNPJ parcial.
+- Linha do tempo separando interações técnico/cliente/sistema
+- Protocolos únicos e seguros gerados automaticamente
+- Atribuição automática de técnico ao interagir (workflow self-service)
+- Transferência entre níveis de suporte
+- Impressão de Ordem de Serviço em formato A4
+- Sincronização em tempo real entre usuários
 
-### ⚙️ Administração do Sistema
+### Agenda Técnica
 
-- **Auditoria Simplificada:** Ferramenta que lê os registros do sistema e os organiza em uma tabela fácil de consultar, com filtros por tipo de evento.
-- **Gestão de Identidade:** Painel central para alterar a logo, o nome da empresa e outros dados que aparecem nos relatórios e nas ordens de serviço.
-- **Verificação de Saúde:** Monitoramento automático que garante que o banco de dados e as pastas do sistema estão prontos para o uso.
+- Prevenção automática de conflitos de horário
+- Calendário interativo com drag-and-drop (FullCalendar)
+- Avisos visuais para atrasos e prioridades críticas
+- Ordem de Serviço pronta para impressão
+
+### Dashboard e Estatísticas
+
+- Indicadores instantâneos com atualização automática via Live Sync
+- Gráficos dinâmicos com zoom e navegação detalhada (ApexCharts)
+- Distribuição por status com filtro por clique
+- Volume por departamento para identificação de gargalos
+- Progresso de visitas técnicas do dia
+
+### Perfil 360º de Clientes
+
+- Repositório contratual com isolamento físico por UUID
+- Dashboard individual com métricas e histórico
+- Busca global cruzada (Nome/Fantasia/CPF/CNPJ)
+- Validação de integridade binária em uploads
+
+### Administração
+
+- Auditoria com rastreamento de IP Real
+- Gestão de identidade (logo, nome da empresa)
+- Configuração segura de integrações (credenciais criptografadas)
+- Verificação de saúde do sistema
+- Monitor de tarefas agendadas
 
 ---
 
-## ✨ Recursos Adicionais
+## Segurança Corporativa
 
-- **Instalação Automática:** No primeiro acesso, o sistema cria sozinho todas as pastas e o banco de dados necessários.
-- **Páginas de Erro Personalizadas:** Visual exclusivo para erros de acesso ou páginas não encontradas, mantendo a identidade do sistema.
+### Proteção de Dados
+
+- **Criptografia AES-256 (Fernet):** Credenciais sensíveis (SMTP, Telegram, WhatsApp) armazenadas encriptadas. Arquivo `.db` roubado é inútil sem a chave de criptografia
+- **Ofuscação com UUIDv4:** IDs sequenciais abolidos para impedir enumeração e exposição de volume
+- **Isolamento Físico:** Logs e backups separados dos uploads de clientes
+
+### Proteção de Arquivos
+
+- **Validação Binária:** Inspeção de Magic Numbers via `filetype`, ignorando extensões falsas
+- **Proteção Anti-Freeze:** Interceptador de colagem que trunca textos massivos e previne travamento do navegador
+
+### Proteção de Acesso
+
+- **Anti-BruteForce:** Flask-Limiter com rastreamento de IP Real (bypass de proxy)
+- **RBAC Granular:** Controle de acesso baseado em funções com decoradores `@admin_required`
+- **Auditoria Completa:** Logs automáticos de autor, timestamp e IP Real em todas as operações
 
 ---
 
-## 🧪 Suite de Testes e QA (Garantia de Estabilidade)
+## Automação e Resiliência
 
-O HelpHub 4.0 conta com uma infraestrutura de testes de última geração, garantindo que cada linha de código seja validada antes do deploy.
+### Tarefas Agendadas (APScheduler)
+
+- **Backup Diário (03:00):** Dump automático com rotação inteligente (últimos 14 backups)
+- **Zelador de Chamados (03:05):** Encerramento automático de tickets pendentes >48h
+
+### Monitoramento
+
+- Decorador `@monitorar_tarefa` registra execução, status e tempo de cada rotina
+- Detecção de servidor offline com alerta crítico no Dashboard
+- Verificação automática de saúde do sistema
+
+---
+
+## Stack Tecnológica
+
+### Backend
+
+![Flask](https://img.shields.io/badge/Flask-3.0-black?logo=flask)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-ORM-red?logo=python)
+![APScheduler](https://img.shields.io/badge/APScheduler-Automation-orange)
+
+- **Flask 3.0:** Framework web principal
+- **SQLAlchemy:** ORM com suporte a SQLite/MySQL/PostgreSQL
+- **Flask-Limiter:** Proteção anti-bruteforce
+- **Flask-Migrate:** Sistema de migrations
+- **Cryptography (Fernet):** Criptografia industrial AES-256
+- **APScheduler:** Agendador de tarefas automáticas
+- **Arrow:** Manipulação precisa de datas/horários
+- **Filetype:** Validação de integridade binária
+
+### Frontend
+
+![Alpine.js](https://img.shields.io/badge/Alpine.js-Reactive-8BC0D0?logo=alpinedotjs)
+![Jinja2](https://img.shields.io/badge/Jinja2-Templates-B41717?logo=jinja)
+
+- **Jinja2:** Template engine
+- **Alpine.js:** Reatividade e Live Sync
+- **ApexCharts:** Gráficos interativos
+- **FullCalendar:** Calendário com drag-and-drop
+- **Design System:** CSS moderno responsivo
+
+### Bancos de Dados
+
+![SQLite](https://img.shields.io/badge/SQLite-Dev-003B57?logo=sqlite)
+![MySQL](https://img.shields.io/badge/MySQL-Production-4479A1?logo=mysql)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Compatible-4169E1?logo=postgresql)
+
+- **SQLite:** Desenvolvimento e pequenas instalações (zero config)
+- **MySQL/MariaDB:** Produção e alta performance
+- **PostgreSQL:** Totalmente compatível via SQLAlchemy
+
+Transição entre bancos por simples alteração de URI, sem mudanças no código.
+
+---
+
+## Testes e Qualidade
 
 <div align="center">
-  
-  [![Test Suite](https://img.shields.io/badge/Status-100%25%20Passed-success?style=for-the-badge&logo=pytest)](tests/)
-  [![Coverage](https://img.shields.io/badge/Coverage-89%25-blue?style=for-the-badge&logo=codecov)](tests/)
-  [![Cenários](https://img.shields.io/badge/Cenários-105%20Validados-orange?style=for-the-badge)](tests/)
+
+[![Test Suite](https://img.shields.io/badge/Status-100%25%20Passed-success?style=for-the-badge&logo=pytest)](tests/)
+[![Coverage](https://img.shields.io/badge/Coverage-87%25-green?style=for-the-badge&logo=codecov)](tests/)
+[![Cenários](https://img.shields.io/badge/Cenários-135%20Validados-orange?style=for-the-badge)](tests/)
 
 </div>
 
-### 📊 Desempenho da Última Bateria
+### Cobertura Completa
 
-O sistema passou por uma bateria exaustiva de testes funcionais, unitários e de integração em ambiente Windows 11.
+| Categoria      | Cenários | Status      |
+|:---------------|:--------:|:------------|
+| Funcionais     | 84       | ✅ Sucesso  |
+| Unitários      | 46       | ✅ Sucesso  |
+| Integração     | 5        | ✅ Sucesso  |
+| **Total**      | **135**  | **100% OK** |
 
-| Categoria      | Arquivos | Cenários |   Status    |
-| :------------- | :------: | :------: | :---------: |
-| **Funcionais** |    13    |    64    | ✅ Sucesso  |
-| **Unitários**  |    9     |    39    | ✅ Sucesso  |
-| **Integração** |    3     |    2     | ✅ Sucesso  |
-| **Total**      |  **25**  | **105**  | **100% OK** |
+**Executar testes:** `python tests/iniciar_testes.py`
+
+---
+
+## Instalação Rápida
+
+```bash
+# 1. Clone o repositório
+git clone [url-do-repositorio]
+
+# 2. Instale dependências
+pip install -r requirements.txt
+
+# 3. Configure fuso horário (opcional)
+# Edite App/configurar.py (default: America/Sao_Paulo)
+
+# 4. Execute
+python debug.py
+
+# 5. Acesse
+http://localhost:5000
+# Usuário: admin | Senha: admin123 (criados automaticamente)
+```
+
+### Migração para MySQL (Produção)
 
 <details>
-<summary>📂 <b>CLIQUE PARA VER O RELATÓRIO TÉCNICO COMPLETO (PYTEST)</b></summary>
-<br>
+<summary>Expandir tutorial de migração</summary>
 
-```text
-============================================================
- INICIANDO BATERIA DE TESTES - HELPHUB 4.0
-============================================================
-collected 105 items
-
-tests\functional\test_admin_config.py .......                                   [  6%]
-tests\functional\test_agenda.py .                                               [  7%]
-tests\functional\test_auth.py ..                                                [  9%]
-tests\functional\test_busca_global.py ...                                       [ 12%]
-tests\functional\test_chamados.py ..........                                    [ 21%]
-tests\functional\test_clientes.py ...........                                   [ 32%]
-tests\functional\test_dashboard.py .                                            [ 33%]
-tests\functional\test_departamentos.py ..........                               [ 42%]
-tests\functional\test_impressao_os.py .                                         [ 43%]
-tests\functional\test_seguranca.py ...                                          [ 46%]
-tests\functional\test_seguranca_autorizacao.py .                                [ 47%]
-tests\functional\test_user_management.py ......                                 [ 53%]
-tests\functional\test_workflow_chamados.py ...                                  [ 56%]
-tests\integration\test_full_lifecycle.py ..                                     [ 58%]
-tests\unit\test_adm_servicos.py ..                                              [ 60%]
-tests\unit\test_agenda_api.py ..                                                [ 61%]
-tests\unit\test_agendador.py ......                                             [ 67%]
-tests\unit\test_app_init.py ..                                                  [ 69%]
-tests\unit\test_auth_routes.py .........                                        [ 78%]
-tests\unit\test_logging.py ..                                                   [ 80%]
-tests\unit\test_models.py .......                                               [ 86%]
-tests\unit\test_upload_manager.py ...........                                   [ 97%]
-tests\unit\test_utils.py ...                                                    [100%]
-
--------------------------------------------------------------------------------------
-TOTAL COBERTURA: 89% (1253 Stmts | 111 Miss)
-========================== 105 passed in 34.62s ==========================
+```sql
+-- 1. Crie o database
+CREATE DATABASE helphub_prod CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
+
+```python
+# 2. Configure URI em App/configurar.py
+SQLALCHEMY_DATABASE_URI = "mysql+pymysql://usuario:senha@localhost/helphub_prod"
+```
+
+```bash
+# 3. Aplique migrations
+$env:FLASK_APP="debug.py"
+flask db upgrade -d App/migrations
+```
+
+**Migração de dados:** Use DBeaver ou DB Browser for SQLite (Exportar/Importar)
 
 </details>
 
-<br>
+---
 
-**Para executar o ecossistema de testes localmente:**
+## Recursos Adicionais
 
-```bash
-python tests/iniciar_testes.py
-```
+- **Instalação Zero-Config:** Criação automática de pastas e banco de dados no primeiro acesso
+- **Páginas de Erro Personalizadas:** Interface consistente mesmo em erros 404/403
+- **Proteção DoS via UI:** Prevenção automática contra travamento do navegador
+- **Logs Estruturados:** Sistema completo de auditoria com rastreamento de IP Real
 
 ---
 
-## Instalação e Primeiro Uso
+## Licença
 
-1.  Clone o repositório.
-2.  Instale as dependências: `pip install -r requirements.txt`.
-3.  Configure o fuso horário em `App/configurar.py` (Default: America/Sao_Paulo).
-4.  Rode o sistema: `python debug.py`.
-5.  **Acesse:** `http://localhost:5000`. O usuário `admin` e senha `admin123` são criados automaticamente se a base for virgem.
+[![License Non-Commercial](https://img.shields.io/badge/License-Non--Commercial-orange.svg)](LICENSE)
+
+Este projeto está sob licença de uso não-comercial. Consulte o arquivo LICENSE para detalhes.
 
 ---
+
+<div align="center">
+
+**HelpHub 4.1** - Gestão Profissional de Chamados e Assistência Técnica
+
+![Made with Flask](https://img.shields.io/badge/Made%20with-Flask-black?logo=flask)
+![Python](https://img.shields.io/badge/Python-3.12%2B-blue?logo=python)
+![Tested](https://img.shields.io/badge/Tests-135%20Passing-success?logo=pytest)
+
+</div>

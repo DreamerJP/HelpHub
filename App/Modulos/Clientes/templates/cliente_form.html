@@ -1,199 +1,188 @@
-{% extends "layout_base.html" %} {% block title %}{{ titulo }} - HelpHub 4.0{%
+{% extends "layout_base.html" %} {% from "componentes.html" import
+render_layout_erp, erp_banner %} {% block title %}{{ titulo }} - HelpHub 4.0{%
 endblock %} {% block page_title %}{{ titulo }}{% endblock %} {% block content %}
-<div style="max-width: 800px">
+{# Toolbar: Único local para botões conforme padrão ERP #} {% set toolbar_html
+%}
+<div x-show="activeTab === 'dados'" x-cloak class="flex items-center gap-2">
+  <button type="submit" form="form-cliente" class="erp-btn erp-btn-primary">
+    <i class="ph ph-check-circle text-lg"></i> Salvar Cliente
+  </button>
+  <div class="erp-separator"></div>
+  <a href="{{ url_for('clientes.lista') }}" class="erp-btn erp-btn-neutral">
+    <i class="ph ph-x-circle text-lg"></i> Cancelar
+  </a>
+</div>
+{% endset %} {% call render_layout_erp( titulo="Cadastro", abas=[{'id': 'dados',
+'label': 'Dados Cadastrais', 'icon': 'ph-user-focus'}],
+toolbar_buttons=toolbar_html, active_tab_id='dados' ) %}
+
+<div style="padding: 2rem; min-height: 600px">
   <form
     method="POST"
-    class="glass-panel"
-    style="padding: 2rem; border-radius: 8px"
+    id="form-cliente"
+    class="form-layout-premium"
+    style="max-width: 1000px"
   >
     {{ form.hidden_tag() }}
 
-    <h4
-      style="
-        margin-bottom: 1rem;
-        color: var(--primary);
-        border-bottom: 1px solid #e5e7eb;
-        padding-bottom: 0.5rem;
-      "
-    >
-      Dados Principais
-    </h4>
-
-    <div
-      style="
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 1rem;
-        margin-bottom: 1rem;
-      "
-    >
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >Nome / Razão Social</label
-        >
-        {{ form.nome_razao(class="form-input", style="width: 100%; padding:
-        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;") }}
-      </div>
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >CPF/CNPJ</label
-        >
-        {{ form.cpf_cnpj(class="form-input", style="width: 100%; padding:
-        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;") }}
-      </div>
-    </div>
-
-    <div
-      style="
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-      "
-    >
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >Nome Fantasia</label
-        >
-        {{ form.nome_fantasia(class="form-input", style="width: 100%; padding:
-        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;") }}
-      </div>
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >Email</label
-        >
-        {{ form.email(class="form-input", style="width: 100%; padding: 0.6rem;
-        border: 1px solid #D1D5DB; border-radius: 6px;") }}
-      </div>
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >Telefone</label
-        >
-        {{ form.telefone(class="form-input", style="width: 100%; padding:
-        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;") }}
-      </div>
-    </div>
-
-    <h4
-      style="
-        margin-bottom: 1rem;
-        color: var(--primary);
-        border-bottom: 1px solid #e5e7eb;
-        padding-bottom: 0.5rem;
-      "
-    >
-      Endereço
-    </h4>
-
-    <div
-      style="
-        display: grid;
-        grid-template-columns: 150px 1fr 120px;
-        gap: 1rem;
-        margin-bottom: 1rem;
-      "
-    >
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >CEP
-          <i
-            class="ph ph-magnifying-glass"
-            id="loading-cep"
-            style="display: none; animation: spin 1s linear infinite"
-          ></i
-        ></label>
-        {{ form.cep(id="cep", class="form-input", style="width: 100%; padding:
-        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;",
-        placeholder="00000-000") }}
-      </div>
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >Logradouro</label
-        >
-        {{ form.logradouro(id="logradouro", class="form-input", style="width:
-        100%; padding: 0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;
-        background-color: #F9FAFB;") }}
-      </div>
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >Número</label
-        >
-        {{ form.numero(class="form-input", style="width: 100%; padding: 0.6rem;
-        border: 1px solid #D1D5DB; border-radius: 6px;") }}
-      </div>
-    </div>
-
-    <div
-      style="
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr 80px;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-      "
-    >
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >Complemento</label
-        >
-        {{ form.complemento(class="form-input", style="width: 100%; padding:
-        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;") }}
-      </div>
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >Bairro</label
-        >
-        {{ form.bairro(id="bairro", class="form-input", style="width: 100%;
-        padding: 0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;
-        background-color: #F9FAFB;") }}
-      </div>
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >Cidade</label
-        >
-        {{ form.cidade(id="cidade", class="form-input", style="width: 100%;
-        padding: 0.6rem; border: 1px solid #D1D5DB; border-radius: 6px;
-        background-color: #F9FAFB;") }}
-      </div>
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >UF</label
-        >
-        {{ form.uf(id="uf", class="form-input", style="width: 100%; padding:
-        0.6rem; border: 1px solid #D1D5DB; border-radius: 6px; background-color:
-        #F9FAFB;") }}
-      </div>
-    </div>
-
-    <div style="margin-bottom: 2rem">
-      <label style="display: flex; align-items: center; gap: 0.5rem">
-        {{ form.ativo() }}
-        <span>Cliente Ativo</span>
-      </label>
-    </div>
-
-    <div style="display: flex; gap: 1rem">
-      <button type="submit" class="btn btn-primary">Salvar Cliente</button>
-      <a
-        href="{{ url_for('clientes.lista') }}"
-        class="btn"
-        style="background: #e5e7eb; color: #374151"
-        >Cancelar</a
+    <section class="flex flex-col gap-6">
+      <h4
+        style="
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          color: var(--primary);
+          font-weight: 800;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 0.5rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        "
       >
-    </div>
+        <i class="ph ph-clipboard-text"></i> Dados Principais
+      </h4>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem">
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm"
+            >Nome / Razão Social</label
+          >
+          {% set cli_placeholder = "Ex: Nome do Cliente ou Empresa" %} {{
+          form.nome_razao(class="form-control", placeholder=cli_placeholder,
+          maxlength="100") }}
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm">CPF / CNPJ</label>
+          {{ form.cpf_cnpj(class="form-control", maxlength="20") }}
+        </div>
+      </div>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1.2fr 1.5fr 1fr;
+          gap: 1.5rem;
+        "
+      >
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm"
+            >Nome Fantasia</label
+          >
+          {{ form.nome_fantasia(class="form-control", maxlength="100") }}
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm">Email</label>
+          {{ form.email(class="form-control", maxlength="120") }}
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm">Telefone</label>
+          {{ form.telefone(class="form-control", maxlength="20") }}
+        </div>
+      </div>
+    </section>
+
+    <section class="flex flex-col gap-6">
+      <h4
+        style="
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          color: var(--primary);
+          font-weight: 800;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 0.5rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        "
+      >
+        <i class="ph ph-map-pin"></i> Endereço
+      </h4>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 150px 1fr 120px;
+          gap: 1.5rem;
+        "
+      >
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm"
+            >CEP
+            <i
+              class="ph ph-spinner animate-spin"
+              id="loading-cep"
+              style="display: none"
+            ></i
+          ></label>
+          {{ form.cep(id="cep", class="form-control", placeholder="00000-000")
+          }}
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm">Logradouro</label>
+          {{ form.logradouro(id="logradouro", class="form-control",
+          style="background-color: #F9FAFB;") }}
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm">Número</label>
+          {{ form.numero(class="form-control") }}
+        </div>
+      </div>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr 80px;
+          gap: 1.5rem;
+        "
+      >
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm">Complemento</label>
+          {{ form.complemento(class="form-control") }}
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm">Bairro</label>
+          {{ form.bairro(id="bairro", class="form-control",
+          style="background-color: #F9FAFB;") }}
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm">Cidade</label>
+          {{ form.cidade(id="cidade", class="form-control",
+          style="background-color: #F9FAFB;") }}
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm">UF</label>
+          {{ form.uf(id="uf", class="form-control", style="background-color:
+          #F9FAFB;") }}
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-1 mt-4">
+        <label class="font-semibold text-gray-700 text-sm"
+          >Observações / Interno</label
+        >
+        {{ form.observacoes(class="form-control", rows="4", style="resize:
+        none;", maxlength="5000", placeholder="Anotações internas sobre este cliente...") }}
+      </div>
+
+      <div class="flex items-center gap-2 mt-4">
+        {{ form.ativo(class="form-checkbox h-4 w-4 text-primary rounded
+        border-gray-300") }}
+        <label class="font-semibold text-gray-700 text-sm"
+          >Cliente Ativo no Sistema</label
+        >
+      </div>
+    </section>
   </form>
 </div>
-{% endblock %} {% block scripts %}
+{% endcall %} {% endblock %} {% block scripts %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const cepInput = document.getElementById("cep");
 
     cepInput.addEventListener("blur", function () {
       let cep = this.value.replace(/\D/g, "");
-
       if (cep.length === 8) {
         document.getElementById("loading-cep").style.display = "inline-block";
-
-        // ViaCEP API
         fetch(`https://viacep.com.br/ws/${cep}/json/`)
           .then((response) => response.json())
           .then((data) => {
@@ -202,8 +191,6 @@ endblock %} {% block page_title %}{{ titulo }}{% endblock %} {% block content %}
               document.getElementById("bairro").value = data.bairro;
               document.getElementById("cidade").value = data.localidade;
               document.getElementById("uf").value = data.uf;
-
-              // Foca no número para facilitar
               document.getElementById("numero").focus();
             } else {
               alert("CEP não encontrado.");
@@ -217,12 +204,4 @@ endblock %} {% block page_title %}{{ titulo }}{% endblock %} {% block content %}
     });
   });
 </script>
-<style>
-  @keyframes spin {
-    100% {
-      -webkit-transform: rotate(360deg);
-      transform: rotate(360deg);
-    }
-  }
-</style>
 {% endblock %}

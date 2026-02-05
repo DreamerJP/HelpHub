@@ -1,5 +1,6 @@
 from flask import Flask
 from flask_login import LoginManager
+from flask_migrate import Migrate
 import logging
 from logging.handlers import RotatingFileHandler
 import os
@@ -8,8 +9,12 @@ import os
 from flask_wtf import CSRFProtect
 from .configurar import config
 from .banco import db
-from .seguranca import limiter
-from .agendador import scheduler, configurar_agendamento, verificar_tarefas_atrasadas
+from .servicos.seguranca import limiter
+from .servicos.agendador import (
+    scheduler,
+    configurar_agendamento,
+    verificar_tarefas_atrasadas,
+)
 
 # Import Blueprints
 from .Modulos.Layout.rotas import layout_bp
@@ -60,7 +65,7 @@ def create_app(config_name=None, test_config=None):
         log_dir = os.path.join(app.config["BASE_DIR"], "Data", "Logs")
 
         # Filtro para injetar o IP real no log
-        from .utils import RequestEntityFilter
+        from .servicos.utils import RequestEntityFilter
 
         file_handler = RotatingFileHandler(
             os.path.join(log_dir, "system.log"),
@@ -78,10 +83,13 @@ def create_app(config_name=None, test_config=None):
 
         app.logger.addHandler(file_handler)
         app.logger.setLevel(logging.INFO)
-        app.logger.info("HelpHub 4.0 Iniciado")
+        app.logger.info("HelpHub 4.1 Iniciado")
 
     # 2. Inicializar Extensões
     db.init_app(app)
+    # Define a pasta de migrações dentro de App para manter a raiz limpa
+    migrations_dir = os.path.join(app.root_path, "migrations")
+    Migrate(app, db, directory=migrations_dir, render_as_batch=True)
     csrf.init_app(app)
 
     login_manager = LoginManager()
@@ -123,9 +131,22 @@ def create_app(config_name=None, test_config=None):
     # 5. Context Processor para globais de template
     @app.context_processor
     def inject_globals():
+        from .Modulos.Administracao.modelo import TarefaMonitor
+
+        erros_notif = []
+        if not app.config.get("TESTING"):
+            try:
+                erros_notif = TarefaMonitor.query.filter(
+                    TarefaMonitor.tarefa_id.like("notificacao_%"),
+                    TarefaMonitor.status == "Erro",
+                ).all()
+            except Exception:
+                pass
+
         return {
             "SCHEDULER_ERROR": app.config.get("SCHEDULER_ERROR"),
             "TAREFAS_ATRASADAS": app.config.get("TAREFAS_ATRASADAS", []),
+            "ERROS_NOTIFICACAO": erros_notif,
             "TIMEZONE": app.config["TIMEZONE"],
         }
 
@@ -151,7 +172,7 @@ def create_app(config_name=None, test_config=None):
             time_str = "Instale a biblioteca 'arrow' para ver a hora correta."
 
         return {
-            "sistema": "HelpHub 4.0",
+            "sistema": "HelpHub 4.1",
             "status": "Online/Pronto",
             "config_timezone": app.config["TIMEZONE"],
             "hora_atual_servidor": time_str,
@@ -163,22 +184,29 @@ def create_app(config_name=None, test_config=None):
             # Cria as tabelas se não existirem
             db.create_all()
 
-            # Cria admin padrão se não houver usuários
-            if not Usuario.query.first():
-                print("--- Criando Usuario Admin Padrão... ---")
-                admin = Usuario(
-                    username="admin",
-                    nome="Administrador Sistema",
-                    email="admin@helphub.com",
-                    role="Admin",
-                )
-                admin.set_password("admin123")
-                admin.save()
-                # Log de criação do admin
-                app.logger.info("Usuário Admin criado automaticamente.")
-                print("--- Admin criado: admin / admin123 ---")
+            # Cria admin padrão se não houver usuários (Protegido por try para permitir migrações iniciais)
+            try:
+                if not Usuario.query.first():
+                    print("--- Criando Usuario Admin Padrão... ---")
+                    admin = Usuario(
+                        username="admin",
+                        nome="Administrador Sistema",
+                        email="admin@helphub.com",
+                        role="Admin",
+                    )
+                    admin.set_password("admin123")
+                    admin.save()
+                    # Log de criação do admin
+                    app.logger.info("Usuário Admin criado automaticamente.")
+                    print("--- Admin criado: admin / admin123 ---")
+            except Exception:
+                # Se a tabela não existir ainda (durante migrate), ignoramos silenciosamente
+                pass
 
             # 8. Verificar tarefas atrasadas (resiliência) após o banco estar pronto
-            verificar_tarefas_atrasadas(app)
+            try:
+                verificar_tarefas_atrasadas(app)
+            except Exception:
+                pass
 
     return app

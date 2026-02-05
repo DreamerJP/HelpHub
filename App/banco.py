@@ -1,21 +1,30 @@
 from flask_sqlalchemy import SQLAlchemy
-import sqlite3
-from datetime import datetime, date
-from sqlalchemy import event
+from sqlalchemy import MetaData, event
 from sqlalchemy.engine import Engine
+import sqlite3
+import datetime
+
+# Convenção de nomes para Constraints (Fundacional para Migrações e MySQL)
+# Isso garante que FKs, PKs e Índices tenham nomes previsíveis.
+convention = {
+    "ix": "ix_%(column_0_label)s",
+    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ck": "ck_%(table_name)s_%(constraint_name)s",
+    "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+    "pk": "pk_%(table_name)s",
+}
+
+metadata = MetaData(naming_convention=convention)
 
 
-# --- CONFIGURAÇÃO DE INFRAESTRUTURA: SUPORTE A DATAS NO SQLITE (PYTHON 3.12+) ---
-# Registramos os adaptadores oficiais para garantir que objetos datetime/date
-# sejam persistidos corretamente como strings ISO, preservando a compatibilidade.
+# --- SUPORTE A DATAS NO SQLITE (PYTHON 3.12+) ---
 @event.listens_for(Engine, "connect")
-def _set_sqlite_adapters(dbapi_connection, connection_record):
+def set_sqlite_pro_processing(dbapi_connection, connection_record):
     if isinstance(dbapi_connection, sqlite3.Connection):
-        # Registramos no nível do módulo apenas uma vez, de forma controlada.
-        # Isso garante que o SQLite saiba traduzir os tipos do Python.
-        sqlite3.register_adapter(datetime, lambda val: val.isoformat(sep=" "))
-        sqlite3.register_adapter(date, lambda val: val.isoformat())
+        # Ensina o SQLite a converter datas corretamente sem gerar Warnings
+        sqlite3.register_adapter(datetime.date, lambda v: v.isoformat())
+        sqlite3.register_adapter(datetime.datetime, lambda v: v.isoformat(sep=" "))
 
 
-# Instância compartilhada do SQLAlchemy.
-db = SQLAlchemy()
+# Instância compartilhada do SQLAlchemy com padronização profissional.
+db = SQLAlchemy(metadata=metadata)

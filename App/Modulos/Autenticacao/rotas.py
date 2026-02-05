@@ -9,10 +9,17 @@ from flask import (
 )
 from flask_login import login_user, logout_user, current_user, login_required
 from App.Modulos.Autenticacao.modelo import Usuario
-from App.Modulos.Autenticacao.formulario import LoginForm, UsuarioForm, AlterarSenhaForm
-from App.seguranca import limiter, admin_required
+from App.Modulos.Autenticacao.formulario import (
+    LoginForm,
+    UsuarioForm,
+    AlterarSenhaForm,
+    PerfilForm,
+)
+from App.servicos.seguranca import limiter, admin_required
 from flask_limiter import RateLimitExceeded
 from App.banco import db
+from App.servicos.upload_manager import UploadManager
+import os
 
 # Blueprint da Autenticação
 auth_bp = Blueprint("auth", __name__, template_folder="templates")
@@ -74,7 +81,14 @@ def logout():
 @login_required
 @admin_required
 def lista_usuarios():
-    usuarios = Usuario.query.order_by(Usuario.nome).all()
+    query = Usuario.query
+    query = Usuario.apply_sort(
+        query, request.args.get("sort"), request.args.get("order")
+    )
+    if not request.args.get("sort"):
+        query = query.order_by(Usuario.nome)
+
+    usuarios = query.all()
     return render_template("usuarios_lista.html", usuarios=usuarios)
 
 
@@ -84,6 +98,10 @@ def lista_usuarios():
 def novo_usuario():
     form = UsuarioForm()
     if form.validate_on_submit():
+        if not form.password.data:
+            flash("A senha é obrigatória para novos usuários.", "error")
+            return render_template("usuario_form.html", form=form, titulo="Novo Membro")
+
         if Usuario.query.filter_by(username=form.username.data).first():
             flash("Este nome de usuário já está em uso.", "error")
             return render_template("usuario_form.html", form=form, titulo="Novo Membro")
@@ -95,10 +113,7 @@ def novo_usuario():
             role=form.role.data,
             ativo=form.ativo.data,
         )
-        if form.password.data:
-            user.set_password(form.password.data)
-        else:
-            user.set_password("HH123456")  # Senha padrão se não informada
+        user.set_password(form.password.data)
 
         user.save()
         flash(f"Usuário {user.username} criado com sucesso!", "success")
@@ -169,17 +184,72 @@ def toggle_usuario(id):
 @auth_bp.route("/perfil", methods=["GET", "POST"])
 @login_required
 def perfil():
-    form = AlterarSenhaForm()
-    if form.validate_on_submit():
-        if not current_user.check_password(form.password_old.data):
+    form_senha = AlterarSenhaForm()
+    form_perfil = PerfilForm(obj=current_user)
+
+    # Identifica qual form foi submetido
+    if "btn_senha" in request.form and form_senha.validate_on_submit():
+        if not current_user.check_password(form_senha.password_old.data):
             flash("Senha atual incorreta.", "error")
         else:
-            current_user.set_password(form.password_new.data)
+            current_user.set_password(form_senha.password_new.data)
             db.session.commit()
             flash("Sua senha foi alterada com sucesso!", "success")
-            return redirect(url_for("layout.index"))
+            return redirect(url_for("auth.perfil"))
 
-    return render_template("perfil.html", form=form)
+    if "btn_perfil" in request.form and form_perfil.validate_on_submit():
+        current_user.nome = form_perfil.nome.data
+        current_user.email = form_perfil.email.data
+
+        # Logica de Upload de Avatar
+        if form_perfil.avatar.data:
+            try:
+                # 1. Se já tem um avatar, remove o antigo do disco para não ocupar espaço
+                if current_user.avatar:
+                    old_path = os.path.join(
+                        current_app.config["UPLOAD_FOLDER"], current_user.avatar
+                    )
+                    if os.path.exists(old_path):
+                        os.remove(old_path)
+
+                # 2. Salva o novo
+                subfolder = f"Profiles/{current_user.id}"
+                filename = UploadManager.salvar(
+                    form_perfil.avatar.data, subfolder=subfolder
+                )
+                current_user.avatar = filename
+            except Exception as e:
+                flash(f"Erro ao salvar foto: {str(e)}", "error")
+                return redirect(url_for("auth.perfil"))
+
+        db.session.commit()
+        flash("Dados atualizados com sucesso!", "success")
+        return redirect(url_for("auth.perfil"))
+
+    return render_template(
+        "perfil.html", form_senha=form_senha, form_perfil=form_perfil
+    )
+
+
+@auth_bp.route("/perfil/remover_avatar")
+@login_required
+def remover_avatar():
+    """Remove a foto de perfil do usuário e apaga o arquivo físico."""
+    if current_user.avatar:
+        try:
+            path = os.path.join(
+                current_app.config["UPLOAD_FOLDER"], current_user.avatar
+            )
+            if os.path.exists(path):
+                os.remove(path)
+
+            current_user.avatar = None
+            db.session.commit()
+            flash("Foto de perfil removida.", "info")
+        except Exception as e:
+            flash(f"Erro ao remover arquivo: {str(e)}", "error")
+
+    return redirect(url_for("auth.perfil"))
 
 
 @auth_bp.app_errorhandler(RateLimitExceeded)

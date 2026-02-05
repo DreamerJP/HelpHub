@@ -1,151 +1,124 @@
-{% extends "layout_base.html" %} {% from "componentes.html" import
-render_paginacao %} {% block title %}Clientes - HelpHub 4.0{% endblock %} {%
-block page_title %}Gerenciar Clientes{% endblock %} {% block content %}
-<div class="glass-panel">
-  <div
-    style="
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    "
-  >
-    <div style="display: flex; gap: 1rem; align-items: center">
-      <!-- Busca Funcional -->
-      <form
-        action="{{ url_for('clientes.lista') }}"
-        method="get"
-        style="display: flex; gap: 0.5rem; align-items: center"
-      >
-        <div style="position: relative">
-          <i
-            class="ph ph-funnel"
-            style="
-              position: absolute;
-              left: 10px;
-              top: 50%;
-              transform: translateY(-50%);
-              color: var(--text-muted);
-            "
-          ></i>
-          <input
-            type="text"
-            name="q"
-            value="{{ q or '' }}"
-            placeholder="Nome, CPF ou CNPJ..."
-            style="
-              padding: 0.5rem 0.5rem 0.5rem 2rem;
-              border: 1px solid #d1d5db;
-              border-radius: 6px;
-              width: 250px;
-              font-size: 0.85rem;
-            "
-          />
-        </div>
-        {% if q %}
-        <a
-          href="{{ url_for('clientes.lista') }}"
-          class="btn"
-          style="background: #f3f4f6"
-          title="Limpar busca"
-        >
-          <i class="ph ph-x"></i>
+{% extends "layout_base.html" %} 
+{% from "componentes.html" import render_paginacao, render_layout_erp, th_ordenavel, badge_status_cliente %}
+
+{% block title %}Clientes - HelpHub 4.0{% endblock %} 
+
+{% block page_title %}
+    Gerenciamento de Clientes 
+    <span class="erp-subtitle hidden lg:inline-block">Base de cadastros ativos e prospecção</span>
+{% endblock %}
+
+{% block content %}
+{% set toolbar_html %}
+    <div x-show="activeTab === 'lista'" x-cloak class="flex items-center gap-2 w-full">
+        <!-- Grupo A: Ações Principais -->
+        <a href="{{ url_for('clientes.novo') }}" class="erp-btn erp-btn-primary">
+            <i class="ph ph-plus-circle text-lg"></i> Novo
         </a>
-        {% endif %}
-      </form>
-      <div class="text-muted" style="font-size: 0.85rem">
-        Total de {{ clientes.total }} clientes.
-      </div>
+
+        <div class="erp-separator"></div>
+
+        <!-- Grupo B: Ações de Contexto (Dependentes de Seleção) -->
+        <a :href="selectedItem ? '{{ url_for('clientes.editar', id=0) }}'.replace('0', selectedItem.id) : '#'"
+           :class="selectedItem ? '' : 'disabled'"
+           class="erp-btn erp-btn-neutral">
+            <i class="ph ph-pencil-simple text-blue-600"></i> Editar
+        </a>
+
+        <button :class="selectedItem ? '' : 'disabled'"
+                class="erp-btn erp-btn-neutral text-red-600"
+                @click="if(selectedItem && await confirmAction('Excluir cliente ' + selectedItem.nome + '?', 'danger')) { alert('Exclusão via API'); }">
+            <i class="ph ph-trash"></i> Deletar
+        </button>
+
+        <!-- Grupo C: Busca e Filtros (Direita) -->
+        <div class="flex items-center gap-2 ml-auto">
+            <form action="{{ url_for('clientes.lista') }}" method="get" class="flex items-center">
+                <div class="erp-search-box">
+                    <i class="ph ph-magnifying-glass"></i>
+                    <input type="text" name="q" value="{{ q or '' }}" placeholder="Nome, Fantasia, CPF/CNPJ..." 
+                           class="erp-search-input">
+                </div>
+            </form>
+            <div class="erp-badge-count" title="Total de Registros">
+                {{ clientes.total }} reg.
+            </div>
+        </div>
+    </div>
+{% endset %}
+
+
+{# --- RENDERIZAÇÃO DO LAYOUT ERP --- #}
+{% call render_layout_erp(
+    titulo="Gerenciamento de Clientes",
+    subtitulo="Base de cadastros ativos e prospecção.",
+    abas=[
+        {'id': 'lista', 'label': 'Carteira Atual', 'icon': 'ph-users'},
+        {'id': 'placeholder', 'label': 'ADD NOVA ABA', 'icon': 'ph-plus-circle'}
+    ],
+    toolbar_buttons=toolbar_html
+) %}
+
+    <!-- CONTEÚDO DA GRID (Nível 2) -->
+    
+    <!-- Aba: LISTA -->
+    <div x-show="activeTab === 'lista'" class="erp-grid-content">
+        <table class="erp-table">
+            <thead>
+                <tr>
+                    <th style="width: 40px;" class="text-center">#</th>
+                    <th>Status</th>
+                    {{ th_ordenavel('Razão Social / Nome', 'nome_razao', request.args.get('sort'), request.args.get('order')) }}
+                    <th>Nome Fantasia</th>
+                    <th>CPF / CNPJ</th>
+                    <th>Cidade / UF</th>
+                    <th>Endereço</th>
+                    <th>Última Interação</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cliente in clientes.items %}
+                <tr class="group cursor-pointer select-none"
+                    :class="{'selected': selectedItem && selectedItem.id == '{{ cliente.id }}'}"
+                    @click="toggleSelection({
+                        id: '{{ cliente.id }}', 
+                        nome: '{{ cliente.nome_razao | replace("'", "\\'") }}'
+                    })"
+                    @dblclick="window.location.href = '{{ url_for('clientes.editar', id=cliente.id) }}'">
+                    
+                    <td class="text-center text-gray-400 font-mono text-xs">{{ cliente.id }}</td>
+                    
+                    <td class="text-center">
+                        {{ badge_status_cliente(cliente.ativo) }}
+                    </td>
+                    
+                    <td class="font-semibold">{{ cliente.nome_razao }}</td>
+                    <td>{{ cliente.nome_fantasia or '-' }}</td>
+                    <td class="font-mono text-gray-600">{{ cliente.cpf_cnpj }}</td>
+                    <td>{{ cliente.cidade }}/{{ cliente.uf }}</td>
+                    <td class="text-xs text-gray-500 truncate max-w-[200px]">{{ cliente.logradouro }}, {{ cliente.numero }}</td>
+                    <td class="text-xs text-gray-400">Há 2 dias</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-12 text-muted">Nenhum registro encontrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- Rodapé Sticky da Grid -->
+        <div class="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-2">
+             {{ render_paginacao(clientes, 'clientes.lista', q=q) }}
+        </div>
     </div>
 
-    <a href="{{ url_for('clientes.novo') }}" class="btn btn-primary">
-      <i class="ph ph-plus"></i> Novo Cliente
-    </a>
-  </div>
+    <!-- Aba: Placeholder -->
+    <div x-show="activeTab === 'placeholder'" class="p-12 text-center text-gray-400">
+        <i class="ph ph-plus-circle text-3xl mb-3 block opacity-50"></i>
+        <p>Espaço reservado para novas funcionalidades.</p>
+    </div>
 
-  <table class="data-table data-table-clickable">
-    <thead>
-      <tr>
-        <th>Nome / Razão</th>
-        <th>CPF/CNPJ</th>
-        <th>Cidade/UF</th>
-        <th>Status</th>
-        <th style="text-align: right">Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for cliente in clientes.items %}
-      <tr
-        class="clickable-row"
-        data-href="{{ url_for('clientes.editar', id=cliente.id) }}"
-      >
-        <td>
-          <div style="font-weight: 500">{{ cliente.nome_razao }}</div>
-          {% if cliente.nome_fantasia %}
-          <div class="text-muted" style="font-size: 0.75rem">
-            {{ cliente.nome_fantasia }}
-          </div>
-          {% endif %}
-        </td>
-        <td>{{ cliente.cpf_cnpj }}</td>
-        <td>
-          {% if cliente.cidade %}{{ cliente.cidade }}/{{ cliente.uf }}{% else
-          %}-{% endif %}
-        </td>
-        <td>
-          {% if cliente.ativo %}
-          <span class="badge badge-success">Ativo</span>
-          {% else %}
-          <span class="badge badge-neutral">Inativo</span>
-          {% endif %}
-        </td>
-        <td style="text-align: right">
-          <a
-            href="{{ url_for('clientes.editar', id=cliente.id) }}"
-            class="btn btn-soft-primary btn-sm"
-          >
-            <i class="ph ph-eye"></i> Detalhes
-          </a>
-        </td>
-      </tr>
-      {% else %}
-      <tr>
-        <td
-          colspan="5"
-          style="text-align: center; padding: 3rem"
-          class="text-muted"
-        >
-          Nenhum cliente encontrado.
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+{% endcall %}
 
-  {# Uso da Macro de Paginação Padronizada #} {{ render_paginacao(clientes,
-  'clientes.lista', q=q) }}
-</div>
-
-<script>
-  // Event listeners para linhas clicáveis
-  document.addEventListener("DOMContentLoaded", function () {
-    const clickableRows = document.querySelectorAll(".clickable-row");
-
-    clickableRows.forEach((row) => {
-      row.style.cursor = "pointer";
-
-      row.addEventListener("click", function (e) {
-        // Ignora clique se foi em um link ou botão
-        if (e.target.closest("a, button")) {
-          return;
-        }
-
-        const href = this.dataset.href;
-        if (href) {
-          window.location.href = href;
-        }
-      });
-    });
-  });
-</script>
 {% endblock %}

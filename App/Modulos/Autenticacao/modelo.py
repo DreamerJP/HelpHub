@@ -7,13 +7,18 @@ from flask_login import UserMixin
 class Usuario(BaseModel, UserMixin):
     __tablename__ = "usuarios"
 
-    username = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    username = db.Column(
+        db.String(64, collation="NOCASE"), unique=True, nullable=False, index=True
+    )
     password_hash = db.Column(db.String(128), nullable=False)
     role = db.Column(db.String(20), default="Operador")  # 'Admin' ou 'Operador'
 
     # Campos pessoais básicos
-    nome = db.Column(db.String(100))
+    nome = db.Column(db.String(100, collation="NOCASE"))
     email = db.Column(db.String(120), unique=True)
+    avatar = db.Column(
+        db.String(255), nullable=True
+    )  # Nome do arquivo da foto de perfil
     ativo = db.Column(db.Boolean, default=True)
 
     def set_password(self, password):

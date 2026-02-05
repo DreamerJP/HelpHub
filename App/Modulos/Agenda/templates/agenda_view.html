@@ -106,19 +106,6 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
     width: 20px;
   }
 
-  /* Badges de Status */
-  .badge {
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    display: inline-block;
-  }
-  .badge-primary { background: #dbeafe; color: #1e40af; } /* Azul */
-  .badge-success { background: #d1fae5; color: #065f46; } /* Verde */
-  .badge-warning { background: #fef3c7; color: #92400e; } /* Laranja */
-  .badge-danger { background: #fee2e2; color: #991b1b; }  /* Vermelho */
-
   /* Padronização de Botões no Modal */
   .btn-modal {
     width: 100%;
@@ -233,35 +220,85 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
 {% endblock %} {% block content %}
 <div x-data="agendaManager">
   <!-- Barra de Produtividade e Legenda -->
-  <div class="glass-panel" style="padding: 1rem; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <div
+    class="glass-panel"
+    style="
+      padding: 1rem;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    "
+  >
     <!-- Resumo de Hoje -->
-    <div style="display: flex; gap: 1.5rem; align-items: center;">
-        <div style="font-weight: 600; color: var(--text-main); font-size: 0.95rem;">
-            <i class="ph ph-chart-bar" style="color: var(--primary); margin-right: 0.5rem;"></i>
-            Resumo da Visão:
-        </div>
-        <div style="font-size: 0.9rem; display: flex; gap: 1rem;">
-            <span title="Total de Visitas"><strong x-text="stats.total">0</strong> Visitas</span>
-            <span style="color: var(--success);" title="Concluídas"><strong x-text="stats.concluidos">0</strong> Concluídas</span>
-            <span style="color: #F59E0B;" title="Atrasadas"><strong x-text="stats.atrasados">0</strong> Em Atraso</span>
-            <span style="color: var(--primary);" title="Agendadas/Pendentes"><strong x-text="stats.pendentes">0</strong> Pendentes</span>
-        </div>
+    <div style="display: flex; gap: 1.5rem; align-items: center">
+      <div
+        style="font-weight: 600; color: var(--text-main); font-size: 0.95rem"
+      >
+        <i
+          class="ph ph-chart-bar"
+          style="color: var(--primary); margin-right: 0.5rem"
+        ></i>
+        Resumo da Visão:
+      </div>
+      <div style="font-size: 0.9rem; display: flex; gap: 1rem">
+        <span title="Total de Visitas"
+          ><strong x-text="stats.total">0</strong> Visitas</span
+        >
+        <span style="color: var(--success)" title="Concluídas"
+          ><strong x-text="stats.concluidos">0</strong> Concluídas</span
+        >
+        <span style="color: #f59e0b" title="Atrasadas"
+          ><strong x-text="stats.atrasados">0</strong> Em Atraso</span
+        >
+        <span style="color: var(--primary)" title="Agendadas/Pendentes"
+          ><strong x-text="stats.pendentes">0</strong> Pendentes</span
+        >
+      </div>
     </div>
 
     <!-- Legenda -->
-    <div style="display: flex; gap: 1rem; font-size: 0.8rem; align-items: center;">
-        <div style="display: flex; align-items: center; gap: 0.25rem;">
-            <span style="width: 10px; height: 10px; background-color: #3B82F6; border-radius: 50%; display: inline-block;"></span>
-            Agendado
-        </div>
-        <div style="display: flex; align-items: center; gap: 0.25rem;">
-            <span style="width: 10px; height: 10px; background-color: #10B981; border-radius: 50%; display: inline-block;"></span>
-            Realizado
-        </div>
-        <div style="display: flex; align-items: center; gap: 0.25rem;">
-            <span style="width: 10px; height: 10px; background-color: #F59E0B; border-radius: 50%; display: inline-block;"></span>
-            Atrasado
-        </div>
+    <div
+      style="display: flex; gap: 1rem; font-size: 0.8rem; align-items: center"
+    >
+      <div style="display: flex; align-items: center; gap: 0.25rem">
+        <span
+          style="
+            width: 10px;
+            height: 10px;
+            background-color: #3b82f6;
+            border-radius: 50%;
+            display: inline-block;
+          "
+        ></span>
+        Agendado
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.25rem">
+        <span
+          style="
+            width: 10px;
+            height: 10px;
+            background-color: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+          "
+        ></span>
+        Realizado
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.25rem">
+        <span
+          style="
+            width: 10px;
+            height: 10px;
+            background-color: #f59e0b;
+            border-radius: 50%;
+            display: inline-block;
+          "
+        ></span>
+        Atrasado
+      </div>
     </div>
   </div>
 
@@ -318,7 +355,7 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
             <label class="form-label">Técnico</label>
             <select
               name="tecnico_id"
-              class="form-control-compact"
+              class="form-control"
               required
               x-model="formData.tecnico_id"
             >
@@ -332,20 +369,24 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
             <div class="form-group">
               <label class="form-label">Início</label>
               <input
-                type="datetime-local"
+                type="text"
                 name="data_inicio"
+                id="agendar_data_inicio"
                 x-model="formData.data_inicio"
-                class="form-control-compact"
+                class="form-control"
+                placeholder="Data/Hora"
                 required
               />
             </div>
             <div class="form-group">
               <label class="form-label">Término</label>
               <input
-                type="datetime-local"
+                type="text"
                 name="data_fim"
+                id="agendar_data_fim"
                 x-model="formData.data_fim"
-                class="form-control-compact"
+                class="form-control"
+                placeholder="Data/Hora"
                 required
               />
             </div>
@@ -381,7 +422,7 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
             <span
               class="badge"
               :class="{
-                'badge-primary': activeEvent.extendedProps.status === 'Agendado',
+                'badge-info': activeEvent.extendedProps.status === 'Agendado',
                 'badge-warning': activeEvent.extendedProps.status === 'Atrasado',
                 'badge-success': !['Agendado', 'Atrasado'].includes(activeEvent.extendedProps.status)
               }"
@@ -429,7 +470,7 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
               <label class="form-label">Técnico</label>
               <select
                 x-model="editData.tecnico_id"
-                class="form-control-compact"
+                class="form-control"
               >
                 {% for t in tecnicos %}
                 <option value="{{ t.id }}">{{ t.nome }}</option>
@@ -440,17 +481,19 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
               <div class="form-group">
                 <label class="form-label">Início</label>
                 <input
-                  type="datetime-local"
+                  type="text"
+                  id="reagendar_start"
                   x-model="editData.start"
-                  class="form-control-compact"
+                  class="form-control"
                 />
               </div>
               <div class="form-group">
                 <label class="form-label">Fim</label>
                 <input
-                  type="datetime-local"
+                  type="text"
+                  id="reagendar_end"
                   x-model="editData.end"
-                  class="form-control-compact"
+                  class="form-control"
                 />
               </div>
             </div>
@@ -486,7 +529,7 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
                 <textarea
                   name="relatorio"
                   rows="4"
-                  class="form-control-compact"
+                  class="form-control"
                   placeholder="O que foi feito?"
                   required
                 ></textarea>
@@ -545,6 +588,15 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
               x-show="['Agendado', 'Atrasado'].includes(activeEvent.extendedProps.status)"
             >
               <i class="ph ph-pencil"></i> Reagendar
+            </button>
+
+            <button
+              @click="cancelAppointment()"
+              class="btn btn-modal btn-modal-secondary"
+              style="color: var(--danger); border-color: #FEE2E2;"
+              x-show="['Agendado', 'Atrasado'].includes(activeEvent.extendedProps.status)"
+            >
+              <i class="ph ph-trash"></i> Anular
             </button>
           </div>
 
@@ -612,7 +664,7 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
 
              total++;
              let props = event.extendedProps;
-             
+
              // Verde = Realizado (#10B981)
              // Laranja = Atrasado (#F59E0B)
              // Azul = Agendado (#3B82F6)
@@ -638,6 +690,57 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
             placeholder: "Buscar chamado...",
             allowEmptyOption: true,
           });
+
+          const fpConfig = {
+            enableTime: true,
+            dateFormat: "Y-m-d H:i",
+            time_24hr: true,
+            locale: "pt",
+            disableMobile: "true",
+            altInput: true,
+            altFormat: "d/m/Y H:i",
+            altInputClass: "form-control",
+          };
+
+          // Flatpickr para Agendamento (Novo)
+          const fpAgendarInicio = flatpickr("#agendar_data_inicio", {
+            ...fpConfig,
+            onChange: (selectedDates, dateStr) => {
+                this.formData.data_inicio = dateStr;
+                if (dateStr) {
+                    const end = dayjs(dateStr).add(1, 'hour').format("YYYY-MM-DD HH:mm");
+                    this.formData.data_fim = end;
+                    fpAgendarFim.setDate(end);
+                }
+            }
+          });
+          const fpAgendarFim = flatpickr("#agendar_data_fim", {
+            ...fpConfig,
+            onChange: (selectedDates, dateStr) => { this.formData.data_fim = dateStr; }
+          });
+
+          // Flatpickr para Reagendamento (Edição)
+          const fpReagendarStart = flatpickr("#reagendar_start", {
+            ...fpConfig,
+            onChange: (selectedDates, dateStr) => {
+                this.editData.start = dateStr;
+                if (dateStr) {
+                    const end = dayjs(dateStr).add(1, 'hour').format("YYYY-MM-DD HH:mm");
+                    this.editData.end = end;
+                    fpReagendarEnd.setDate(end);
+                }
+            }
+          });
+          const fpReagendarEnd = flatpickr("#reagendar_end", {
+            ...fpConfig,
+            onChange: (selectedDates, dateStr) => { this.editData.end = dateStr; }
+          });
+
+          // Watchers para sincronizar quando o FullCalendar altera os campos via código
+          this.$watch('formData.data_inicio', val => fpAgendarInicio.setDate(val, false));
+          this.$watch('formData.data_fim', val => fpAgendarFim.setDate(val, false));
+          this.$watch('editData.start', val => fpReagendarStart.setDate(val, false));
+          this.$watch('editData.end', val => fpReagendarEnd.setDate(val, false));
         });
       },
 
@@ -697,8 +800,10 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
             return { domNodes: [container] };
           },
           select: (info) => {
-            this.formData.data_inicio = dayjs(info.start).format("YYYY-MM-DDTHH:mm");
-            this.formData.data_fim = dayjs(info.end).format("YYYY-MM-DDTHH:mm");
+            const start = dayjs(info.start).format("YYYY-MM-DD HH:mm");
+            const end = dayjs(info.end).format("YYYY-MM-DD HH:mm");
+            this.formData.data_inicio = start;
+            this.formData.data_fim = end;
             this.formData.tecnico_id = info.resource ? info.resource.id : "{{ current_user.id }}";
             this.showAddModal = true;
           },
@@ -710,8 +815,8 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
               extendedProps: info.event.extendedProps,
             };
             this.editData.tecnico_id = info.event.getResources()[0].id;
-            this.editData.start = dayjs(info.event.start).format("YYYY-MM-DDTHH:mm");
-            this.editData.end = dayjs(info.event.end).format("YYYY-MM-DDTHH:mm");
+            this.editData.start = dayjs(info.event.start).format("YYYY-MM-DD HH:mm");
+            this.editData.end = dayjs(info.event.end).format("YYYY-MM-DD HH:mm");
 
             this.isEditing = false;
             this.showFinishForm = false;
@@ -757,8 +862,8 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
         }
 
         const payload = {
-          start: dayjs(info.event.start).format("YYYY-MM-DDTHH:mm:ss"),
-          end: dayjs(info.event.end || info.event.start).format("YYYY-MM-DDTHH:mm:ss"),
+          start: dayjs(info.event.start).format("YYYY-MM-DD HH:mm:ss"),
+          end: dayjs(info.event.end || info.event.start).format("YYYY-MM-DD HH:mm:ss"),
           resourceId: info.newResource ? info.newResource.id : info.event.getResources()[0].id
         };
         const response = await fetch(`/agenda/api/reagendar/${info.event.id}`, {
@@ -775,6 +880,25 @@ endblock %} {% block page_title %}Agenda Técnica{% endblock %} {% block head %}
         } else {
           showToast(result.message, "error");
           info.revert();
+        }
+      },
+
+      async cancelAppointment() {
+        if(!(await confirmAction('Deseja realmente anular este agendamento? Ele será removido do calendário e registrado na timeline do chamado.', 'danger'))) return;
+
+        const response = await fetch(`/agenda/api/cancelar/${this.activeEvent.id}`, {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": "{{ csrf_token() }}",
+          },
+        });
+        const result = await response.json();
+        if (result.success) {
+            showToast(result.message, "success");
+            this.calendar.refetchEvents();
+            this.showDetailModal = false;
+        } else {
+            showToast(result.message, "error");
         }
       },
 

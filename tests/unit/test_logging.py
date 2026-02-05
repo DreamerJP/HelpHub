@@ -1,7 +1,7 @@
 import logging
 from unittest.mock import patch
 from flask import Flask
-from App.utils import RequestEntityFilter
+from App.servicos.utils import RequestEntityFilter
 
 
 class TestLoggingFilter:
@@ -13,7 +13,7 @@ class TestLoggingFilter:
         app = Flask(__name__)
 
         # Mock get_real_ip para retornar um IP fixo
-        with patch("App.utils.get_real_ip", return_value="10.0.0.99"):
+        with patch("App.servicos.utils.get_real_ip", return_value="10.0.0.99"):
             with app.test_request_context():
                 result = filtro.filter(record)
 

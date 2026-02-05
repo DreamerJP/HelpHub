@@ -26,6 +26,8 @@ class ClienteForm(AppBaseForm):
     cidade = StringField("Cidade", validators=[Optional(), Length(max=60)])
     uf = StringField("UF", validators=[Optional(), Length(max=2)])
 
-    observacoes = TextAreaField("Anotações do Cliente", validators=[Optional()])
+    observacoes = TextAreaField(
+        "Anotações do Cliente", validators=[Optional(), Length(max=5000)]
+    )
 
     ativo = BooleanField("Cliente Ativo", default=True)

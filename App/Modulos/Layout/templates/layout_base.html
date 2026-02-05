@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>{% block title %}HelpHub 4.0{% endblock %}</title>
+    <title>{% block title %}HelpHub 4.1{% endblock %}</title>
 
     <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -51,16 +51,27 @@
     />
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 
+    <!-- Flatpickr (Premium DatePicker) -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
+
     {% block head %}{% endblock %}
   </head>
-  <body x-data="{ sidebarOpen: true }">
-    <div class="layout-container">
+  <body x-data="{ sidebarOpen: true }" x-init="notificationSystem = $data.notificationSystem">
+    <div x-data="liveSync"></div>
+    <div x-data="notificationSystem">
+      <div class="layout-container">
       <!-- Sidebar Fixa -->
       <aside class="sidebar">
         <div class="sidebar-header" style="justify-content: center">
           <img
             src="{{ url_for('layout.static', filename='img/logo_light.png') }}"
-            alt="HelpHub 4.0"
+            alt="HelpHub 4.1"
             style="height: 45px"
           />
         </div>
@@ -108,60 +119,43 @@
           <a href="{{ url_for('admin.configuracoes') }}" class="nav-link">
             <i class="ph ph-gear"></i> Configurações OS
           </a>
+          <a href="{{ url_for('admin.notificacoes') }}" class="nav-link">
+            <i class="ph ph-broadcast"></i> Integrações/Alertas
+          </a>
           {% endif %}
         </nav>
 
-        <div
-          style="
-            padding: 1.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-          "
-        >
-          <div style="display: flex; align-items: center; gap: 0.75rem">
-            <div
-              style="
-                width: 32px;
-                height: 32px;
-                background: #374151;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-              "
+        <!-- Sidebar Footer (Usuário - Avatar Focado) -->
+        <div style="padding: 0.75rem 1rem 1.5rem; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: auto;">
+          <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <!-- Avatar (Link clicável) -->
+            <a href="{{ url_for('auth.perfil') }}" 
+               style="width: 64px; height: 64px; background: #374151; border-radius: 50%; overflow: hidden; border: 2px solid rgba(255,255,255,0.1); flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: block; transition: transform 0.2s;"
+               onmouseover="this.style.transform='scale(1.05)'"
+               onmouseout="this.style.transform='scale(1)'"
             >
-              <i class="ph ph-user"></i>
-            </div>
-            <div>
-              <div style="font-weight: 600; font-size: 0.875rem">
-                {% if current_user.is_authenticated %}
-                <a
-                  href="{{ url_for('auth.perfil') }}"
-                  style="
-                    color: inherit;
-                    text-decoration: none;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.25rem;
-                  "
-                >
+              {% if current_user.avatar %}
+                <img src="{{ url_for('layout.servir_upload', filename=current_user.avatar) }}" style="width: 100%; height: 100%; object-fit: cover;">
+              {% else %}
+                <div style="width: 100%; height: 100%; background: #4b5563; display: flex; align-items: center; justify-content: center; color: #9ca3af;">
+                  <i class="ph ph-user text-2xl"></i>
+                </div>
+              {% endif %}
+            </a>
+
+            <!-- Identificação -->
+            <div style="flex: 1; min-width: 0;">
+              <div style="font-weight: 700; color: white; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em;">
+                <a href="{{ url_for('auth.perfil') }}" style="color: inherit; text-decoration: none;">
                   {{ current_user.username }}
-                  <i
-                    class="ph ph-caret-right"
-                    style="font-size: 0.75rem; color: #9ca3af"
-                  ></i>
+                  <i class="ph ph-caret-right" style="font-size: 0.8rem; opacity: 0.4;"></i>
                 </a>
-                {% else %} Visitante {% endif %}
               </div>
-              <a
-                href="{{ url_for('auth.logout') }}"
-                style="
-                  font-size: 0.75rem;
-                  color: #9ca3af;
-                  text-decoration: none;
-                "
-              >
-                Sair do Sistema
-              </a>
+              <div style="font-size: 0.75rem; margin-top: 4px;">
+                <a href="{{ url_for('auth.logout') }}" style="color: #9ca3af; text-decoration: none; font-weight: 500;" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#9ca3af'">
+                  Sair do Sistema
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -306,10 +300,24 @@
           ></div>
         </div>
 
+        <!-- Alertas de Integração (Falhas no Monitor) -->
+        {% if current_user.is_authenticated and current_user.is_admin and
+        ERROS_NOTIFICACAO %} {% from "componentes.html" import erp_banner %}
+        <div style="padding: 1rem 1.5rem 0 1.5rem">
+          {% for erro in ERROS_NOTIFICACAO %} {% call erp_banner(tipo='danger',
+          titulo='Falha na Integração: ' ~ erro.nome_amigavel,
+          icon='ph-broadcast') %} O serviço tentou enviar uma mensagem mas
+          retornou erro:
+          <strong>{{ erro.mensagem }}</strong>. Verifique as configurações ou a
+          conectividade. {% endcall %} {% endfor %}
+        </div>
+        {% endif %}
+
         <!-- Page Content -->
         <div class="page-content">{% block content %}{% endblock %}</div>
       </main>
     </div>
+  </div>
 
     <!-- Modal de Confirmação Global -->
     <div
@@ -379,29 +387,34 @@
         ></p>
 
         <!-- Botões -->
-        <div style="display: flex; gap: 0.75rem">
-          <button
-            @click="cancel()"
-            class="btn"
-            style="
-              flex: 1;
-              background: #f3f4f6;
-              color: var(--text-main);
-              border: 1px solid #e5e7eb;
-            "
-          >
-            Cancelar
-          </button>
+        <div style="display: flex; gap: 0.75rem; justify-content: center; width: 100%">
+          <template x-if="actionType !== 'alert'">
+            <button
+              @click="cancel()"
+              class="btn"
+              style="
+                flex: 1;
+                background: #f3f4f6;
+                color: var(--text-main);
+                border: 1px solid #e5e7eb;
+              "
+            >
+              Cancelar
+            </button>
+          </template>
           <button
             @click="confirm()"
             class="btn"
             :style="{
-              flex: 1,
+              flex: actionType === 'alert' ? '0 1 160px' : '1',
               background: actionType === 'delete' ? 'var(--danger)' : 'var(--primary)',
               color: 'white',
-              border: 'none'
+              border: 'none',
+              fontWeight: '600',
+              padding: '0.6rem 2rem',
+              justifyContent: 'center'
             }"
-            x-text="actionType === 'delete' ? 'Confirmar Exclusão' : 'Confirmar'"
+            x-text="actionType === 'alert' ? 'Confirmar' : (actionType === 'delete' ? 'Confirmar Exclusão' : 'Confirmar')"
           ></button>
         </div>
       </div>
@@ -445,16 +458,71 @@
         return await modal.open(message, type);
       };
 
-      // Gerenciador de Notificações Global
+      // --- HELPHUB LIVE SYNC (v4.1 High-End) ---
+      // Gerencia sincronização em tempo real e cache de performance
       document.addEventListener("alpine:init", () => {
+        Alpine.data("liveSync", () => ({
+          versions: { chamados: 0, clientes: 0, usuarios: 0, departamentos: 0 },
+          interval: null,
+          refreshRate: 30000, // 30 segundos (Equilíbrio entre tempo real e poupar worker)
+
+          init() {
+            // Primeira verificação imediata
+            this.check();
+            // Inicia o ciclo de pulsação (Heartbeat)
+            this.interval = setInterval(() => this.check(), this.refreshRate);
+          },
+
+          async check() {
+            try {
+              const response = await fetch("{{ url_for('layout.sync_check') }}");
+              if (!response.ok) return;
+              const newVersions = await response.json();
+
+              // Se as versões mudaram, precisamos agir
+              if (this.versions.chamados > 0 && newVersions.chamados !== this.versions.chamados) {
+                this.handleSync('chamados');
+              }
+              
+              this.versions = newVersions;
+            } catch (error) {
+              console.warn("LiveSync: Servidor momentaneamente indisponível.");
+            }
+          },
+
+          handleSync(entidade) {
+            console.log(`LiveSync: Mudança detectada em ${entidade}. Sincronizando...`);
+            
+            // 1. Se estiver na DASHBOARD, recarrega a página toda (para atualizar gráficos)
+            if (window.location.pathname === "{{ url_for('layout.index') }}") {
+              window.location.reload(); 
+              return;
+            }
+
+            // 2. Se estiver na LISTA DE CHAMADOS, usa o motor AJAX para um refresh suave
+            const nav = Alpine.$data(document.querySelector('[x-data="erpNavigation"]'));
+            if (nav && entidade === 'chamados' && window.location.pathname.includes('/chamados')) {
+               nav.loadUrl(window.location.href);
+               window.showToast("Lista atualizada automaticamente.");
+            }
+          }
+           
+          /**
+           * UPGRADE PATH: Para sincronização por milissegundos
+           * Substitua o setInterval acima por um listener do Pusher:
+           * 
+           * pusherChannel.bind('data-changed', (data) => {
+           *    this.handleSync(data.entidade);
+           * });
+           */
+        }));
+
         Alpine.data("notificationSystem", () => ({
           toasts: [],
 
           add(message, type = "info") {
             const id = Date.now() + Math.random();
-            // Ajusta categorias do Flask para as classes CSS
             const finalType = type === "message" ? "info" : type;
-
             this.toasts.push({ id, message, type: finalType, show: true });
 
             setTimeout(() => {
@@ -476,6 +544,68 @@
           }),
         );
       };
+
+      /**
+       * ANTI-FREEZE & DoS PROTECTION: Interceptação Global de Colagem
+       * Protege contra travamentos por volumes massivos de texto (100k+ chars).
+       */
+      document.addEventListener('paste', function(e) {
+          const target = e.target;
+          const isInput = target.tagName === 'INPUT';
+          const isTextArea = target.tagName === 'TEXTAREA';
+          const isEditable = target.isContentEditable;
+
+          if (!isInput && !isTextArea && !isEditable) return;
+
+          const maxLengthAttr = target.getAttribute('maxlength');
+          
+          // DEFINIÇÃO DE LIMITES DE SEGURANÇA (Mesmo sem maxlength definido)
+          // Inputs curtos: 1.000 | Textareas/Editores: 30.000
+          let limit = maxLengthAttr ? parseInt(maxLengthAttr) : (isInput ? 1000 : 30000);
+
+          const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+          if (!pastedText) return;
+
+          // Se for um campo padrão (Input/TextArea)
+          if (isInput || isTextArea) {
+              const currentVal = target.value;
+              const start = target.selectionStart || 0;
+              const end = target.selectionEnd || 0;
+              const availableSpace = limit - currentVal.length + (end - start);
+
+              // Intercepta se: Texto gigante (>50k) OU Ultrapassa espaço disponível
+              if (pastedText.length > 50000 || pastedText.length > availableSpace) {
+                  e.preventDefault();
+                  
+                  if (availableSpace <= 0) {
+                      window.showToast("Limite de " + limit + " caracteres atingido.", "warning");
+                      return;
+                  }
+
+                  const truncated = pastedText.substring(0, availableSpace);
+                  target.value = currentVal.substring(0, start) + truncated + currentVal.substring(end);
+                  target.selectionStart = target.selectionEnd = start + truncated.length;
+                  
+                  target.dispatchEvent(new Event('input', { bubbles: true }));
+                  window.showToast("Texto limitado para " + limit + " caracteres por segurança.", "info");
+              }
+          } 
+          // Se for um elemento contenteditable
+          else if (isEditable) {
+              const currentText = target.innerText;
+              if (currentText.length + pastedText.length > limit) {
+                  e.preventDefault();
+                  const remaining = limit - currentText.length;
+                  if (remaining > 0) {
+                      const truncated = pastedText.substring(0, remaining);
+                      document.execCommand('insertText', false, truncated);
+                      window.showToast("Conteúdo editável limitado a " + limit + " caracteres.", "info");
+                  } else {
+                      window.showToast("Limite do editor atingido.", "warning");
+                  }
+              }
+          }
+      }, true);
     </script>
 
     <style>

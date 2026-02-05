@@ -1,7 +1,7 @@
 import pytest
 
 from unittest.mock import MagicMock, patch
-from App.upload_manager import UploadManager
+from App.servicos.upload_manager import UploadManager
 
 
 class TestUploadManager:
@@ -33,9 +33,9 @@ class TestUploadManager:
         with pytest.raises(ValueError, match="Tipo de arquivo não permitido"):
             UploadManager.salvar(file_storage)
 
-    @patch("App.upload_manager.os.makedirs")
-    @patch("App.upload_manager.os.path.exists")
-    @patch("App.upload_manager.filetype.guess")
+    @patch("App.servicos.upload_manager.os.makedirs")
+    @patch("App.servicos.upload_manager.os.path.exists")
+    @patch("App.servicos.upload_manager.filetype.guess")
     def test_save_valid_image(self, mock_guess, mock_exists, mock_makedirs, app):
         """Testa o salvamento bem sucedido de uma imagem válida."""
         app.config["UPLOAD_FOLDER"] = "/tmp/uploads"
@@ -56,10 +56,10 @@ class TestUploadManager:
         assert result.endswith(".png")
         file_storage.save.assert_called()
 
-    @patch("App.upload_manager.os.makedirs")
-    @patch("App.upload_manager.os.path.exists")
-    @patch("App.upload_manager.filetype.guess")
-    @patch("App.upload_manager.os.remove")
+    @patch("App.servicos.upload_manager.os.makedirs")
+    @patch("App.servicos.upload_manager.os.path.exists")
+    @patch("App.servicos.upload_manager.filetype.guess")
+    @patch("App.servicos.upload_manager.os.remove")
     def test_save_removes_file_on_magic_number_mismatch(
         self, mock_remove, mock_guess, mock_exists, mock_makedirs, app
     ):
@@ -78,10 +78,10 @@ class TestUploadManager:
 
         mock_remove.assert_called()
 
-    @patch("App.upload_manager.os.makedirs")
-    @patch("App.upload_manager.os.path.exists")
-    @patch("App.upload_manager.filetype.guess")
-    @patch("App.upload_manager.os.remove")
+    @patch("App.servicos.upload_manager.os.makedirs")
+    @patch("App.servicos.upload_manager.os.path.exists")
+    @patch("App.servicos.upload_manager.filetype.guess")
+    @patch("App.servicos.upload_manager.os.remove")
     def test_save_removes_file_on_suspicious_mime(
         self, mock_remove, mock_guess, mock_exists, mock_makedirs, app
     ):
@@ -103,9 +103,9 @@ class TestUploadManager:
 
         mock_remove.assert_called()
 
-    @patch("App.upload_manager.os.makedirs")
-    @patch("App.upload_manager.os.path.exists")
-    @patch("App.upload_manager.filetype.guess")
+    @patch("App.servicos.upload_manager.os.makedirs")
+    @patch("App.servicos.upload_manager.os.path.exists")
+    @patch("App.servicos.upload_manager.filetype.guess")
     def test_save_creates_folder_if_not_exists(
         self, mock_guess, mock_exists, mock_makedirs, app
     ):
@@ -129,10 +129,10 @@ class TestUploadManager:
         # Garante que o path usado termina com /tmp/uploads (normalizando barras)
         assert "C:/tmp/uploads" in args[0].replace("\\", "/")
 
-    @patch("App.upload_manager.os.makedirs")
-    @patch("App.upload_manager.os.path.exists")
-    @patch("App.upload_manager.filetype.guess")
-    @patch("App.upload_manager.os.remove")
+    @patch("App.servicos.upload_manager.os.makedirs")
+    @patch("App.servicos.upload_manager.os.path.exists")
+    @patch("App.servicos.upload_manager.filetype.guess")
+    @patch("App.servicos.upload_manager.os.remove")
     def test_save_exception_handling_removes_file(
         self, mock_remove, mock_guess, mock_exists, mock_makedirs, app
     ):
@@ -151,10 +151,10 @@ class TestUploadManager:
 
         assert mock_remove.called
 
-    @patch("App.upload_manager.os.makedirs")
-    @patch("App.upload_manager.os.path.exists")
-    @patch("App.upload_manager.filetype.guess")
-    @patch("App.upload_manager.os.remove")
+    @patch("App.servicos.upload_manager.os.makedirs")
+    @patch("App.servicos.upload_manager.os.path.exists")
+    @patch("App.servicos.upload_manager.filetype.guess")
+    @patch("App.servicos.upload_manager.os.remove")
     def test_save_exception_cleanup_simulated_missing_file(
         self, mock_remove, mock_guess, mock_exists, mock_makedirs, app
     ):
@@ -176,9 +176,9 @@ class TestUploadManager:
         # mock_remove NÃO deve ser chamado pois o arquivo "não existe"
         mock_remove.assert_not_called()
 
-    @patch("App.upload_manager.os.makedirs")
-    @patch("App.upload_manager.os.path.exists")
-    @patch("App.upload_manager.filetype.guess")
+    @patch("App.servicos.upload_manager.os.makedirs")
+    @patch("App.servicos.upload_manager.os.path.exists")
+    @patch("App.servicos.upload_manager.filetype.guess")
     def test_save_valid_text_file(self, mock_guess, mock_exists, mock_makedirs, app):
         """Testa o salvamento de arquivo txt (onde magic number é None mas é permitido)."""
         app.config["UPLOAD_FOLDER"] = "/tmp/uploads"

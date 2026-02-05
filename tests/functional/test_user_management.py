@@ -12,7 +12,7 @@ def test_admin_access_user_list(client, admin_user):
 
     response = client.get(url_for("auth.lista_usuarios"))
     assert response.status_code == 200
-    assert b"Membros da Equipe" in response.data
+    assert "Gestão de Equipe".encode("utf-8") in response.data
     assert b"admin_test" in response.data
 
 
@@ -143,6 +143,7 @@ def test_change_password_profile(client, app):
             "password_old": "old_password",
             "password_new": "new_password",
             "password_confirm": "new_password",
+            "btn_senha": "1",
         },
         follow_redirects=True,
     )
@@ -152,3 +153,62 @@ def test_change_password_profile(client, app):
     updated_user = db.session.get(Usuario, user_id)
     assert updated_user.check_password("new_password")
     assert not updated_user.check_password("old_password")
+
+
+def test_create_user_missing_password(client, admin_user):
+    """Garante que a criação de usuário falha se a senha não for fornecida."""
+    client.post(
+        url_for("auth.login"), data={"username": "admin_test", "password": "123456"}
+    )
+
+    response = client.post(
+        url_for("auth.novo_usuario"),
+        data={
+            "nome": "Sem Senha",
+            "username": "semsenha",
+            "email": "semsenha@test.com",
+            "role": "Operador",
+            "password": "",  # Enviando vazio
+            "ativo": True,
+        },
+        follow_redirects=True,
+    )
+
+    assert (
+        b"A senha \xc3\xa9 obrigat\xc3\xb3ria para novos usu\xc3\xa1rios."
+        in response.data
+    )
+    assert Usuario.query.filter_by(username="semsenha").first() is None
+
+
+def test_edit_user_keep_password(client, admin_user, app):
+    """Garante que na edição a senha continua opcional (mantém a atual)."""
+    with app.app_context():
+        user = Usuario(
+            username="mantem_senha", email="mantem@test.com", role="Operador"
+        )
+        user.set_password("senha_original")
+        db.session.add(user)
+        db.session.commit()
+        user_id = user.id
+
+    client.post(
+        url_for("auth.login"), data={"username": "admin_test", "password": "123456"}
+    )
+
+    # Edita apenas o nome, mantendo senha vazia
+    client.post(
+        url_for("auth.editar_usuario", id=user_id),
+        data={
+            "nome": "Nome Novo",
+            "username": "mantem_senha",
+            "email": "mantem@test.com",
+            "role": "Operador",
+            "password": "",  # Vazio na edição
+            "ativo": True,
+        },
+    )
+
+    updated_user = db.session.get(Usuario, user_id)
+    assert updated_user.nome == "Nome Novo"
+    assert updated_user.check_password("senha_original")

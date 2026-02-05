@@ -1,212 +1,126 @@
-{% extends "layout_base.html" %} {% block title %}{{ titulo }} - HelpHub 4.0{%
+{% extends "layout_base.html" %} {% from "componentes.html" import
+render_layout_erp, erp_banner %} {% block title %}{{ titulo }} - HelpHub 4.0{%
 endblock %} {% block page_title %}{{ titulo }}{% endblock %} {% block content %}
-<div style="max-width: 600px; margin: 0 auto">
-  <div class="glass-panel" style="padding: 2rem">
-    <div style="margin-bottom: 2rem">
-      <a
-        href="{{ url_for('auth.lista_usuarios') }}"
+{# Toolbar: Único local para botões conforme padrão ERP #} {% set toolbar_html
+%}
+<div x-show="activeTab === 'membro'" x-cloak class="flex items-center gap-2">
+  <button type="submit" form="form-usuario" class="erp-btn erp-btn-primary">
+    <i class="ph ph-check-circle text-lg"></i> Salvar Usuário
+  </button>
+  <div class="erp-separator"></div>
+  <a
+    href="{{ url_for('auth.lista_usuarios') }}"
+    class="erp-btn erp-btn-neutral"
+  >
+    <i class="ph ph-x-circle text-lg"></i> Cancelar
+  </a>
+</div>
+{% endset %} {% call render_layout_erp( titulo="Membro da Equipe", abas=[{'id':
+'membro', 'label': 'Dados do Usuário', 'icon': 'ph-user-circle-plus'}],
+toolbar_buttons=toolbar_html, active_tab_id='membro' ) %}
+
+<div style="padding: 2rem; min-height: 500px">
+  <form
+    method="POST"
+    id="form-usuario"
+    class="flex flex-col gap-10"
+    style="max-width: 800px"
+  >
+    {{ form.hidden_tag() }} {% call erp_banner(tipo='info', titulo='Informação',
+    icon='ph-shield-check') %} Defina as credenciais de acesso e o nível de
+    permissão do usuário. {% endcall %}
+
+    <section class="flex flex-col gap-6">
+      <h4
         style="
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          color: var(--primary);
+          font-weight: 800;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 0.5rem;
           display: flex;
           align-items: center;
           gap: 0.5rem;
-          color: var(--text-muted);
-          text-decoration: none;
-          font-size: 0.875rem;
-          margin-bottom: 1rem;
         "
       >
-        <i class="ph ph-arrow-left"></i> Voltar para a lista
-      </a>
-      <h3 style="font-size: 1.5rem; font-weight: 700; color: var(--text-main)">
-        {{ titulo }}
-      </h3>
-      <p style="color: var(--text-muted); font-size: 0.875rem">
-        Preencha os dados do membro da sua equipe.
-      </p>
-    </div>
+        <i class="ph ph-identification-card"></i> Perfil de Acesso
+      </h4>
 
-    <form method="POST" action="" class="app-form">
-      {{ form.hidden_tag() }}
-
-      <div class="form-group" style="margin-bottom: 1.5rem">
-        <label
-          class="form-label"
-          style="display: block; margin-bottom: 0.5rem; font-weight: 500"
-          >Nome Completo</label
-        >
-        {{ form.nome(class="form-control", placeholder="Ex: João Silva",
-        style="width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb;
-        border-radius: 8px;") }} {% for error in form.nome.errors %}
-        <span
-          style="
-            color: #ef4444;
-            font-size: 0.75rem;
-            display: block;
-            margin-top: 0.25rem;
-          "
-          >{{ error }}</span
-        >
+      <div class="flex flex-col gap-1">
+        <label class="font-semibold text-gray-700 text-sm">Nome Completo</label>
+        {{ form.nome(class="form-control", placeholder="Ex: João Silva") }} {%
+        for error in form.nome.errors %}
+        <span class="text-xs text-red-500 mt-1">{{ error }}</span>
         {% endfor %}
       </div>
 
-      <div
-        style="
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1rem;
-          margin-bottom: 1.5rem;
-        "
-      >
-        <div class="form-group">
-          <label
-            class="form-label"
-            style="display: block; margin-bottom: 0.5rem; font-weight: 500"
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem">
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm"
             >Usuário (Login)</label
           >
-          {{ form.username(class="form-control", placeholder="Ex:
-          joao.atendimento", style="width: 100%; padding: 0.75rem; border: 1px
-          solid #e5e7eb; border-radius: 8px;") }} {% for error in
-          form.username.errors %}
-          <span
-            style="
-              color: #ef4444;
-              font-size: 0.75rem;
-              display: block;
-              margin-top: 0.25rem;
-            "
-            >{{ error }}</span
-          >
+          {% set user_placeholder = "Ex: joao.atendimento" %} {{
+          form.username(class="form-control", placeholder=user_placeholder) }}
+          {% for error in form.username.errors %}
+          <span class="text-xs text-red-500 mt-1">{{ error }}</span>
           {% endfor %}
         </div>
-        <div class="form-group">
-          <label
-            class="form-label"
-            style="display: block; margin-bottom: 0.5rem; font-weight: 500"
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm"
             >Cargo / Nível</label
           >
-          {{ form.role(class="form-control", style="width: 100%; padding:
-          0.75rem; border: 1px solid #e5e7eb; border-radius: 8px; background:
-          white;") }} {% for error in form.role.errors %}
-          <span
-            style="
-              color: #ef4444;
-              font-size: 0.75rem;
-              display: block;
-              margin-top: 0.25rem;
-            "
-            >{{ error }}</span
-          >
+          {{ form.role() }} {% for error in form.role.errors %}
+          <span class="text-xs text-red-500 mt-1">{{ error }}</span>
           {% endfor %}
         </div>
       </div>
 
-      <div class="form-group" style="margin-bottom: 1.5rem">
-        <label
-          class="form-label"
-          style="display: block; margin-bottom: 0.5rem; font-weight: 500"
-          >E-mail</label
-        >
-        {{ form.email(class="form-control", placeholder="joao@empresa.com",
-        style="width: 100%; padding: 0.75rem; border: 1px solid #e5e7eb;
-        border-radius: 8px;") }} {% for error in form.email.errors %}
-        <span
-          style="
-            color: #ef4444;
-            font-size: 0.75rem;
-            display: block;
-            margin-top: 0.25rem;
-          "
-          >{{ error }}</span
-        >
-        {% endfor %}
-      </div>
-
-      <div class="form-group" style="margin-bottom: 1.5rem">
-        <label
-          class="form-label"
-          style="display: block; margin-bottom: 0.5rem; font-weight: 500"
-        >
-          Senha {% if 'Editar' in titulo %}
-          <span
-            style="
-              font-weight: 400;
-              color: var(--text-muted);
-              font-size: 0.75rem;
-            "
-            >(Vazio para manter)</span
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem">
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm"
+            >E-mail Corporativo</label
           >
-          {% else %}
-          <span
-            style="
-              font-weight: 400;
-              color: var(--text-muted);
-              font-size: 0.75rem;
-            "
-            >(Padrão: HH123456)</span
-          >
-          {% endif %}
-        </label>
-        {{ form.password(class="form-control", type="password",
-        placeholder="******", style="width: 100%; padding: 0.75rem; border: 1px
-        solid #e5e7eb; border-radius: 8px;") }} {% for error in
-        form.password.errors %}
-        <span
-          style="
-            color: #ef4444;
-            font-size: 0.75rem;
-            display: block;
-            margin-top: 0.25rem;
-          "
-          >{{ error }}</span
-        >
-        {% endfor %}
+          {{ form.email(class="form-control", placeholder="joao@empresa.com") }}
+          {% for error in form.email.errors %}
+          <span class="text-xs text-red-500 mt-1">{{ error }}</span>
+          {% endfor %}
+        </div>
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm">
+            Senha de Acesso {% if 'Editar' in titulo %}
+            <span class="font-normal text-gray-400 text-xs"
+              >(Deixe vazio para manter)</span
+            >
+            {% else %}
+            <span class="font-normal text-red-400 text-xs">(Obrigatório)</span>
+            {% endif %}
+          </label>
+          {{ form.password(class="form-control", type="password",
+          placeholder="******") }} {% for error in form.password.errors %}
+          <span class="text-xs text-red-500 mt-1">{{ error }}</span>
+          {% endfor %}
+        </div>
       </div>
 
       <div
-        style="
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          margin-bottom: 2rem;
-          padding: 1rem;
-          background: #f9fafb;
-          border-radius: 8px;
-        "
+        class="flex items-center gap-2 mt-4 p-4 bg-gray-50 rounded-lg border border-gray-100"
       >
-        {{ form.ativo(style="width: 18px; height: 18px;") }}
-        <label
-          class="form-label"
-          style="margin: 0; font-weight: 500; cursor: pointer"
-          >{{ form.ativo.label.text }}</label
+        {{ form.ativo(class="form-checkbox h-4 w-4 text-primary rounded
+        border-gray-300") }}
+        <label class="font-semibold text-gray-700 text-sm cursor-pointer"
+          >Usuário Ativo e com Permissão de Login</label
         >
       </div>
-
-      <div style="display: flex; gap: 1rem">
-        <button
-          type="submit"
-          class="btn btn-primary"
-          style="flex: 2; padding: 0.75rem; font-weight: 600"
-        >
-          Salvar Usuário
-        </button>
-        <a
-          href="{{ url_for('auth.lista_usuarios') }}"
-          class="btn"
-          style="
-            flex: 1;
-            padding: 0.75rem;
-            background: #f3f4f6;
-            color: var(--text-main);
-            text-align: center;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 500;
-          "
-        >
-          Cancelar
-        </a>
-      </div>
-    </form>
-  </div>
+    </section>
+  </form>
 </div>
+{% endcall %} {% endblock %} {% block scripts %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    if (document.getElementById("role")) {
+      new TomSelect("#role", { create: false, allowEmptyOption: false });
+    }
+  });
+</script>
 {% endblock %}

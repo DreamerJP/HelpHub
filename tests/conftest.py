@@ -40,6 +40,7 @@ def app():
         "TIMEZONE": "America/Sao_Paulo",
         "WTF_CSRF_ENABLED": False,
         "PRESERVE_CONTEXT_ON_EXCEPTION": False,
+        "DB_PATH": db_name,
     }
 
     app = create_app(config_name="testing", test_config=test_config)

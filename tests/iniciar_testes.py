@@ -11,7 +11,7 @@ def main():
     sys.path.insert(0, project_root)
 
     print("=" * 60)
-    print(" INICIANDO BATERIA DE TESTES - HELPHUB 4.0")
+    print(" INICIANDO BATERIA DE TESTES - HELPHUB 4.1")
     print(f" Diretorio Raiz: {project_root}")
     print("=" * 60)
 

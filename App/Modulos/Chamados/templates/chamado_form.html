@@ -1,88 +1,163 @@
-{% extends "layout_base.html" %} {% block title %}Novo Chamado{% endblock %} {%
-block page_title %}Abertura de Chamado{% endblock %} {% block content %}
-<div style="max-width: 800px">
+{% extends "layout_base.html" %} {% from "componentes.html" import
+render_layout_erp %} {% block title %}Novo Chamado - HelpHub 4.0{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %} {% block content %} {# Toolbar:
+Padrão ERP #} {% set toolbar_html %}
+<div x-show="activeTab === 'abertura'" x-cloak class="flex items-center gap-2">
+  <button type="submit" form="form-chamado" class="erp-btn erp-btn-primary">
+    <i class="ph ph-check-circle text-lg"></i> Abrir Ticket
+  </button>
+  <div class="erp-separator"></div>
+  <a href="{{ url_for('chamados.lista') }}" class="erp-btn erp-btn-neutral">
+    <i class="ph ph-x-circle text-lg"></i> Cancelar
+  </a>
+</div>
+{% endset %} {% call render_layout_erp( titulo=titulo, abas=[{'id': 'abertura',
+'label': 'Dados do Ticket', 'icon': 'ph-ticket'}], toolbar_buttons=toolbar_html,
+active_tab_id='abertura' ) %}
+
+<div style="padding: 2rem; min-height: 600px">
   <form
     method="POST"
-    class="glass-panel"
-    style="padding: 2rem; border-radius: 8px"
+    id="form-chamado"
+    class="form-layout-premium"
+    style="max-width: 1000px"
   >
     {{ form.hidden_tag() }}
 
-    <div
-      style="
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1rem;
-        margin-bottom: 1.5rem;
-      "
-    >
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >Cliente</label
-        >
-        {{ form.cliente_id(style="width: 100%; padding: 0.6rem; border: 1px
-        solid #D1D5DB; border-radius: 6px;") }}
+    <section class="flex flex-col gap-6">
+      <h4
+        style="
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          color: var(--primary);
+          font-weight: 800;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 0.5rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        "
+      >
+        <i class="ph ph-identification-badge"></i> Identificação
+      </h4>
+
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem">
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm"
+            >Cliente Solicitante</label
+          >
+          {% set cli_placeholder = "Selecione o cliente..." %} {{
+          form.cliente_id(placeholder=cli_placeholder) }}
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm"
+            >Departamento de Destino</label
+          >
+          {{ form.departamento_id() }}
+        </div>
       </div>
-      <div>
-        <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-          >Departamento / Destino</label
-        >
-        {{ form.departamento_id(style="width: 100%; padding: 0.6rem; border: 1px
-        solid #D1D5DB; border-radius: 6px;") }}
+
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem">
+        <div class="flex flex-col gap-1">
+          <label class="font-semibold text-gray-700 text-sm">Prioridade</label>
+          {{ form.prioridade() }}
+        </div>
       </div>
-    </div>
+    </section>
 
-    <div style="margin-bottom: 1.5rem">
-      <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-        >Assunto</label
+    <section class="flex flex-col gap-6">
+      <h4
+        style="
+          font-size: 0.75rem;
+          text-transform: uppercase;
+          color: var(--primary);
+          font-weight: 800;
+          border-bottom: 1px solid #e5e7eb;
+          padding-bottom: 0.5rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        "
       >
-      {{ form.assunto(style="width: 100%; padding: 0.6rem; border: 1px solid
-      #D1D5DB; border-radius: 6px;") }}
-    </div>
+        <i class="ph ph-note-pencil"></i> Detalhes da Ocorrência
+      </h4>
 
-    <div style="margin-bottom: 1.5rem">
-      <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-        >Descrição Detalhada</label
-      >
-      {{ form.descricao(rows=5, style="width: 100%; padding: 0.6rem; border: 1px
-      solid #D1D5DB; border-radius: 6px; font-family: inherit;") }}
-    </div>
+      <div class="flex flex-col gap-1">
+        <label class="font-semibold text-gray-700 text-sm">Assunto</label>
+        {% set assunto_placeholder = "Ex: Sem conexão" %} {{
+        form.assunto(class="form-control", placeholder=assunto_placeholder,
+        maxlength="80") }}
+      </div>
 
-    <div style="margin-bottom: 2rem">
-      <label style="display: block; font-weight: 500; margin-bottom: 0.5rem"
-        >Prioridade Inicial</label
-      >
-      {{ form.prioridade(style="width: 200px; padding: 0.6rem; border: 1px solid
-      #D1D5DB; border-radius: 6px;") }}
-    </div>
-
-    <div style="display: flex; gap: 1rem">
-      <button type="submit" class="btn btn-primary">Abrir Ticket</button>
-      <a
-        href="{{ url_for('chamados.lista') }}"
-        class="btn"
-        style="background: #e5e7eb; color: #374151"
-        >Cancelar</a
-      >
-    </div>
+      <div class="flex flex-col gap-1">
+        <label class="font-semibold text-gray-700 text-sm"
+          >Descrição Detalhada</label
+        >
+        {% set desc_placeholder = "Descreva aqui o problema..." %} {{
+        form.descricao(rows=10, class="form-control", style="resize: none;",
+        placeholder=desc_placeholder, maxlength="10000") }}
+      </div>
+    </section>
   </form>
 </div>
-{% endblock %} {% block scripts %}
+{% endcall %} {% endblock %} {% block scripts %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // Inicializa Pesquisa no Campo de Cliente
-    new TomSelect("#cliente_id", {
-      create: false,
-      placeholder: "Pesquise por nome, CPF ou CNPJ...",
-      allowEmptyOption: true,
-    });
+    // TomSelect para Clientes (Busca AJAX)
+    if (document.getElementById("cliente_id")) {
+      new TomSelect("#cliente_id", {
+        valueField: "id",
+        labelField: "text",
+        searchField: "text",
+        load: function (query, callback) {
+          if (!query.length || query.length < 2) return callback();
+          var url = "/clientes/api/busca?q=" + encodeURIComponent(query);
+          fetch(url)
+            .then((response) => response.json())
+            .then((json) => {
+              callback(json);
+            })
+            .catch(() => {
+              callback();
+            });
+        },
+        render: {
+          option: function (item, escape) {
+            return (
+              '<div class="flex flex-col px-2 py-1">' +
+              '<span class="font-semibold">' +
+              escape(item.text) +
+              "</span>" +
+              '<span class="text-xs text-gray-400">' +
+              escape(item.doc || "") +
+              "</span>" +
+              "</div>"
+            );
+          },
+          item: function (item, escape) {
+            return "<div>" + escape(item.text) + "</div>";
+          },
+        },
+        placeholder: "Selecione o cliente...",
+        openOnFocus: false,
+        shouldLoad: function (query) {
+          return query.length >= 2;
+        },
+      });
+    }
 
-    // Inicializa Pesquisa no Campo de Departamento
-    new TomSelect("#departamento_id", {
-      create: false,
-      placeholder: "Selecione o destino...",
-      allowEmptyOption: true,
-    });
+    // TomSelect Simples
+    if (document.getElementById("departamento_id")) {
+      new TomSelect("#departamento_id", {
+        create: false,
+        allowEmptyOption: true,
+        placeholder: "--- Triagem Geral ---",
+      });
+    }
+    if (document.getElementById("prioridade")) {
+      new TomSelect("#prioridade", { create: false, allowEmptyOption: false });
+    }
   });
 </script>
 {% endblock %}

@@ -11,7 +11,7 @@ import uuid
 
 class BaseModel(db.Model):
     """
-    Classe Abstrata Base para todos os modelos do HelpHub 4.0.
+    Classe Abstrata Base para todos os modelos do HelpHub 4.1.
     Adiciona automaticamente campos de auditoria e métodos úteis.
     """
 
@@ -38,19 +38,44 @@ class BaseModel(db.Model):
     # Rastreabilidade
     audit_ip = db.Column(db.String(45), nullable=True)  # Suporta IPv6
 
+    def delete(self):
+        """Remove a instância do banco de dados."""
+        from App.Modulos.Administracao.modelo import SyncControl
+
+        entidades_sync = {
+            "clientes": "clientes",
+            "chamados": "chamados",
+            "usuarios": "usuarios",
+            "departamentos": "departamentos",
+        }
+        entidade = entidades_sync.get(self.__tablename__)
+
+        db.session.delete(self)
+        db.session.commit()
+
+        if entidade:
+            SyncControl.incrementar(entidade)
+
     def save(self):
         """Salva a instância no banco de dados."""
+        from App.Modulos.Administracao.modelo import SyncControl
+
+        entidades_sync = {
+            "clientes": "clientes",
+            "chamados": "chamados",
+            "usuarios": "usuarios",
+            "departamentos": "departamentos",
+        }
+        entidade = entidades_sync.get(self.__tablename__)
+
         db.session.add(self)
         try:
             db.session.commit()
+            if entidade:
+                SyncControl.incrementar(entidade)
         except Exception as e:
             db.session.rollback()
             raise e
-
-    def delete(self):
-        """Remove a instância do banco de dados."""
-        db.session.delete(self)
-        db.session.commit()
 
     @property
     def created_at_br(self):
@@ -62,3 +87,27 @@ class BaseModel(db.Model):
                 .format("DD/MM/YYYY HH:mm:ss")
             )
         return None
+
+    @property
+    def updated_at_br(self):
+        """Retorna a data de atualização formatada em Timezone BR."""
+        if self.updated_at:
+            return (
+                arrow.get(self.updated_at)
+                .to("America/Sao_Paulo")
+                .format("DD/MM/YYYY HH:mm:ss")
+            )
+        return None
+
+    @classmethod
+    def apply_sort(cls, query, field, order="asc"):
+        """
+        Aplica ordenação dinâmica e segura na query.
+        Uso: query = Modelo.apply_sort(query, 'nome', 'desc')
+        """
+        if not field or not hasattr(cls, field):
+            return query  # Retorna inalterado se campo não existe
+
+        coluna = getattr(cls, field)
+        is_desc = str(order).lower() == "desc"
+        return query.order_by(coluna.desc() if is_desc else coluna.asc())

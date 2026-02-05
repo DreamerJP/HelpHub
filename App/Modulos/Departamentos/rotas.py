@@ -1,9 +1,9 @@
-from flask import Blueprint, render_template, redirect, url_for, flash
+from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_required
 from App.banco import db
 from App.Modulos.Departamentos.modelo import Departamento
 from App.Modulos.Departamentos.formulario import DepartamentoForm
-from App.seguranca import admin_required
+from App.servicos.seguranca import admin_required
 
 dept_bp = Blueprint(
     "departamentos",
@@ -17,7 +17,15 @@ dept_bp = Blueprint(
 @login_required
 @admin_required
 def lista():
-    departamentos = Departamento.query.all()
+    query = Departamento.query
+    query = Departamento.apply_sort(
+        query, request.args.get("sort"), request.args.get("order")
+    )
+
+    if not request.args.get("sort"):
+        query = query.order_by(Departamento.nome.asc())
+
+    departamentos = query.all()
     return render_template("depto_lista.html", departamentos=departamentos)
 
 

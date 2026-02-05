@@ -8,8 +8,10 @@ from App.Modulos.Clientes.modelo import Cliente
 class ChamadoForm(AppBaseForm):
     cliente_id = SelectField("Cliente", validators=[DataRequired()])
     departamento_id = SelectField("Departamento", validators=[Optional()])
-    assunto = StringField("Assunto", validators=[DataRequired(), Length(max=150)])
-    descricao = TextAreaField("Descrição Detalhada", validators=[DataRequired()])
+    assunto = StringField("Assunto", validators=[DataRequired(), Length(max=80)])
+    descricao = TextAreaField(
+        "Descrição Detalhada", validators=[DataRequired(), Length(max=10000)]
+    )
     prioridade = SelectField(
         "Prioridade",
         choices=[
@@ -41,7 +43,9 @@ class ChamadoForm(AppBaseForm):
 
 
 class AndamentoForm(AppBaseForm):
-    texto = TextAreaField("Nova Interação / Resposta", validators=[DataRequired()])
+    texto = TextAreaField(
+        "Nova Interação / Resposta", validators=[DataRequired(), Length(max=10000)]
+    )
     novo_status = SelectField(
         "Alterar Status para",
         choices=[
@@ -58,8 +62,20 @@ class AndamentoForm(AppBaseForm):
     anexo = FileField("Anexar Arquivo (PDF, Imagem, Doc)", validators=[Optional()])
 
     # Campos para Agendamento (Surgem se status for Agendado)
+    tecnico_id = SelectField("Técnico Responsável", validators=[Optional()])
     data_inicio = StringField("Início da Visita", validators=[Optional()])
     data_fim = StringField("Fim Estimado", validators=[Optional()])
     instrucoes_tecnicas = TextAreaField(
-        "Instruções Técnicas / Tarefa", validators=[Optional()]
+        "Instruções Técnicas / Tarefa", validators=[Optional(), Length(max=5000)]
     )
+
+    def __init__(self, *args, **kwargs):
+        super(AndamentoForm, self).__init__(*args, **kwargs)
+        # Popula choices de técnicos dinamicamente
+        from App.Modulos.Autenticacao.modelo import Usuario
+
+        self.tecnico_id.choices = [
+            (u.id, u.nome)
+            for u in Usuario.query.filter_by(ativo=True).order_by(Usuario.nome).all()
+        ]
+        self.tecnico_id.choices.insert(0, ("", "--- Técnico Atual ---"))

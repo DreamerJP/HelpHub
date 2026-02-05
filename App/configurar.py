@@ -1,6 +1,6 @@
 import os
 
-# Caminho base do projeto (raiz do HelpHub 4.0)
+# Caminho base do projeto (raiz do HelpHub 4.1)
 # App/configurar.py -> parent is App -> parent is Root
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_DIR = os.path.join(BASE_DIR, "Data")
@@ -13,7 +13,7 @@ class Config:
     BASE_DIR = BASE_DIR
 
     # Segurança
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-key-mudar-em-producao-123"
+    SECRET_KEY = os.environ.get("SECRET_KEY") or "Alessa Gillespie"
 
     # Banco de Dados (SQLite em Data/banco.db)
     DB_PATH = os.path.join(DATA_DIR, "banco.db")
@@ -25,7 +25,7 @@ class Config:
 
     # Uploads (Fora do App)
     UPLOAD_FOLDER = os.path.join(DATA_DIR, "Uploads")
-    MAX_CONTENT_LENGTH = 100 * 1024 * 1024  # 100MB limite
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB limite (Segurança contra DoS)
 
     # Controle de Sessão
     from datetime import timedelta

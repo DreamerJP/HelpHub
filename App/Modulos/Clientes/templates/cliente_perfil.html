@@ -1,17 +1,12 @@
 {% extends "layout_base.html" %} {% from "componentes.html" import
-badge_status_chamado %} {% block title %}Perfil: {{ cliente.nome_razao }} -
-HelpHub 4.0{% endblock %} {% block page_title %}
+badge_status_chamado, badge_status_cliente %} {% block title %}Perfil: {{
+cliente.nome_razao }} - HelpHub 4.0{% endblock %} {% block page_title %}
 <div style="display: flex; align-items: center; gap: 1rem">
   <a href="{{ url_for('clientes.lista') }}" style="color: var(--text-muted)"
     ><i class="ph ph-arrow-left"></i
   ></a>
   <span>Perfil do Cliente</span>
-  <span
-    class="badge {% if cliente.ativo %}badge-success{% else %}badge-neutral{% endif %}"
-    style="font-size: 0.75rem"
-  >
-    {{ 'Ativo' if cliente.ativo else 'Inativo' }}
-  </span>
+  {{ badge_status_cliente(cliente.ativo) }}
 </div>
 {% endblock %} {% block content %}
 <div

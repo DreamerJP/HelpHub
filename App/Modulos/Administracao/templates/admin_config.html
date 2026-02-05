@@ -1,192 +1,287 @@
-{% extends "layout_base.html" %} {% block title %}Configurações do Sistema -
-HelpHub 4.0{% endblock %} {% block page_title %}
-<div style="display: flex; align-items: center; gap: 1rem">
-  <i class="ph ph-gear" style="color: var(--primary)"></i>
-  <span>Configurações da Empresa</span>
-</div>
-{% endblock %} {% block content %}
-<div
-  class="glass-panel"
-  style="max-width: 800px; margin: 0 auto; padding: 2.5rem; border-radius: 12px"
+{% extends "layout_base.html" %} {% from "componentes.html" import
+render_layout_erp %} {% block title %}Configurações do Sistema - HelpHub 4.0{%
+endblock %} {% block page_title %} Configurações da Empresa
+<span class="erp-subtitle hidden lg:inline-block"
+  >Dados da Ordem de Serviço e Identidade</span
 >
-  <h3
+{% endblock %} {% block content %}
+<form
+  method="POST"
+  enctype="multipart/form-data"
+  id="configForm"
+  class="modern-form"
+>
+  {{ form.hidden_tag() }} {% set toolbar_html %}
+  <div class="flex items-center gap-2 w-full">
+    <button type="submit" class="erp-btn erp-btn-primary">
+      <i class="ph ph-floppy-disk"></i> Salvar Alterações
+    </button>
+    <div class="erp-separator"></div>
+    <span class="text-xs text-gray-400 italic"
+      >Última atualização: {{ config.updated_at.strftime('%d/%m/%Y %H:%M') if
+      config.updated_at else 'N/A' }}</span
+    >
+  </div>
+  {% endset %} {% call render_layout_erp( titulo="Configurações", abas=[{'id':
+  'geral', 'label': 'Dados Gerais', 'icon': 'ph-buildings'}],
+  toolbar_buttons=toolbar_html ) %}
+
+  <div
+    class="erp-grid-content h-full"
     style="
-      margin-bottom: 2rem;
+      padding: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
       display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      color: var(--text-main);
+      flex-direction: column;
+      gap: 2rem;
     "
   >
-    <i class="ph ph-buildings" style="color: var(--primary)"></i>
-    Dados da Ordem de Serviço
-  </h3>
-
-  <form method="POST" enctype="multipart/form-data" class="modern-form">
-    {{ form.hidden_tag() }}
-
     <div
+      class="glass-panel"
       style="
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-        margin-bottom: 1.5rem;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
       "
     >
-      <div class="form-group">
-        <label
-          class="form-label"
-          style="
-            font-weight: 600;
-            font-size: 0.85rem;
-            margin-bottom: 0.5rem;
-            display: block;
-          "
-          >Nome da Empresa</label
-        >
-        {{ form.empresa_nome(class="form-input", placeholder="Ex: HelpHub
-        Soluções TI", style="width: 100%; padding: 0.75rem; border-radius: 8px;
-        border: 1px solid #d1d5db;") }}
-      </div>
-      <div class="form-group">
-        <label
-          class="form-label"
-          style="
-            font-weight: 600;
-            font-size: 0.85rem;
-            margin-bottom: 0.5rem;
-            display: block;
-          "
-          >CNPJ/Identificação</label
-        >
-        {{ form.empresa_cnpj(class="form-input",
-        placeholder="00.000.000/0001-00", style="width: 100%; padding: 0.75rem;
-        border-radius: 8px; border: 1px solid #d1d5db;") }}
-      </div>
-    </div>
-
-    <div
-      style="
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-        margin-bottom: 1.5rem;
-      "
-    >
-      <div class="form-group">
-        <label
-          class="form-label"
-          style="
-            font-weight: 600;
-            font-size: 0.85rem;
-            margin-bottom: 0.5rem;
-            display: block;
-          "
-          >E-mail de Contato</label
-        >
-        {{ form.empresa_email(class="form-input",
-        placeholder="financeiro@empresa.com", style="width: 100%; padding:
-        0.75rem; border-radius: 8px; border: 1px solid #d1d5db;") }}
-      </div>
-      <div class="form-group">
-        <label
-          class="form-label"
-          style="
-            font-weight: 600;
-            font-size: 0.85rem;
-            margin-bottom: 0.5rem;
-            display: block;
-          "
-          >Telefone</label
-        >
-        {{ form.empresa_telefone(class="form-input", placeholder="(00)
-        0000-0000", style="width: 100%; padding: 0.75rem; border-radius: 8px;
-        border: 1px solid #d1d5db;") }}
-      </div>
-    </div>
-
-    <div class="form-group" style="margin-bottom: 1.5rem">
-      <label
-        class="form-label"
+      <h4
         style="
-          font-weight: 600;
-          font-size: 0.85rem;
-          margin-bottom: 0.5rem;
-          display: block;
-        "
-        >Endereço Completo</label
-      >
-      {{ form.empresa_endereco(class="form-input", placeholder="Av. Principal,
-      123 - Centro, Cidade/UF", style="width: 100%; padding: 0.75rem;
-      border-radius: 8px; border: 1px solid #d1d5db;") }}
-    </div>
-
-    <div
-      class="form-group"
-      style="
-        padding: 1.5rem;
-        background: #f9fafb;
-        border-radius: 10px;
-        border: 1px dashed #cbd5e1;
-        margin-bottom: 2rem;
-      "
-    >
-      <label
-        class="form-label"
-        style="
+          font-size: 0.75rem;
           font-weight: 700;
-          font-size: 0.9rem;
-          margin-bottom: 1rem;
-          display: block;
-          color: var(--text-main);
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin-bottom: 2rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
         "
-        >Logo da Empresa</label
       >
+        <i class="ph ph-info text-blue-500 text-lg"></i>
+        Informações Institucionais
+      </h4>
 
-      <div style="display: flex; align-items: center; gap: 2rem">
-        {% if config.empresa_logo %}
-        <div
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+          margin-bottom: 1.5rem;
+        "
+      >
+        <div class="form-group">
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: #374151;
+              margin-bottom: 0.75rem;
+              display: block;
+            "
+            >Nome da Empresa</label
+          >
+          {{ form.empresa_nome(class="form-input", placeholder="Ex: HelpHub
+          Soluções TI", maxlength="100") }}
+        </div>
+        <div class="form-group">
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: #374151;
+              margin-bottom: 0.75rem;
+              display: block;
+            "
+            >CNPJ / Identificação</label
+          >
+          {{ form.empresa_cnpj(class="form-input",
+          placeholder="00.000.000/0001-00", maxlength="20") }}
+        </div>
+      </div>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+          margin-bottom: 1.5rem;
+        "
+      >
+        <div class="form-group">
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: #374151;
+              margin-bottom: 0.75rem;
+              display: block;
+            "
+            >E-mail de Contato</label
+          >
+          {{ form.empresa_email(class="form-input",
+          placeholder="contato@empresa.com", maxlength="120") }}
+        </div>
+        <div class="form-group">
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: #374151;
+              margin-bottom: 0.75rem;
+              display: block;
+            "
+            >Telefone Suporte</label
+          >
+          {{ form.empresa_telefone(class="form-input", placeholder="(00)
+          0000-0000", maxlength="20") }}
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 2.5rem">
+        <label
+          class="form-label"
           style="
-            width: 100px;
-            height: 100px;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #e5e7eb;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.75rem;
+            display: block;
+          "
+          >Endereço Completo (para OS)</label
+        >
+        {{ form.empresa_endereco(class="form-input", placeholder="Av. Principal,
+        123 - Centro, Cidade/UF", maxlength="255") }}
+      </div>
+
+      <!-- Upload de Logo -->
+      <div
+        style="
+          padding: 1.5rem;
+          background: #f8fafc;
+          border-radius: 12px;
+          border: 1px dashed #cbd5e1;
+        "
+      >
+        <label
+          class="form-label"
+          style="
+            font-weight: 700;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            display: block;
+            color: #475569;
           "
         >
-          <img
-            src="{{ url_for('chamados.baixar_anexo', filename=config.empresa_logo) }}"
-            alt="Logo Atual"
-            style="max-width: 100%; max-height: 100%; object-fit: contain"
-          />
-        </div>
-        {% endif %}
+          Logo da Empresa (Impressão)
+        </label>
 
-        <div style="flex: 1">
-          {{ form.empresa_logo(style="font-size: 0.85rem; color: #64748b;") }}
-          <p style="font-size: 0.75rem; color: #94a3b8; margin-top: 5px">
-            Recomendado: fundo transparente, proporção retangular ou quadrada.
-          </p>
+        <div style="display: flex; align-items: center; gap: 2rem">
+          {% if config.empresa_logo %}
+          <div
+            style="
+              width: 100px;
+              height: 100px;
+              border-radius: 12px;
+              overflow: hidden;
+              border: 1px solid #e2e8f0;
+              background: white;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            "
+          >
+            <img
+              src="{{ url_for('chamados.baixar_anexo', filename=config.empresa_logo) }}"
+              alt="Logo Atual"
+              style="max-width: 80px; max-height: 80px; object-fit: contain"
+            />
+          </div>
+          {% else %}
+          <div
+            style="
+              width: 100px;
+              height: 100px;
+              border-radius: 12px;
+              border: 2px dashed #e2e8f0;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              color: #94a3b8;
+              background: #ffffff;
+            "
+          >
+            <i class="ph ph-image text-3xl"></i>
+            <span style="font-size: 0.65rem; font-weight: 600; margin-top: 4px"
+              >SEM LOGO</span
+            >
+          </div>
+          {% endif %}
+
+          <div style="flex: 1">
+            {{ form.empresa_logo(style="font-size: 0.85rem; color: #64748b;
+            width: 100%; cursor: pointer;") }}
+            <p
+              style="
+                font-size: 0.75rem;
+                color: #94a3b8;
+                margin-top: 8px;
+                line-height: 1.4;
+              "
+            >
+              Formatos aceitos: <strong>PNG ou JPG</strong>.<br />
+              Tamanho recomendado: 250px de largura com fundo transparente.
+            </p>
+          </div>
         </div>
       </div>
     </div>
 
+    <!-- Banner Informativo -->
     <div
       style="
+        padding: 1.25rem;
+        background: #f0fdf4;
+        border-radius: 10px;
+        border: 1px solid #dcfce7;
         display: flex;
-        justify-content: flex-end;
         gap: 1rem;
-        border-top: 1px solid #f1f5f9;
-        padding-top: 2rem;
+        align-items: flex-start;
       "
     >
-      {{ form.submit(class="btn btn-primary", style="padding: 0.8rem 2rem;
-      font-weight: 700; cursor: pointer;") }}
+      <i
+        class="ph ph-check-circle text-green-600 text-xl"
+        style="margin-top: 2px"
+      ></i>
+      <div>
+        <h5
+          style="
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #166534;
+            margin-bottom: 0.25rem;
+          "
+        >
+          Identidade Visual
+        </h5>
+        <p
+          style="
+            font-size: 0.8rem;
+            color: #166534;
+            line-height: 1.5;
+            opacity: 0.9;
+          "
+        >
+          Esses dados são utilizados automaticamente na geração de
+          <strong>Ordens de Serviço (PDF)</strong> e nos cabeçalhos de
+          comunicados oficiais enviados aos clientes.
+        </p>
+      </div>
     </div>
-  </form>
-</div>
+  </div>
+  {% endcall %}
+</form>
 {% endblock %}

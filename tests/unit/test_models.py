@@ -198,3 +198,43 @@ def test_tarefa_monitor_model(app, _db):
             TarefaMonitor.query.filter_by(tarefa_id="tarefa_teste").first().status
             == "Erro"
         )
+
+
+def test_chamado_priority_sorting(app, _db):
+    """Verifica se a ordenação inteligente por prioridade está funcionando."""
+    with app.app_context():
+        # Setup
+        cliente = Cliente(
+            nome_razao="Sort Corp", cpf_cnpj="111", created_by=1, email="a@a.com"
+        )
+        _db.session.add(cliente)
+        _db.session.commit()
+
+        # Criar chamados em ordem aleatória de prioridade
+        prio_map = {
+            "Baixa": "Ticket Baixo",
+            "Crítica": "Ticket Crítico",
+            "Normal": "Ticket Normal",
+            "Alta": "Ticket Alto",
+        }
+
+        for prio, assunto in prio_map.items():
+            c = Chamado(
+                cliente_id=cliente.id,
+                assunto=assunto,
+                descricao="...",
+                prioridade=prio,
+                created_by=1,
+            )
+            c.gerar_protocolo()
+            _db.session.add(c)
+
+        _db.session.commit()
+
+        # Aplicar ordenação (Descrescente: Crítica -> Baixa)
+        sorted_tickets = Chamado.apply_sort(Chamado.query, "prioridade", "desc").all()
+
+        # A ordem deve ser: Crítica (9), Alta (3), Normal (2), Baixa (0)
+        # Note: Se houver empates de peso, a ordenação secundária é ID desc.
+        ordem_recebida = [t.prioridade for t in sorted_tickets]
+        assert ordem_recebida == ["Crítica", "Alta", "Normal", "Baixa"]

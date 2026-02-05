@@ -1,29 +1,227 @@
-{# Macro para renderizar a paginação de forma padronizada em todas as tabelas #}
-{% macro render_paginacao(paginated_obj, endpoint) %}
-<div class="pagination">
-  {% if paginated_obj.has_prev %}
-  <a
-    href="{{ url_for(endpoint, page=paginated_obj.prev_num, **kwargs) }}"
-    class="btn"
-  >
-    <i class="ph ph-caret-left"></i> Anterior
-  </a>
-  {% endif %} {% if paginated_obj.has_next %}
-  <a
-    href="{{ url_for(endpoint, page=paginated_obj.next_num, **kwargs) }}"
-    class="btn"
-  >
-    Próximo <i class="ph ph-caret-right"></i>
-  </a>
-  {% endif %}
-</div>
-{% endmacro %} {# Macro para Badges de Status de Chamados #} {% macro
-badge_status_chamado(status) %} {% set classe = 'badge-neutral' %} {% if status
-== 'Aberto' %} {% set classe = 'badge-info' %} {% elif status == 'Agendado' %}
-{% set classe = 'badge-warning' %} {% elif status == 'Pendente' %} {% set classe
-= 'badge-neutral' %} {% elif status == 'Escalonado' %} {% set classe =
-'badge-danger' %} {% elif status == 'Fechado' %} {% set classe = 'badge-success'
-%} {% endif %}
+﻿{% macro render_paginacao(paginated_obj, endpoint) %}
+<div class="flex items-center justify-end gap-4 w-full">
+  <!-- Contador de Páginas -->
+  <span class="text-xs text-gray-500 font-medium">
+    Página <strong class="text-gray-800">{{ paginated_obj.page }}</strong> de {{
+    paginated_obj.pages }}
+  </span>
 
+  <!-- Controles de Navegação -->
+  <div class="flex items-center gap-1">
+    <!-- Botão Anterior -->
+    {% if paginated_obj.has_prev %}
+    <a href="{{ url_for(endpoint, **dict(request.args, page=paginated_obj.prev_num, **kwargs)) }}"
+      @click.prevent="loadUrl($el.href)" class="erp-btn erp-btn-neutral btn-sm">
+      <i class="ph ph-caret-left font-bold"></i> Anterior
+    </a>
+    {% else %}
+    <span class="erp-btn erp-btn-neutral btn-sm disabled opacity-50 cursor-not-allowed">
+      <i class="ph ph-caret-left font-bold"></i> Anterior
+    </span>
+    {% endif %}
+
+    <!-- Botão Próximo -->
+    {% if paginated_obj.has_next %}
+    <a href="{{ url_for(endpoint, **dict(request.args, page=paginated_obj.next_num, **kwargs)) }}"
+      @click.prevent="loadUrl($el.href)" class="erp-btn erp-btn-neutral btn-sm">
+      Próximo <i class="ph ph-caret-right font-bold"></i>
+    </a>
+    {% else %}
+    <span class="erp-btn erp-btn-neutral btn-sm disabled opacity-50 cursor-not-allowed">
+      Próximo <i class="ph ph-caret-right font-bold"></i>
+    </span>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %} {# --- Macro para Título de Coluna Ordenável --- #} {% macro
+th_ordenavel(label, field, current_sort, current_order, style="") %}
+<th style="{{ style }}">
+  {% set cur_sort = (current_sort or "")|lower %} {% set cur_order =
+  (current_order or "")|lower %} {% set next_order = 'desc' if cur_sort ==
+  field|lower and cur_order == 'asc' else 'asc' %}
+  <a href="{{ url_for(request.endpoint, **dict(request.args, sort=field, order=next_order, page=1, **request.view_args)) }}"
+    class="flex items-center gap-1 group cursor-pointer select-none" style="
+      text-decoration: none !important;
+      color: inherit;
+      display: inline-flex;
+    " @click.prevent="loadUrl($el.href)">
+    <span class="group-hover:text-blue-600 transition-colors">{{ label }}</span>
+
+    {% if cur_sort == field|lower %}
+    <i class="ph {{ 'ph-caret-up' if cur_order == 'asc' else 'ph-caret-down' }} text-blue-600"></i>
+    {% else %}
+    <i class="ph ph-caret-up-down text-gray-300 opacity-0 group-hover:opacity-50 transition-opacity"></i>
+    {% endif %}
+  </a>
+</th>
+{% endmacro %} {# Macro para Badges de Status de Chamados #} {% macro
+badge_status_chamado(status, colorido=True) %} {% set classe = 'badge-neutral' %}
+{% if colorido %} {% if status == 'Aberto' %} {% set classe = 'badge-danger' %}
+{% elif status == 'Agendado' %} {% set classe = 'badge-warning' %} {% elif status
+== 'Pendente' %} {% set classe = 'badge-info' %} {% elif status == 'Escalonado'
+%} {% set classe = 'badge-escalonado' %} {% elif status == 'Fechado' %} {% set
+classe = 'badge-success' %} {% endif %} {% endif %}
 <span class="badge {{ classe }}">{{ status }}</span>
-{% endmacro %}
+{% endmacro %} {# Macro para Badges de Prioridade de Chamados #} {% macro
+badge_prioridade_chamado(prioridade) %} {% set classe = 'badge-neutral' %} {% if
+prioridade == 'Critica' %} {% set classe = 'badge-danger' %} {% elif prioridade
+== 'Alta' %} {% set classe = 'badge-warning' %} {% elif prioridade == 'Normal'
+%} {% set classe = 'badge-info' %} {% elif prioridade == 'Baixa' %} {% set
+classe = 'badge-neutral' %} {% endif %}
+<span class="badge {{ classe }}">{{ prioridade }}</span>
+{% endmacro %} {# Macro para Status de Cliente (Ativo/Inativo) #} {% macro
+badge_status_cliente(ativo) %} {% if ativo %}
+<span class="badge badge-success">Ativo</span>
+{% else %}
+<span class="badge badge-danger">Inativo</span>
+{% endif %} {% endmacro %} {# Macro para Perfil de Usuário #} {% macro
+badge_perfil_usuario(role) %} {% if role == 'Admin' or role == True %}
+<span class="badge badge-escalonado">Administrador</span>
+{% else %}
+<span class="badge badge-neutral">Operador</span>
+{% endif %} {% endmacro %} {# Layout ERP Master (Abas + Toolbar + Grid AJAX) #} {% macro render_layout_erp(titulo,
+subtitulo='', abas=[],
+toolbar_buttons='', active_tab_id=None,
+persistir_aba=False, storage_type='session', custom_key=None) %}
+<script>
+  // Inicializa o componente de navegação ERP globalmente
+  document.addEventListener("alpine:init", () => {
+    Alpine.data("erpNavigation", () => ({
+      activeTab: '{{ active_tab_id if active_tab_id else (abas[0].id if abas else "lista") }}',
+      selectedItem: null,
+      isLoading: false,
+
+      init() {
+        // Persistência de abas (Sticky Tabs)
+        const persistir = {{ 'true' if persistir_aba else 'false' }};
+        if (!persistir) return;
+
+        const storageType = '{{ storage_type }}'; 
+        const storage = storageType === 'session' ? sessionStorage : localStorage;
+        
+        // Usamos o título da página ou uma chave customizada para a memória
+        const pageId = "{{ custom_key if custom_key else titulo }}".toLowerCase().replace(/[^a-z0-9]/g, '_');
+        const storageKey = `erp_tab_${pageId}`;
+        const savedTab = storage.getItem(storageKey);
+
+        if (savedTab && this.isValidTab(savedTab)) {
+          this.activeTab = savedTab;
+        }
+
+        this.$watch('activeTab', value => {
+          storage.setItem(storageKey, value);
+        });
+      },
+
+      isValidTab(tabId) {
+        // Verifica se a aba salva ainda existe no componente atual
+        const abas = [
+          {% for aba in abas %}'{{ aba.id }}',{% endfor %}
+        ];
+        return abas.includes(tabId);
+      },
+
+      toggleSelection(item) {
+        if (this.selectedItem && this.selectedItem.id === item.id) {
+          this.selectedItem = null;
+        } else {
+          this.selectedItem = item;
+        }
+      },
+
+      async loadUrl(url) {
+        if (!url || url === "#") return;
+
+        this.isLoading = true;
+        this.selectedItem = null; // Limpa seleção ao mudar página
+
+        try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error("Erro na rede");
+
+          const html = await response.text();
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, "text/html");
+
+          const currentPanel = this.$root.querySelector(".erp-panel");
+
+          if (currentPanel) {
+            // 1. Atualiza a Toolbar (contadores e botões)
+            const newToolbar = doc.querySelector(".erp-toolbar");
+            const currentToolbar = currentPanel.querySelector(".erp-toolbar");
+            if (newToolbar && currentToolbar) {
+              currentToolbar.innerHTML = newToolbar.innerHTML;
+            }
+
+            // 2. Atualiza a Grid de dados e Paginação
+            const newGrid = doc.querySelector(".erp-grid-container");
+            const currentGrid = currentPanel.querySelector(".erp-grid-container");
+            if (newGrid && currentGrid) {
+              currentGrid.innerHTML = newGrid.innerHTML;
+            }
+
+            // Atualiza URL do navegador sem reload
+            window.history.pushState({}, "", url);
+
+            // Força o Alpine a processar as novas diretivas bind/click no conteúdo injetado
+            this.$nextTick(() => {
+              if (window.Alpine) {
+                // Nota: Alpine 3 processa automaticamente se os elementos 
+                // usarem variáveis do escopo pai que mudarem.
+              }
+            });
+          } else {
+            window.location.href = url;
+          }
+        } catch (error) {
+          console.error("Erro na navegação AJAX:", error);
+          window.location.href = url; // Fallback seguro
+        } finally {
+          this.isLoading = false;
+        }
+      },
+    }));
+  });
+</script>
+
+<div x-data="erpNavigation" class="flex flex-col relative">
+  <!-- Título e Abas -->
+
+  <!-- 2. Abas de Fichário (Nível 0) -->
+  {% if abas %}
+  <div class="erp-tab-container">
+    {% for aba in abas %}
+    <button @click="activeTab = '{{ aba.id }}'" :class="activeTab === '{{ aba.id }}' ? 'active' : ''" class="erp-tab">
+      {% if aba.icon %}<i class="ph {{ aba.icon }} text-lg"></i>{% endif %} {{
+      aba.label }}
+    </button>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- 3. Painel Principal (Papel Branco) -->
+  <div class="erp-panel relative">
+    <!-- Loading Overlay -->
+    <div x-show="isLoading" class="erp-loading-overlay" style="display: none">
+      <div class="erp-loader-spinner"></div>
+    </div>
+
+    <!-- 4. Toolbar Estável (Nível 1) -->
+    <div class="erp-toolbar">{{ toolbar_buttons }}</div>
+
+    <!-- 5. Grid / Conteúdo (Target AJAX) -->
+    <div class="erp-grid-container custom-scrollbar">{{ caller() }}</div>
+  </div>
+</div>
+{% endmacro %} {# --- Macro para Banner de Alerta ERP --- #} {% macro
+erp_banner(tipo='warning', titulo='', icon='ph-warning-diamond') -%}
+<div class="erp-banner erp-banner-{{ tipo }}">
+  <i class="ph {{ icon }}"></i>
+  <div class="erp-banner-content">
+    {% if titulo %}
+    <span class="erp-banner-title">{{ titulo }}</span>
+    {% endif %}
+    <div class="erp-banner-description">{{ caller() }}</div>
+  </div>
+</div>
+{%- endmacro %}

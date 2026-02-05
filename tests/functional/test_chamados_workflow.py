@@ -196,3 +196,66 @@ def test_auto_closure_logic(app, admin_user):
             .first()
         )
         assert "Encerrado automaticamente" in ultimo_log.texto
+        assert "Encerrado automaticamente" in ultimo_log.texto
+
+
+def test_auto_assignment_on_interaction(client, app, admin_user):
+    """Testa a regra de auto-atribuição: Técnico assume, Admin NÃO assume."""
+    from App.Modulos.Autenticacao.modelo import Usuario
+
+    with app.app_context():
+        cliente = Cliente(
+            nome_razao="Interaction Corp", cpf_cnpj="789", created_by=admin_user.id
+        )
+        db.session.add(cliente)
+
+        # Criar um técnico comum (Operador)
+        tecnico = Usuario(username="tec_test", email="tec@test.com", role="Operador")
+        tecnico.set_password("123456")
+        db.session.add(tecnico)
+        db.session.flush()
+        tecnico_id = tecnico.id
+
+        # Criar chamado SEM técnico
+        chamado = Chamado(
+            cliente_id=cliente.id,
+            assunto="Ticket sem Dono",
+            descricao="Ninguém pegou ainda",
+            status="Aberto",
+            tecnico_id=None,
+            created_by=1,
+        )
+        chamado.gerar_protocolo()
+        db.session.add(chamado)
+        db.session.commit()
+        chamado_id = chamado.id
+
+    # 1. Testar com ADMIN: NÃO deve assumir
+    client.post(
+        url_for("auth.login"), data={"username": "admin_test", "password": "123456"}
+    )
+    client.post(
+        url_for("chamados.detalhe", id=chamado_id),
+        data={"texto": "Nota de supervisor (Admin)", "novo_status": ""},
+        follow_redirects=True,
+    )
+
+    with app.app_context():
+        ch = db.session.get(Chamado, chamado_id)
+        assert ch.tecnico_id is None, "Admin não deveria assumir o chamado!"
+
+    # 2. Testar com TÉCNICO: DEVE assumir
+    client.get(url_for("auth.logout"), follow_redirects=True)
+    client.post(
+        url_for("auth.login"), data={"username": "tec_test", "password": "123456"}
+    )
+    client.post(
+        url_for("chamados.detalhe", id=chamado_id),
+        data={"texto": "Vou resolver isso agora (Técnico)", "novo_status": ""},
+        follow_redirects=True,
+    )
+
+    with app.app_context():
+        db.session.expire_all()
+        ch = db.session.get(Chamado, chamado_id)
+        assert ch.tecnico_id == tecnico_id, "Técnico comum deveria assumir o chamado!"

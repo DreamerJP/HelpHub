@@ -17,7 +17,16 @@ def lista():
     page = request.args.get("page", 1, type=int)
     q = request.args.get("q", "").strip()
 
-    query = Cliente.query.order_by(Cliente.nome_razao)
+    query = Cliente.query
+
+    # Ordenação Dinâmica (1 Linha)
+    query = Cliente.apply_sort(
+        query, request.args.get("sort"), request.args.get("order")
+    )
+
+    # Ordenação Padrão (se não houve dinâmica)
+    if not request.args.get("sort"):
+        query = query.order_by(Cliente.nome_razao)
 
     if q:
         # Filtra por Nome ou CPF/CNPJ
@@ -86,15 +95,17 @@ def editar(id):
 @login_required
 def upload_documento(id):
     from App.Modulos.Clientes.modelo import DocumentoCliente
-    from App.upload_manager import UploadManager
-    from datetime import datetime
+    from App.servicos.upload_manager import UploadManager
+    from datetime import datetime, timezone
 
     cliente = db.get_or_404(Cliente, id)
     file = request.files.get("arquivo")
 
     if file:
         try:
-            sub_diretorio = f"Clientes/{cliente.id}/{datetime.now().strftime('%Y')}"
+            sub_diretorio = (
+                f"Clientes/{cliente.id}/{datetime.now(timezone.utc).strftime('%Y')}"
+            )
             caminho = UploadManager.salvar(file, subfolder=sub_diretorio)
 
             doc = DocumentoCliente(

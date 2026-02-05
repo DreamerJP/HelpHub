@@ -1,8 +1,5 @@
 from flask_limiter import Limiter
 from .utils import get_real_ip
-
-# Instância compartilhada do Rate Limiter.
-# Responsável por fornecer as travas de segurança (como bloqueio de força bruta no login).
 from flask import abort
 from flask_login import current_user
 from functools import wraps

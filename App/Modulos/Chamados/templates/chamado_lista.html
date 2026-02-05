@@ -1,194 +1,151 @@
 {% extends "layout_base.html" %} {% from "componentes.html" import
-render_paginacao, badge_status_chamado %} {% block title %}Chamados - HelpHub
-4.0{% endblock %} {% block page_title %}Fila de Chamados{% endblock %} {% block
-content %}
+render_paginacao, badge_status_chamado, badge_prioridade_chamado,
+render_layout_erp, th_ordenavel %} {% block title %}Chamados - HelpHub 4.1{%
+endblock %} {% block page_title %} Fila de Chamados
+<span class="erp-subtitle hidden lg:inline-block"
+  >Centro de operações e suporte ao cliente</span
+>
+{% endblock %} {% block content %} {# --- BOTÕES DA TOOLBAR --- #} {% set
+toolbar_html %}
+<!-- Grupo A: Novo -->
+<a href="{{ url_for('chamados.novo') }}" class="erp-btn erp-btn-primary">
+  <i class="ph ph-plus-circle text-lg"></i> Novo Chamado
+</a>
 
-<!-- Sistema de Abas (Filas) -->
-<div class="tab-container" style="margin-bottom: 2rem">
-  <a
-    href="{{ url_for('chamados.lista', status='ativos', q=q) }}"
-    class="tab-link {% if status_filter == 'ativos' %}active{% endif %}"
-  >
-    <i class="ph ph-envelope"></i> Abertos
-  </a>
-  <a
-    href="{{ url_for('chamados.lista', status='abertos', q=q) }}"
-    class="tab-link {% if status_filter == 'abertos' %}active{% endif %}"
-  >
-    <i class="ph ph-envelope-open" style="color: var(--danger)"></i> Triagem
-  </a>
-  <a
-    href="{{ url_for('chamados.lista', status='agendados', q=q) }}"
-    class="tab-link {% if status_filter == 'agendados' %}active{% endif %}"
-  >
-    <i class="ph ph-calendar" style="color: var(--warning)"></i> Visitas
-  </a>
-  <a
-    href="{{ url_for('chamados.lista', status='pendentes', q=q) }}"
-    class="tab-link {% if status_filter == 'pendentes' %}active{% endif %}"
-  >
-    <i class="ph ph-hourglass" style="color: var(--text-muted)"></i> Aguardando
-    Cliente
-  </a>
-  <a
-    href="{{ url_for('chamados.lista', status='escalonados', q=q) }}"
-    class="tab-link {% if status_filter == 'escalonados' %}active{% endif %}"
-  >
-    <i class="ph ph-trend-up" style="color: var(--danger)"></i> Nível Superior
-  </a>
-  <a
-    href="{{ url_for('chamados.lista', status='fechados', q=q) }}"
-    class="tab-link {% if status_filter == 'fechados' %}active{% endif %}"
-  >
-    <i class="ph ph-check-circle" style="color: var(--success)"></i> Finalizados
-  </a>
-</div>
+<div class="erp-separator"></div>
 
-<div class="glass-panel">
-  <div
-    style="
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    "
+<!-- Grupo B: Ações de Contexto -->
+<a
+  :href="selectedItem ? '{{ url_for('chamados.detalhe', id=0) }}'.replace('0', selectedItem.id) : '#'"
+  :class="selectedItem ? '' : 'disabled'"
+  class="erp-btn erp-btn-neutral"
+>
+  <i class="ph ph-arrow-square-out text-blue-600"></i> Abrir
+</a>
+
+<!-- Grupo C: Busca -->
+<div class="flex items-center gap-2 ml-auto">
+  <form
+    action="{{ url_for('chamados.lista') }}"
+    method="get"
+    class="flex items-center"
   >
-    <div style="display: flex; gap: 1rem; align-items: center">
-      <!-- Busca Funcional -->
-      <form
-        action="{{ url_for('chamados.lista') }}"
-        method="get"
-        style="display: flex; gap: 0.5rem; align-items: center"
-      >
-        <input type="hidden" name="status" value="{{ status_filter }}" />
-        <div style="position: relative">
-          <i
-            class="ph ph-funnel"
-            style="
-              position: absolute;
-              left: 10px;
-              top: 50%;
-              transform: translateY(-50%);
-              color: var(--text-muted);
-            "
-          ></i>
-          <input
-            type="text"
-            name="q"
-            value="{{ q or '' }}"
-            placeholder="Protocolo, Assunto ou Cliente..."
-            style="
-              padding: 0.5rem 0.5rem 0.5rem 2rem;
-              border: 1px solid #d1d5db;
-              border-radius: 6px;
-              width: 280px;
-              font-size: 0.85rem;
-            "
-          />
-        </div>
-        {% if q %}
-        <a
-          href="{{ url_for('chamados.lista', status=status_filter) }}"
-          class="btn"
-          style="background: #f3f4f6"
-          title="Limpar busca"
-        >
-          <i class="ph ph-x"></i>
-        </a>
-        {% endif %}
-      </form>
-      <div class="text-muted" style="font-size: 0.85rem">
-        Exibindo {{ chamados.items|length }} de {{ chamados.total }} chamados.
-      </div>
+    <input type="hidden" name="status" value="{{ status_filter }}" />
+    <div class="erp-search-box">
+      <i class="ph ph-magnifying-glass"></i>
+      <input
+        type="text"
+        name="q"
+        value="{{ q or '' }}"
+        placeholder="Protocolo, Assunto..."
+        class="erp-search-input"
+      />
     </div>
-
-    <a href="{{ url_for('chamados.novo') }}" class="btn btn-primary">
-      <i class="ph ph-plus"></i> Abrir Chamado
-    </a>
+  </form>
+  <div class="erp-badge-count" title="Total nesta fila">
+    {{ chamados.total }} reg.
   </div>
+</div>
+{% endset %} {# --- RENDERIZAÇÃO ERP --- #} {# Truque do AJAX: 1. Passamos o
+status_filter atual como active_tab_id. 2. Usamos x-effect abaixo para ouvir
+mudanças na aba e recarregar a página via AJAX. #} {% call render_layout_erp(
+titulo="Chamados", abas=[ {'id': 'ativos', 'label': 'Todos Ativos', 'icon':
+'ph-envelope'}, {'id': 'abertos', 'label': 'Triagem', 'icon':
+'ph-envelope-open'}, {'id': 'agendados', 'label': 'Visitas', 'icon':
+'ph-calendar'}, {'id': 'pendentes', 'label': 'Aguardando', 'icon':
+'ph-hourglass'}, {'id': 'escalonados', 'label': 'Nível Superior', 'icon':
+'ph-trend-up'}, {'id': 'fechados', 'label': 'Finalizados', 'icon':
+'ph-check-circle'} ], toolbar_buttons=toolbar_html, active_tab_id=status_filter,
+persistir_aba=True
+) %}
 
-  <table class="data-table data-table-clickable">
+<!-- Watcher para Navegação de Abas -->
+<div
+  x-effect="if (activeTab !== '{{ status_filter }}') loadUrl('{{ url_for('chamados.lista') }}?status=' + activeTab + '&q={{ q or '' }}')"
+></div>
+
+<!-- Grid de Dados -->
+<div class="erp-grid-content">
+  <table class="erp-table">
     <thead>
       <tr>
-        <th>Protocolo</th>
+        <th style="width: 120px">Protocolo</th>
         <th>Assunto</th>
         <th>Cliente</th>
-        <th>Status</th>
-        <th>Criado em</th>
-        <th></th>
+        {{ th_ordenavel('Prioridade', 'prioridade', request.args.get('sort'),
+        request.args.get('order'), style="width: 110px") }} {{
+        th_ordenavel('Departamento', 'departamento_id',
+        request.args.get('sort'), request.args.get('order')) }}
+        <th style="width: 100px">Status</th>
+        {{ th_ordenavel('Criado em', 'created_at', request.args.get('sort'),
+        request.args.get('order'), style="width: 140px") }}
+        {% if status_filter == 'agendados' %}
+        {{ th_ordenavel('Próximo Agend.', 'proximo_agendamento', request.args.get('sort'),
+        request.args.get('order'), style="width: 140px") }}
+        {% endif %}
+        {% if status_filter == 'fechados' %}
+        {{ th_ordenavel('Finalizado em', 'updated_at', request.args.get('sort'),
+        request.args.get('order'), style="width: 140px") }}
+        {% endif %}
+        <th>Responsável</th>
       </tr>
     </thead>
     <tbody>
       {% for c in chamados.items %}
       <tr
-        class="clickable-row"
-        data-href="{{ url_for('chamados.detalhe', id=c.id) }}"
+        class="group cursor-pointer select-none"
+        :class="{'selected': selectedItem && selectedItem.id == '{{ c.id }}'}"
+        @click="toggleSelection({
+                        id: '{{ c.id }}', 
+                        protocolo: '{{ c.protocolo }}'
+                    })"
+        @dblclick="window.location.href = '{{ url_for('chamados.detalhe', id=c.id) }}'"
       >
-        <td style="font-family: monospace; font-weight: 600">
-          {{ c.protocolo }}
+        <td class="font-mono font-semibold text-blue-700">{{ c.protocolo }}</td>
+
+        <td class="font-medium text-gray-800">{{ c.assunto }}</td>
+
+        <td>{{ c.cliente.nome_razao }}</td>
+
+        <td>{{ badge_prioridade_chamado(c.prioridade) }}</td>
+
+        <td class="text-gray-500 text-xs">
+          <i class="ph ph-buildings mr-1"></i>
+          {{ c.departamento.nome if c.departamento else 'Triagem' }}
         </td>
-        <td>{{ c.assunto }}</td>
-        <td>
-          <div style="font-weight: 500">{{ c.cliente.nome_razao }}</div>
-          <div class="text-muted" style="font-size: 0.75rem">
-            <i class="ph ph-buildings"></i> {{ c.departamento.nome if
-            c.departamento else 'Triagem' }}
-          </div>
+
+        <td>{{ badge_status_chamado(c.status, colorido=False) }}</td>
+
+        <td class="text-xs text-gray-500">{{ c.created_at_br }}</td>
+        {% if status_filter == 'agendados' %}
+        <td class="text-xs text-gray-500" {% if c.proximo_agendamento and c.proximo_agendamento.esta_atrasado %}style="color: #dc2626 !important;"{% endif %}>
+          {{ c.proximo_agendamento.data_inicio_br if c.proximo_agendamento else '-' }}
         </td>
-        <td>{{ badge_status_chamado(c.status) }}</td>
-        <td class="text-sm">{{ c.created_at_br }}</td>
-        <td style="text-align: right">
-          <a
-            href="{{ url_for('chamados.detalhe', id=c.id) }}"
-            class="btn btn-action"
-            style="background: #eff6ff; color: var(--primary)"
-          >
-            <i class="ph ph-arrow-square-out"></i> Abrir
-          </a>
+        {% endif %}
+        {% if status_filter == 'fechados' %}
+        <td class="text-xs text-blue-500 font-medium">{{ c.updated_at_br }}</td>
+        {% endif %}
+
+        <td class="text-xs text-gray-400">
+          {% if c.tecnico %} {{ c.tecnico.username }} {% else %} - {% endif %}
         </td>
       </tr>
       {% else %}
       <tr>
-        <td
-          colspan="6"
-          style="text-align: center; padding: 3rem"
-          class="text-muted"
-        >
-          <i
-            class="ph ph-ticket"
-            style="font-size: 2rem; display: block; margin-bottom: 0.5rem"
-          ></i>
-          Nenhum chamado encontrado nesta categoria.
+        <td colspan="{% if status_filter == 'fechados' or status_filter == 'agendados' %}9{% else %}8{% endif %}" class="text-center py-12 text-muted">
+          <i class="ph ph-inbox text-3xl mb-2 block opacity-20"></i>
+          Nenhum chamado encontrado nesta fila.
         </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 
-  {# Uso da Macro de Paginação Padronizada #} {{ render_paginacao(chamados,
-  'chamados.lista', q=q, status=status_filter) }}
+  <!-- Paginação -->
+  <div class="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-2">
+    {{ render_paginacao(chamados, 'chamados.lista', status=status_filter, q=q)
+    }}
+  </div>
 </div>
 
-<script>
-  // Event listeners para linhas clicáveis
-  document.addEventListener("DOMContentLoaded", function () {
-    const clickableRows = document.querySelectorAll(".clickable-row");
-
-    clickableRows.forEach((row) => {
-      row.style.cursor = "pointer";
-
-      row.addEventListener("click", function (e) {
-        // Ignora clique se foi em um link ou botão
-        if (e.target.closest("a, button")) {
-          return;
-        }
-
-        const href = this.dataset.href;
-        if (href) {
-          window.location.href = href;
-        }
-      });
-    });
-  });
-</script>
-{% endblock %}
+{% endcall %} {% endblock %}

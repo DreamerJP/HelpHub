@@ -1,399 +1,836 @@
-{% extends "layout_base.html" %} {% block title %}#{{ chamado.protocolo }} -
-HelpHub 4.0{% endblock %} {% block page_title %}
-<div style="display: flex; align-items: center; gap: 1rem">
-  <a href="{{ url_for('chamados.lista') }}" style="color: var(--text-muted)"
-    ><i class="ph ph-arrow-left"></i
-  ></a>
-  <span>Chamado #{{ chamado.protocolo }}</span>
-  <span
-    style="
-      font-size: 0.8rem;
-      background: #e5e7eb;
-      padding: 2px 8px;
-      border-radius: 12px;
-      color: #374151;
-    "
-    >{{ chamado.status }}</span
-  >
-</div>
-{% endblock %} {% block content %}
-<div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem">
-  <!-- Esquerda: Timeline e Detalhes -->
-  <div>
-    <!-- Card Principal do Chamado -->
-    <div
-      class="glass-panel"
-      style="padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem"
-    >
-      <h2 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 0.5rem">
-        {{ chamado.assunto }}
-      </h2>
+{% extends "layout_base.html" %}
+{% from "componentes.html" import render_layout_erp, badge_status_chamado, badge_prioridade_chamado %}
+
+{% block title %}Chamado {{ chamado.protocolo }}{% endblock %}
+
+{% block page_title %}
+Chamado {{ chamado.protocolo }}
+<span class="erp-subtitle hidden lg:inline-block">Gerenciamento de Atendimento</span>
+{% endblock %}
+
+{% block content %}
+
+{# ============================================================================
+INICIALIZAÇÃO ALPINE.JS - ESTADO GLOBAL DO DETALHE
+============================================================================ #}
+<div x-data="{ 
+  // --- ABA 1: HISTÓRICO ---
+  modalOpen: false,
+  viewModalOpen: false,
+  viewData: {
+    data: '',
+    usuario: '',
+    tipo: '',
+    texto: '',
+    anexo: null
+  },
+
+  // --- ABA 2: VISITAS TÉCNICAS ---
+  visitModalOpen: false,
+  editVisitModalOpen: false,
+  visitData: {
+    id: null,
+    tecnico_id: '',
+    data_inicio: '',
+    data_fim: '',
+    instrucoes: ''
+  }
+}" x-cloak>
+
+  {# ============================================================================
+  ABA 1: HISTÓRICO & AÇÕES
+  ============================================================================ #}
+
+  {# ----------------------------------------------------------------------------
+  ABA 1 - MODAIS
+  ---------------------------------------------------------------------------- #}
+
+  {# Modal 1: Visualização de Andamento #}
+  <div x-show="viewModalOpen" class="confirm-modal-overlay" @click.self="viewModalOpen = false"
+    x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
+
+    <div class="confirm-modal-content" style="max-width: 1000px; width: 90vw;"
+      x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95"
+      x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-95"
+      @click.stop>
+
+      {# Header do Modal de Visualização #}
       <div
-        style="
-          display: flex;
-          gap: 1.5rem;
-          margin-bottom: 1rem;
-          font-size: 0.875rem;
-          color: var(--text-muted);
-        "
-      >
-        <span>
-          <i class="ph ph-user"></i>
-          <a
-            href="{{ url_for('clientes.editar', id=chamado.cliente_id) }}"
-            style="color: inherit; text-decoration: none; font-weight: 600"
-            onmouseover="this.style.textDecoration = 'underline'"
-            onmouseout="this.style.textDecoration = 'none'"
-          >
-            {{ chamado.cliente.nome_razao }}
-          </a>
-        </span>
-        <span><i class="ph ph-calendar"></i> {{ chamado.created_at_br }}</span>
-        <span
-          ><i class="ph ph-warning-circle"></i> {{ chamado.prioridade }}</span
-        >
+        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem;">
+        <h3
+          style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.75rem;">
+          <i class="ph ph-file-text" style="color: var(--primary);"></i>
+          Detalhes da Interação
+        </h3>
+        <button type="button" @click="viewModalOpen = false"
+          style="color: #9ca3af; font-size: 1.5rem; cursor: pointer; background: none; border: none; padding: 0; line-height: 1;"
+          title="Fechar">
+          <i class="ph ph-x"></i>
+        </button>
       </div>
-      <div
-        style="
-          background: #f9fafb;
-          padding: 1rem;
-          border-radius: 6px;
-          border: 1px solid #e5e7eb;
-        "
-      >
-        {{ chamado.descricao }}
+
+      {# Conteúdo do Modal de Visualização #}
+      <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+
+        {# Metadados #}
+        <div
+          style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; padding: 1rem; background: #f9fafb; border-radius: 8px; border: 1px solid #e5e7eb;">
+          <div>
+            <label
+              style="display: block; font-size: 0.7rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin-bottom: 0.25rem;">
+              Data/Hora
+            </label>
+            <span x-text="viewData.data"
+              style="font-size: 0.85rem; font-weight: 600; color: var(--text-main); font-family: monospace;"></span>
+          </div>
+          <div>
+            <label
+              style="display: block; font-size: 0.7rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin-bottom: 0.25rem;">
+              Usuário
+            </label>
+            <span x-text="viewData.usuario"
+              style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);"></span>
+          </div>
+          <div>
+            <label
+              style="display: block; font-size: 0.7rem; font-weight: 600; color: #6b7280; text-transform: uppercase; margin-bottom: 0.25rem;">
+              Tipo
+            </label>
+            <span x-text="viewData.tipo" :class="{
+                    'badge-neutral': viewData.tipo === 'Evento',
+                    'badge-warning': viewData.tipo === 'Nota',
+                    'badge-info': viewData.tipo !== 'Evento' && viewData.tipo !== 'Nota'
+                  }" class="badge">
+            </span>
+          </div>
+        </div>
+
+        {# Texto da Interação #}
+        <div>
+          <label
+            style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.75rem;">
+            Descrição da Atividade
+          </label>
+          <div x-text="viewData.texto"
+            style="padding: 1rem; background: white; border: 1px solid #e5e7eb; border-radius: 8px; min-height: 120px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; line-height: 1.6; font-size: 0.9rem; color: #374151; word-break: break-word; overflow-wrap: break-word;">
+          </div>
+        </div>
+
+        {# Anexo (se houver) #}
+        <div x-show="viewData.anexo">
+          <label
+            style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.75rem;">
+            Anexo
+          </label>
+          <a :href="viewData.anexo" target="_blank" class="btn btn-outline"
+            style="display: inline-flex; align-items: center; gap: 0.5rem;">
+            <i class="ph ph-paperclip"></i>
+            <span>Abrir Anexo</span>
+          </a>
+        </div>
+
+        {# Botão Fechar #}
+        <div style="display: flex; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+          <button type="button" @click="viewModalOpen = false" class="btn btn-primary">
+            <i class="ph ph-check"></i> Fechar
+          </button>
+        </div>
       </div>
     </div>
+  </div>
 
-    <!-- TIMELINE INTERATIVA -->
-    <h3 style="margin-bottom: 1rem; font-size: 1.1rem">Linha do Tempo</h3>
-    <div
-      style="
-        position: relative;
-        padding-left: 2rem;
-        border-left: 2px solid #e5e7eb;
-      "
-    >
-      {% for andamento in chamado.andamentos %}
-      <div style="position: relative; margin-bottom: 2rem">
-        <!-- Bolinha na linha -->
-        <div
-          class="timeline-dot-{{ andamento.tipo | lower }}"
-          style="
-            position: absolute;
-            left: -2.6rem;
-            width: 1rem;
-            height: 1rem;
-            border-radius: 50%;
-            border: 2px solid white;
-          "
-        ></div>
+  {# Modal 2: Nova Interação #}
+  <div x-show="modalOpen" class="confirm-modal-overlay" @click.self="modalOpen = false"
+    x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100" x-transition:leave="transition ease-in duration-200"
+    x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0">
 
-        <div
-          class="glass-panel {% if andamento.tipo == 'Evento' %}andamento-evento{% endif %}"
-          style="padding: 1rem; border-radius: 8px"
-        >
-          <div
-            style="
-              display: flex;
-              justify-content: space-between;
-              margin-bottom: 0.5rem;
-            "
-          >
-            <span style="font-weight: 600; font-size: 0.9rem">
-              {% if andamento.tipo == 'Evento' %} Sistema {% else %} {{
-              andamento.usuario.username }} {% endif %}
-            </span>
-            <span style="font-size: 0.75rem; color: var(--text-muted)"
-              >{{ andamento.created_at_br }}</span
-            >
+    <div class="confirm-modal-content" style="max-width: 1000px; width: 90vw;"
+      x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 transform scale-95"
+      x-transition:enter-end="opacity-100 transform scale-100" x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity-100 transform scale-100" x-transition:leave-end="opacity-0 transform scale-95"
+      @click.stop>
+
+      {# Header do Modal #}
+      <div
+        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem;">
+        <h3
+          style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.75rem;">
+          <i class="ph ph-plus-circle" style="color: var(--primary);"></i>
+          Nova Interação
+        </h3>
+        <button type="button" @click="modalOpen = false"
+          style="color: #9ca3af; font-size: 1.5rem; cursor: pointer; background: none; border: none; padding: 0; line-height: 1;"
+          title="Fechar">
+          <i class="ph ph-x"></i>
+        </button>
+      </div>
+
+      {# Formulário #}
+      {% if current_user.is_authenticated %}
+      <form action="{{ url_for('chamados.detalhe', id=chamado.id) }}" method="POST" enctype="multipart/form-data"
+        x-data="{ status: '{{ chamado.status }}' }">
+
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        {# Campo: Descrição do Andamento - Full Width #}
+        <div style="margin-bottom: 1.5rem;">
+          <label
+            style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+            Descreva o andamento...
+          </label>
+          {{ form.texto(
+          class="form-control",
+          placeholder="Digite aqui as informações sobre o andamento deste chamado...",
+          style="resize: vertical; min-height: 200px; width: 100%;"
+          ) }}
+        </div>
+
+        {# Grid: Status e Upload #}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+
+          {# Campo: Alterar Status #}
+          <div>
+            <label
+              style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+              Alterar Status do Chamado
+            </label>
+            {{ form.novo_status(class="form-control", **{"x-model": "status", "id": "novo_status"}) }}
           </div>
 
-          <div style="color: #374151">{{ andamento.texto }}</div>
+          {# Campo: Anexar Arquivo #}
+          <div>
+            <label
+              style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-main); margin-bottom: 0.5rem;">
+              Anexar Arquivo
+            </label>
+            <div x-data="{ fileName: '' }">
+              <div
+                style="border: 2px dashed #d1d5db; padding: 0.75rem 1rem; border-radius: 8px; background: #f9fafb; transition: all 0.2s; cursor: pointer; min-height: 46px; display: flex; align-items: center; justify-content: center;"
+                @click="$refs.fileInput.click()"
+                @dragover.prevent="$el.style.borderColor = 'var(--primary)'; $el.style.background = '#eff6ff'"
+                @dragleave.prevent="$el.style.borderColor = '#d1d5db'; $el.style.background = '#f9fafb'"
+                @drop.prevent="$el.style.borderColor = '#d1d5db'; $el.style.background = '#f9fafb'; $refs.fileInput.files = $event.dataTransfer.files; fileName = $event.dataTransfer.files[0]?.name || ''"
+                onmouseover="this.style.borderColor = 'var(--primary)'; this.style.background = '#eff6ff'"
+                onmouseout="this.style.borderColor = '#d1d5db'; this.style.background = '#f9fafb'">
 
-          {% if andamento.anexo %}
-          <div style="margin-top: 0.75rem">
-            <a
-              href="{{ url_for('chamados.baixar_anexo', filename=andamento.anexo) }}"
-              target="_blank"
-              class="btn"
-              style="
-                padding: 4px 10px;
-                font-size: 0.8rem;
-                background: #eef2ff;
-                border: 1px solid #c7d2fe;
-                color: var(--primary);
-              "
-            >
-              <i class="ph ph-paperclip"></i> Ver Anexo
-            </a>
+                <div x-show="!fileName"
+                  style="display: flex; flex-direction: column; align-items: center; text-align: center;">
+                  <i class="ph ph-upload-simple" style="font-size: 1.5rem; color: #9ca3af; margin-bottom: 0.25rem;"></i>
+                  <p
+                    style="font-size: 0.8rem; color: var(--text-main); font-weight: 500; line-height: 1.2; margin-bottom: 0.125rem;">
+                    Clique para selecionar ou arraste o arquivo aqui
+                  </p>
+                  <p style="font-size: 0.65rem; color: var(--text-muted); line-height: 1;">
+                    PDF, Imagens, Docs (Max 100MB)
+                  </p>
+                </div>
+
+                <div x-show="fileName"
+                  style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; width: 100%;">
+                  <div style="display: flex; align-items: center; gap: 0.5rem; flex: 1; min-width: 0;">
+                    <i class="ph ph-file" style="font-size: 1.25rem; color: var(--primary); flex-shrink: 0;"></i>
+                    <div style="min-width: 0; flex: 1;">
+                      <p x-text="fileName"
+                        style="font-size: 0.8rem; color: var(--text-main); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                      </p>
+                      <p style="font-size: 0.65rem; color: var(--text-muted);">Arquivo selecionado</p>
+                    </div>
+                  </div>
+                  <button type="button" @click.stop="$refs.fileInput.value = ''; fileName = ''"
+                    style="padding: 0.25rem 0.5rem; background: #fee2e2; color: #dc2626; border: none; border-radius: 4px; font-size: 0.65rem; cursor: pointer; font-weight: 600; flex-shrink: 0;"
+                    onmouseover="this.style.background = '#fecaca'" onmouseout="this.style.background = '#fee2e2'">
+                    <i class="ph ph-x"></i> Remover
+                  </button>
+                </div>
+
+                {{ form.anexo(
+                style="display: none;",
+                id="input-anexo",
+                **{
+                "x-ref": "fileInput",
+                "@change": "fileName = $event.target.files[0]?.name || ''"
+                }
+                ) }}
+              </div>
+            </div>
           </div>
+        </div>
+
+        {# Painel de Agendamento Rápido (Condicional Alpine.js) #}
+        {% set tem_visita_agendada = chamado.visitas | selectattr('status', 'equalto', 'Agendado') | list | length > 0 %}
+        <div x-show="status === 'Agendado'" x-transition 
+             style="margin-bottom: 1.5rem; padding: 1.25rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;">
+          
+          <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; color: #92400e;">
+            <i class="ph ph-calendar-plus" style="font-size: 1.25rem;"></i>
+            <h4 style="font-size: 0.9rem; font-weight: 700; margin: 0;">Agendamento Rápido</h4>
+          </div>
+
+          {% if tem_visita_agendada %}
+            <div style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 1rem; background: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; color: #b91c1c;">
+              <i class="ph ph-warning-circle" style="font-size: 1.25rem; flex-shrink: 0; margin-top: 2px;"></i>
+              <div>
+                <p style="font-size: 0.85rem; font-weight: 700; margin-bottom: 2px;">Já existe um agendamento ativo</p>
+                <p style="font-size: 0.8rem; margin: 0;">
+                  Para criar um novo, anule a visita atual na aba de <strong>Visitas Técnicas</strong> primeiro.
+                </p>
+              </div>
+            </div>
+          {% else %}
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+              <div class="erp-field-group">
+                <label style="font-size: 0.75rem;">Técnico Responsável</label>
+                {{ form.tecnico_id(class="form-control", id="interaction_tecnico_id") }}
+              </div>
+              <div class="erp-field-group">
+                <label style="font-size: 0.75rem;">Início da Visita</label>
+                {{ form.data_inicio(class="form-control", id="interaction_data_inicio", placeholder="Data/Hora Início") }}
+              </div>
+              <div class="erp-field-group">
+                <label style="font-size: 0.75rem;">Fim Estimado</label>
+                {{ form.data_fim(class="form-control", id="interaction_data_fim", placeholder="Data/Hora Fim") }}
+              </div>
+            </div>
+            
+            <div class="erp-field-group" style="margin-bottom: 0;">
+                <label style="font-size: 0.75rem;">Instruções Técnicas / Tarefa (Opcional)</label>
+                {{ form.instrucoes_tecnicas(class="form-control", placeholder="O que o técnico deve realizar?", style="min-height: 80px;") }}
+            </div>
           {% endif %}
         </div>
-      </div>
-      {% else %}
-      <p class="text-muted" style="font-style: italic">
-        Nenhuma interação registrada ainda.
-      </p>
-      {% endfor %}
-    </div>
-  </div>
 
-  <!-- Direita: Ações -->
-  <div>
-    <div
-      class="glass-panel"
-      style="padding: 1.5rem; border-radius: 8px; position: sticky; top: 80px"
-    >
-      {% if chamado.status == 'Agendado' %} {% set visita_ativa =
-      chamado.visitas | selectattr('status', 'equalto', 'Agendado') | first %}
-      {% if visita_ativa %}
-      <div
-        style="
-          background: #fffbeb;
-          border: 1px solid #fcd34d;
-          border-radius: 8px;
-          padding: 1.25rem;
-          margin-bottom: 2rem;
-        "
-      >
-        <h4
-          style="
-            color: #92400e;
-            font-size: 0.9rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-          "
-        >
-          <i class="ph ph-calendar-check"></i> AGENDAMENTO ATIVO
-        </h4>
-
-        <div style="font-size: 0.85rem; color: #b45309; margin-bottom: 1rem">
-          <div>
-            <span style="font-weight: 600">Data:</span> {{
-            visita_ativa.data_inicio.strftime('%d/%m/%Y %H:%M') }}
-          </div>
-          <div>
-            <span style="font-weight: 600">Técnico:</span> {{
-            visita_ativa.tecnico.username }}
-          </div>
-        </div>
-
-        <form
-          action="{{ url_for('chamados.atualizar_visita', id=visita_ativa.id) }}"
-          method="POST"
-        >
-          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-          <label
-            style="
-              display: block;
-              font-size: 0.75rem;
-              font-weight: 600;
-              color: #92400e;
-              margin-bottom: 0.25rem;
-            "
-            >Instruções Técnicas / Tarefa:</label
-          >
-          <textarea
-            name="instrucoes_tecnicas"
-            rows="4"
-            style="
-              width: 100%;
-              padding: 0.5rem;
-              border: 1px solid #fcd34d;
-              border-radius: 6px;
-              font-size: 0.85rem;
-              font-family: inherit;
-              margin-bottom: 0.75rem;
-            "
-          >
-{{ visita_ativa.instrucoes_tecnicas or '' }}</textarea
-          >
-
-          <button
-            type="submit"
-            class="btn"
-            style="
-              width: 100%;
-              background: #fcd34d;
-              color: #92400e;
-              border: 1px solid #f59e0b;
-              font-weight: 600;
-              font-size: 0.8rem;
-              justify-content: center;
-            "
-          >
-            <i class="ph ph-floppy-disk"></i> Atualizar Tarefa
+        {# Botões de Ação #}
+        <div
+          style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+          <button type="button" @click="modalOpen = false" class="btn btn-outline">
+            <i class="ph ph-x"></i> Cancelar
           </button>
-        </form>
-      </div>
-      {% endif %} {% endif %}
-
-      <h4
-        style="
-          margin-bottom: 1rem;
-          border-bottom: 1px solid #e5e7eb;
-          padding-bottom: 0.5rem;
-        "
-      >
-        Nova Interação
-      </h4>
-
-      <form method="POST" enctype="multipart/form-data">
-        {{ form.hidden_tag() }}
-
-        <div style="margin-bottom: 1rem">
-          {{ form.texto(placeholder="Escreva uma resposta ou nota interna...",
-          rows=4, style="width: 100%; padding: 0.5rem; border: 1px solid
-          #D1D5DB; border-radius: 6px; font-family: inherit;") }}
+          <button type="submit" class="btn btn-primary">
+            <i class="ph ph-paper-plane-right"></i> Enviar Atualização
+          </button>
         </div>
-
-        <div x-data="{ status: '' }" style="margin-bottom: 1rem">
-          <label
-            style="
-              display: block;
-              font-size: 0.85rem;
-              font-weight: 500;
-              margin-bottom: 0.25rem;
-            "
-            >Alterar Status</label
-          >
-          {{ form.novo_status(style="width: 100%; padding: 0.5rem; border: 1px
-          solid #D1D5DB; border-radius: 6px;", **{"x-model": "status"}) }}
-
-          <!-- Campos extras se for Agendado -->
-          <div
-            x-show="status === 'Agendado'"
-            x-transition
-            style="
-              margin-top: 1rem;
-              padding: 1rem;
-              background: #fffbeb;
-              border: 1px solid #fcd34d;
-              border-radius: 8px;
-            "
-          >
-            <p
-              style="
-                font-size: 0.75rem;
-                color: #92400e;
-                font-weight: 600;
-                margin-bottom: 0.75rem;
-              "
-            >
-              <i class="ph ph-calendar-plus"></i> DETALHES DO AGENDAMENTO
-            </p>
-            <div style="margin-bottom: 0.75rem">
-              <label
-                style="
-                  display: block;
-                  font-size: 0.75rem;
-                  color: #92400e;
-                  margin-bottom: 0.25rem;
-                "
-                >Início da Visita</label
-              >
-              {{ form.data_inicio(type="datetime-local", style="width: 100%;
-              padding: 0.4rem; border: 1px solid #fcd34d; border-radius: 4px;")
-              }}
-            </div>
-            <div>
-              <label
-                style="
-                  display: block;
-                  font-size: 0.75rem;
-                  color: #92400e;
-                  margin-bottom: 0.25rem;
-                "
-                >Término Estimado</label
-              >
-              {{ form.data_fim(type="datetime-local", style="width: 100%;
-              padding: 0.4rem; border: 1px solid #fcd34d; border-radius: 4px;")
-              }}
-            </div>
-            <div style="margin-top: 1rem">
-              <label
-                style="
-                  display: block;
-                  font-size: 0.75rem;
-                  color: #92400e;
-                  margin-bottom: 0.25rem;
-                "
-                >O que deve ser feito? (Tarefa)</label
-              >
-              {{ form.instrucoes_tecnicas(placeholder="Instruções para o
-              técnico...", rows=3, style="width: 100%; padding: 0.4rem; border:
-              1px solid #fcd34d; border-radius: 4px; font-family: inherit;
-              font-size: 0.8rem;") }}
-            </div>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 1.5rem">
-          <label
-            style="
-              display: block;
-              font-size: 0.85rem;
-              font-weight: 500;
-              margin-bottom: 0.25rem;
-            "
-            >Anexar Arquivo</label
-          >
-          {{ form.anexo(style="font-size: 0.85rem;") }}
-          <div style="font-size: 0.75rem; color: #6b7280; margin-top: 2px">
-            PDF, Imagens, Docs (Max 100MB)
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          class="btn btn-primary"
-          style="width: 100%; justify-content: center"
-        >
-          <i class="ph ph-paper-plane-right"></i> Enviar
-        </button>
       </form>
-
-      <!-- Botão para Gerar OS -->
-      <div
-        style="
-          margin-top: 2rem;
-          border-top: 1px solid #e5e7eb;
-          padding-top: 1rem;
-        "
-      >
-        <a
-          href="{{ url_for('agenda.baixar_os', chamado_id=chamado.id) }}"
-          target="_blank"
-          class="btn"
-          style="
-            width: 100%;
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            color: #475569;
-            justify-content: center;
-            font-weight: 600;
-          "
-          onmouseover="this.style.background = '#f1f5f9'"
-          onmouseout="this.style.background = '#f8fafc'"
-        >
-          <i class="ph ph-printer"></i> Gerar Ordem de Serviço
-        </a>
-      </div>
+      {% endif %}
     </div>
   </div>
-</div>
-{% endblock %} {% block scripts %}
+
+  {# Formulário: Exclusão de Chamado #}
+  <form id="form-excluir-chamado" action="{{ url_for('chamados.excluir', id=chamado.id) }}" method="POST"
+    style="display: none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  </form>
+
+  {# ============================================================================
+  DEFINIÇÃO DAS TOOLBARS (TODAS AS ABAS)
+  ============================================================================ #}
+  {% set toolbar_html %}
+
+  {# Toolbar da ABA 1: Histórico & Ações #}
+  <div x-show="activeTab === 'historico'" class="flex items-center gap-2">
+    <button type="button" class="erp-btn erp-btn-primary" @click="modalOpen = true">
+      <i class="ph ph-plus-circle text-lg"></i> Nova Interação
+    </button>
+    <div class="erp-separator"></div>
+    {% if current_user.is_admin %}
+    <div class="erp-separator"></div>
+    <button type="button" class="erp-btn erp-btn-neutral text-red-600 hover:bg-red-50 hover:border-red-200"
+      @click="if(await confirmAction('Deseja realmente excluir este chamado irreversivelmente?', 'confirm')) { document.getElementById('form-excluir-chamado').submit(); }">
+      <i class="ph ph-trash"></i> Excluir Chamado
+    </button>
+    {% endif %}
+  </div>
+
+  {# Toolbar da ABA 2: Visitas Técnicas #}
+  {% set tem_visita_agendada = chamado.visitas | selectattr('status', 'equalto', 'Agendado') | list | length > 0 %}
+  <div x-show="activeTab === 'visitas'" class="flex items-center gap-2" x-cloak>
+    {% if tem_visita_agendada %}
+    <a href="{{ url_for('agenda.baixar_os', chamado_id=chamado.id) }}" target="_blank" class="erp-btn erp-btn-neutral">
+      <i class="ph ph-printer text-lg"></i> Imprimir O.S.
+    </a>
+    {% endif %}
+
+    <button type="button" class="erp-btn erp-btn-primary" @click="{% if tem_visita_agendada %} 
+                      confirmAction('Este chamado já possui uma visita agendada. Cancele a visita existente antes de criar uma nova.', 'alert'); 
+                    {% else %} 
+                      visitData = { id: null, tecnico_id: '', data_inicio: '', data_fim: '', instrucoes: '' }; 
+                      visitModalOpen = true; 
+                    {% endif %}">
+      <i class="ph ph-calendar-plus text-lg"></i> Novo Agendamento
+    </button>
+  </div>
+
+  {# Toolbar da ABA 3: ADD NOVA ABA (reservado para desenvolvimento futuro) #}
+  <div x-show="activeTab === 'info'" class="flex items-center gap-2" x-cloak>
+    {# Botões serão adicionados quando a funcionalidade for implementada #}
+  </div>
+
+  {% endset %}
+
+  {# ============================================================================
+  RENDERIZAÇÃO DO LAYOUT ERP COM SISTEMA DE ABAS
+  ============================================================================ #}
+  {% call render_layout_erp(
+  titulo="Detalhes do Chamado",
+  abas=[
+  {'id': 'historico', 'label': 'Histórico & Ações', 'icon': 'ph-list-dashes'},
+  {'id': 'visitas', 'label': 'Visitas Técnicas', 'icon': 'ph-map-pin'},
+  {'id': 'info', 'label': 'ADD NOVA ABA', 'icon': 'ph-plus-circle'}
+  ],
+  toolbar_buttons=toolbar_html,
+  active_tab_id='historico',
+  persistir_aba=True,
+  storage_type='session'
+  ) %}
+
+
+  {# ----------------------------------------------------------------------------
+  ABA 1 - CONTEÚDO
+  ---------------------------------------------------------------------------- #}
+  <div x-show="activeTab === 'historico'" class="erp-grid-content">
+
+    {# Tabela de Andamentos #}
+    <table class="erp-table">
+      <thead>
+        {# LINHA DE INFORMAÇÕES DO CHAMADO #}
+        <tr style="background: #f9fafb;">
+          <td colspan="6" style="padding: 0.4rem 1rem; border-bottom: 2px solid #e5e7eb;">
+
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              {# LINHA 1: Cliente e Informações de Status #}
+              <div style="display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;">
+                {# Cliente #}
+                <div style="display: flex; align-items: center;">
+                  <div style="width: 24px; flex-shrink: 0; display: flex; align-items: center;"><i
+                      class="ph ph-user-circle" style="color: #6b7280; font-size: 1.1rem;"></i></div>
+                  <div style="width: 90px; flex-shrink: 0; font-size: 0.75rem; color: #6b7280; font-weight: 600;">
+                    CLIENTE:</div>
+                  <a href="{{ url_for('clientes.editar', id=chamado.cliente.id) }}"
+                    style="font-size: 0.9rem; font-weight: 600; color: #2563eb; text-decoration: none;"
+                    onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{
+                    chamado.cliente.nome_razao }}</a>
+                </div>
+                <div style="width: 1px; height: 12px; background: #e5e7eb;"></div>
+                <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                  {# Data de Abertura #}
+                  <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    <i class="ph ph-calendar" style="color: #6b7280; font-size: 1rem;"></i>
+                    <span style="font-size: 0.7rem; color: #6b7280; font-weight: 600;">ABERTO:</span>
+                    <span style="font-size: 0.85rem; font-weight: 600; color: #111827; font-family: monospace;">{{
+                      chamado.created_at_br }}</span>
+                  </div>
+                  {# Prioridade #}
+                  <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    <i class="ph ph-warning-circle" style="color: #6b7280; font-size: 1rem;"></i>
+                    <span style="font-size: 0.7rem; color: #6b7280; font-weight: 600;">PRIORIDADE:</span>
+                    {{ badge_prioridade_chamado(chamado.prioridade) }}
+                  </div>
+                  {# Status #}
+                  <div style="display: flex; align-items: center; gap: 0.4rem;">
+                    <i class="ph ph-flag" style="color: #6b7280; font-size: 1rem;"></i>
+                    <span style="font-size: 0.7rem; color: #6b7280; font-weight: 600;">STATUS:</span>
+                    {{ badge_status_chamado(chamado.status) }}
+                  </div>
+                </div>
+              </div>
+
+              {# LINHA 2: Assunto #}
+              <div style="display: flex; align-items: flex-start; min-width: 0;">
+                <div style="width: 24px; min-height: 1.4rem; display: flex; align-items: center; flex-shrink: 0;"><i
+                    class="ph ph-megaphone-simple" style="color: #6b7280; font-size: 1rem;"></i></div>
+                <div
+                  style="width: 90px; min-height: 1.4rem; display: flex; align-items: center; flex-shrink: 0; font-size: 0.7rem; color: #6b7280; font-weight: 600;">
+                  ASSUNTO:</div>
+                <div
+                  style="flex: 1; min-width: 0; font-size: 0.85rem; color: #111827; font-weight: 700; line-height: 1.4rem; white-space: pre-wrap; word-break: break-all;">
+                  {{- chamado.assunto.strip() -}}</div>
+              </div>
+
+              {# LINHA 3: Descrição #}
+              <div style="display: flex; align-items: flex-start; min-width: 0;">
+                <div style="width: 24px; min-height: 1.4rem; display: flex; align-items: center; flex-shrink: 0;"><i
+                    class="ph ph-file-text" style="color: #6b7280; font-size: 1rem;"></i></div>
+                <div
+                  style="width: 90px; min-height: 1.4rem; display: flex; align-items: center; flex-shrink: 0; font-size: 0.7rem; color: #6b7280; font-weight: 600;">
+                  DESCRIÇÃO:</div>
+                <div
+                  style="flex: 1; min-width: 0; font-size: 0.85rem; color: #374151; line-height: 1.4rem; max-height: 150px; overflow-y: auto; padding-right: 0.5rem; white-space: pre-wrap; word-break: break-all;">
+                  {{- chamado.descricao.strip() -}}</div>
+              </div>
+            </div>
+          </td>
+        </tr>
+
+        {# LINHA DE CABEÇALHOS DA TABELA #}
+        <tr>
+          <th style="width: 150px">Data/Hora</th>
+          <th style="width: 200px">Usuário</th>
+          <th style="width: 120px">Tipo</th>
+          <th>Descrição da Atividade</th>
+          <th style="width: 50px; text-align: center;">Anexo</th>
+          <th style="width: 50px; text-align: center;">Anular</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for andamento in chamado.andamentos %}
+        <tr class="group hover:bg-gray-50 transition-colors {% if andamento.foi_retratado %}opacity-50{% endif %}">
+          <td class="p-3 font-mono text-gray-600 text-xs align-top border-b border-gray-100">
+            {{ andamento.created_at.strftime('%d/%m/%Y %H:%M') }}
+          </td>
+          <td class="p-3 text-sm font-medium text-gray-700 align-top border-b border-gray-100">
+            {% if andamento.tipo == 'Evento' %}
+            <span class="text-gray-400 italic flex items-center gap-1"><i class="ph ph-robot"></i> Sistema</span>
+            {% else %}
+            {{ andamento.usuario.nome }}
+            {% endif %}
+          </td>
+          <td class="p-3 align-top border-b border-gray-100">
+            <span class="badge 
+                       {% if andamento.tipo == 'Evento' %}badge-neutral
+                       {% elif andamento.tipo == 'Nota' %}badge-warning
+                       {% else %}badge-info{% endif %}">
+              {{ andamento.tipo }}
+            </span>
+          </td>
+          <td class="p-3 text-sm text-gray-800 leading-relaxed align-top border-b border-gray-100"
+            style="max-width: 400px;">
+            {% if andamento.foi_retratado %}
+            <span class="text-gray-400 italic line-through text-xs">Interação anulada pelo usuário</span>
+            <span class="badge badge-neutral text-[10px] ml-2">RETRATADO</span>
+            {% else %}
+            <div style="cursor: pointer; position: relative;" @click="
+                 viewData = {
+                   data: '{{ andamento.created_at.strftime('%d/%m/%Y %H:%M') }}',
+                   usuario: '{{ andamento.usuario.nome if andamento.usuario else 'Sistema' }}',
+                   tipo: '{{ andamento.tipo }}',
+                   texto: `{{ andamento.texto|replace('`', '\\`')|replace('\n', '\\n') }}`,
+                   anexo: {% if andamento.anexo %}'{{ url_for('chamados.baixar_anexo', filename=andamento.anexo) }}'{% else %}null{% endif %}
+                 };
+                 viewModalOpen = true;
+               " @mouseenter="$el.style.backgroundColor = '#f9fafb'"
+              @mouseleave="$el.style.backgroundColor = 'transparent'">
+              <span
+                style="display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; word-break: break-word;">
+                {{ andamento.texto }}
+              </span>
+              <i class="ph ph-arrow-square-out"
+                style="position: absolute; right: 0; top: 0; color: #9ca3af; font-size: 0.875rem; opacity: 0; transition: opacity 0.2s;"
+                x-ref="expandIcon"></i>
+            </div>
+            <style>
+              td:hover .ph-arrow-square-out {
+                opacity: 1 !important;
+              }
+            </style>
+            {% endif %}
+          </td>
+          <td class="border-b border-gray-100" style="padding: 2px;">
+            <div style="display: flex; justify-content: center; align-items: center;">
+              {% if andamento.anexo and not andamento.foi_retratado %}
+              <a href="{{ url_for('chamados.baixar_anexo', filename=andamento.anexo) }}" target="_blank"
+                style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 4px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; text-decoration: none; box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: all 0.3s ease; cursor: pointer;"
+                onmouseover="this.style.boxShadow='0 4px 6px rgba(0,0,0,0.15)'; this.style.transform='scale(1.05)'"
+                onmouseout="this.style.boxShadow='0 1px 2px rgba(0,0,0,0.1)'; this.style.transform='scale(1)'"
+                title="Baixar anexo">
+                <i class="ph-fill ph-download-simple" style="font-size: 16px; display: flex;"></i>
+              </a>
+              {% else %}
+              <i class="ph ph-file-dashed" style="font-size: 16px; color: #9ca3af; display: flex;"
+                title="Sem anexo"></i>
+              {% endif %}
+            </div>
+          </td>
+          <td class="border-b border-gray-100" style="padding: 2px;">
+            <div style="display: flex; justify-content: center; align-items: center;">
+              {% if andamento.pode_retratar %}
+              {# Botão Anular - Disponível por 10 minutos #}
+              <form action="{{ url_for('chamados.retratar_andamento', id=andamento.id) }}" method="POST"
+                style="display: inline-block;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="button"
+                  @click="if(await confirmAction('Deseja anular esta interação? Ela será marcada como erro.', 'confirm')) $el.form.submit()"
+                  style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 4px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: all 0.3s ease; cursor: pointer;"
+                  onmouseover="this.style.boxShadow='0 4px 6px rgba(0,0,0,0.15)'; this.style.transform='scale(1.05)'"
+                  onmouseout="this.style.boxShadow='0 1px 2px rgba(0,0,0,0.1)'; this.style.transform='scale(1)'"
+                  title="Anular interação (disponível por 10 minutos)">
+                  <i class="ph-fill ph-trash" style="font-size: 16px; display: flex;"></i>
+                </button>
+              </form>
+              {% else %}
+              <i class="ph ph-lock" style="font-size: 16px; color: #9ca3af; display: flex;"
+                title="{% if andamento.foi_retratado %}Interação anulada{% elif andamento.usuario_id != current_user.id %}Sem permissão{% elif andamento.tipo == 'Evento' %}Evento do sistema{% else %}Tempo expirado (10 minutos){% endif %}"></i>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center py-12 text-muted border-b border-gray-100">
+            Nenhuma interação registrada neste chamado.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {# Rodapé com Contador #}
+    <div
+      class="sticky bottom-0 bg-gray-50 border-t border-gray-200 p-2 flex justify-end items-center text-xs text-gray-500">
+      <span>Total de registros: {{ chamado.andamentos|length }}</span>
+    </div>
+  </div>
+  {# FIM ABA 1: HISTÓRICO & AÇÕES #}
+
+
+  {# ============================================================================
+  ABA 2: VISITAS TÉCNICAS
+  ============================================================================ #}
+
+  <div x-show="activeTab === 'visitas'" class="erp-grid-content">
+    <table class="erp-table">
+      <thead>
+        <tr>
+          <th style="width: 150px">Início</th>
+          <th style="width: 150px">Previsão Fim</th>
+          <th style="width: 180px">Técnico</th>
+          <th style="width: 120px">Status</th>
+          <th>Instruções Técnicas</th>
+          <th style="width: 80px; text-align: center;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for visita in chamado.visitas|sort(attribute='data_inicio', reverse=true) %}
+        <tr class="group hover:bg-gray-50 transition-colors">
+          <td class="p-3 font-mono text-gray-700 text-xs">
+            {{ visita.data_inicio.strftime('%d/%m/%Y %H:%M') }}
+          </td>
+          <td class="p-3 font-mono text-gray-500 text-xs">
+            {{ visita.data_fim.strftime('%d/%m/%Y %H:%M') if visita.data_fim else '--' }}
+          </td>
+          <td class="p-3 text-sm font-semibold text-gray-700">
+            {{ visita.tecnico.nome }}
+          </td>
+          <td class="p-3">
+            <span class="badge 
+              {% if visita.status == 'Agendado' %}badge-warning
+              {% elif visita.status == 'Finalizado' %}badge-success
+              {% elif visita.status == 'Em Andamento' %}badge-info
+              {% else %}badge-neutral{% endif %}">
+              {{ visita.status }}
+            </span>
+          </td>
+          <td class="p-3 text-sm text-gray-600">
+            <div style="max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
+              title="{{ visita.instrucoes_tecnicas }}">
+              {{ visita.instrucoes_tecnicas or 'Nenhuma instrução' }}
+            </div>
+          </td>
+          <td class="p-3">
+            <div style="display: flex; justify-content: center; gap: 0.5rem; align-items: center;">
+              {# Editar Instruções (Apenas Agendadas) #}
+              {% if visita.status == 'Agendado' %}
+              <button type="button" @click="visitData = { 
+                        id: '{{ visita.id }}', 
+                        tecnico_id: '{{ visita.tecnico_id }}',
+                        data_inicio: '{{ visita.data_inicio.strftime('%Y-%m-%d %H:%M') }}',
+                        data_fim: '{{ visita.data_fim.strftime('%Y-%m-%d %H:%M') if visita.data_fim else '' }}',
+                        instrucoes: `{{ visita.instrucoes_tecnicas|replace('`', '\\`') if visita.instrucoes_tecnicas else '' }}` 
+                      }; 
+                      // Atualiza os componentes visuais
+                      $nextTick(() => {
+                        document.querySelector('#modal_tecnico_id').tomselect.setValue(visitData.tecnico_id);
+                        document.querySelector('#modal_data_inicio')._flatpickr.setDate(visitData.data_inicio);
+                        document.querySelector('#modal_data_fim')._flatpickr.setDate(visitData.data_fim);
+                      });
+                      visitModalOpen = true;"
+                style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 4px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: all 0.3s ease; cursor: pointer;"
+                onmouseover="this.style.boxShadow='0 4px 6px rgba(0,0,0,0.15)'; this.style.transform='scale(1.1)'"
+                onmouseout="this.style.boxShadow='0 1px 2px rgba(0,0,0,0.1)'; this.style.transform='scale(1)'"
+                title="Editar Visita">
+                <i class="ph-fill ph-pencil-simple" style="font-size: 16px; display: flex;"></i>
+              </button>
+
+              {# Anular Visita #}
+              <button type="button" @click="if(await confirmAction('Deseja realmente anular esta visita do calendário?', 'confirm')) {
+                        const resp = await fetch('{{ url_for('agenda.api_cancelar', id=visita.id) }}', {
+                            method: 'POST',
+                            headers: {'X-CSRFToken': '{{ csrf_token() }}'}
+                        });
+                        const data = await resp.json();
+                        if(data.success) { window.location.reload(); } else { alert(data.message); }
+                      }"
+                style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 4px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; border: none; box-shadow: 0 1px 2px rgba(0,0,0,0.1); transition: all 0.3s ease; cursor: pointer;"
+                onmouseover="this.style.boxShadow='0 4px 6px rgba(0,0,0,0.15)'; this.style.transform='scale(1.1)'"
+                onmouseout="this.style.boxShadow='0 1px 2px rgba(0,0,0,0.1)'; this.style.transform='scale(1)'"
+                title="Anular Visita">
+                <i class="ph-fill ph-calendar-x" style="font-size: 16px; display: flex;"></i>
+              </button>
+              {% else %}
+              <i class="ph ph-lock" style="font-size: 16px; color: #9ca3af; display: flex;"
+                title="Visita finalizada ou cancelada"></i>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="text-center py-12 text-muted">
+            Nenhuma visita técnica registrada para este chamado.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Modal Unificado: Novo ou Editar Agendamento #}
+  <div x-show="visitModalOpen" class="confirm-modal-overlay" @click.self="visitModalOpen = false" x-cloak>
+    <div class="confirm-modal-content" style="max-width: 800px; width: 90vw;" @click.stop>
+      <div
+        style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 1rem;">
+        <h3
+          style="font-size: 1.25rem; font-weight: 700; color: var(--text-main); display: flex; align-items: center; gap: 0.75rem;">
+          <i :class="visitData.id ? 'ph ph-pencil-simple' : 'ph ph-calendar-plus'" style="color: var(--primary);"></i>
+          <span x-text="visitData.id ? 'Editar Agendamento' : 'Novo Agendamento Técnico'"></span>
+        </h3>
+        <button type="button" @click="visitModalOpen = false"
+          class="w-10 h-10 flex items-center justify-center rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors">
+          <i class="ph ph-x text-xl"></i>
+        </button>
+      </div>
+
+      <form
+        :action="visitData.id ? '{{ url_for('chamados.atualizar_visita', id=0) }}'.replace('0', visitData.id) : '{{ url_for('chamados.detalhe', id=chamado.id) }}'"
+        method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        {# Se for novo, envia os campos de trigger do chamado #}
+        <template x-if="!visitData.id">
+          <div>
+            <input type="hidden" name="novo_status" value="Agendado" />
+            <input type="hidden" name="texto" value="Agendamento técnico realizado via painel de visitas." />
+          </div>
+        </template>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.5rem;">
+          <div class="erp-field-group">
+            <label>Técnico Responsável</label>
+            {{ form.tecnico_id(class="form-control", id="modal_tecnico_id", **{"x-model": "visitData.tecnico_id"}) }}
+          </div>
+          <div class="erp-field-group">
+            <label>Início da Visita</label>
+            {{ form.data_inicio(class="form-control", id="modal_data_inicio", placeholder="Data/Hora Início") }}
+          </div>
+          <div class="erp-field-group">
+            <label>Término Estimado</label>
+            {{ form.data_fim(class="form-control", id="modal_data_fim", placeholder="Data/Hora Fim") }}
+          </div>
+        </div>
+
+        <div class="erp-field-group">
+          <label>Tarefa Técnica / Instruções</label>
+          <textarea name="instrucoes_tecnicas" x-model="visitData.instrucoes" class="form-control"
+            style="min-height: 150px;" placeholder="Descreva o que o técnico deve realizar..."></textarea>
+        </div>
+
+        <div
+          style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #e5e7eb;">
+          <button type="button" @click="visitModalOpen = false" class="btn btn-outline">Cancelar</button>
+          <button type="submit" class="btn" :class="visitData.id ? 'btn-primary' : 'btn-primary'">
+            <i :class="visitData.id ? 'ph ph-floppy-disk' : 'ph ph-check-circle'"></i>
+            <span x-text="visitData.id ? 'Salvar Alterações' : 'Confirmar Agendamento'"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {# FIM ABA 2: VISITAS TÉCNICAS #}
+
+
+  {# ============================================================================
+  ABA 3: INFORMAÇÕES
+  ============================================================================ #}
+
+  {# ----------------------------------------------------------------------------
+  ABA 3 - CONTEÚDO (A IMPLEMENTAR)
+  ---------------------------------------------------------------------------- #}
+  <div x-show="activeTab === 'info'" class="erp-grid-content p-4" x-cloak>
+    <div class="text-center py-12 text-gray-400">
+      <i class="ph ph-info text-3xl mb-2 block opacity-20"></i>
+      <p>Aguardando implementação</p>
+    </div>
+  </div>
+  {# FIM ABA 3: INFORMAÇÕES #}
+
+  {% endcall %}
+
+</div> {# Fecha x-data do Alpine.js #}
+
+{% endblock %}
+
+{# ============================================================================
+SCRIPTS JAVASCRIPT - INICIALIZAÇÃO DE COMPONENTES
+============================================================================ #}
+{% block scripts %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    // Inicializa Tom Select para o campo de status
+    // --- COMPONENTES ABA 1 (Modal Interação) ---
     new TomSelect("#novo_status", {
       create: false,
-      allowEmptyOption: true,
+      allowEmptyOption: false,
     });
+
+    const fpConfig = {
+      enableTime: true,
+      dateFormat: "Y-m-d H:i",
+      time_24hr: true,
+      locale: "pt",
+      disableMobile: "true",
+      altInput: true,
+      altFormat: "d/m/Y H:i",
+      altInputClass: "form-control",
+    };
+
+    // Inicialização condicional para o Agendamento Rápido
+    if (document.querySelector("#interaction_tecnico_id")) {
+      new TomSelect("#interaction_tecnico_id", {
+        create: false,
+        allowEmptyOption: true,
+        placeholder: "Manter técnico atual...",
+      });
+
+      const fpIntInicio = flatpickr("#interaction_data_inicio", {
+        ...fpConfig,
+        onChange: function (selectedDates, dateStr) {
+          if (dateStr) {
+            const endDateStr = dayjs(dateStr).add(1, "hour").format("YYYY-MM-DD HH:mm");
+            fpIntFim.setDate(endDateStr);
+          }
+        },
+      });
+      const fpIntFim = flatpickr("#interaction_data_fim", fpConfig);
+    }
+
+    // --- COMPONENTES ABA 2 (Modal Visitas) ---
+    new TomSelect("#modal_tecnico_id", {
+      create: false,
+      allowEmptyOption: true,
+      placeholder: "Selecione o técnico responsável...",
+    });
+
+    const fpModalInicio = flatpickr("#modal_data_inicio", {
+      ...fpConfig,
+      onChange: function (selectedDates, dateStr) {
+        if (dateStr) {
+          const endDateStr = dayjs(dateStr).add(1, "hour").format("YYYY-MM-DD HH:mm");
+          fpModalFim.setDate(endDateStr);
+        }
+      },
+    });
+    const fpModalFim = flatpickr("#modal_data_fim", fpConfig);
   });
 </script>
 {% endblock %}

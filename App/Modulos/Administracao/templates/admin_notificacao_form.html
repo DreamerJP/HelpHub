@@ -1,0 +1,782 @@
+{% extends "layout_base.html" %} {% from "componentes.html" import
+render_layout_erp %} {% block title %}Editar Integração - HelpHub 4.0{% endblock
+%} {% block page_title %} Configurar Integração
+<span class="erp-subtitle hidden lg:inline-block"
+  >Ajuste técnico do conector {{ provedor }}</span
+>
+{% endblock %} {% block content %}
+<form method="POST" id="editForm" class="modern-form">
+  {{ form.hidden_tag() }} {% set toolbar_html %}
+  <a href="{{ url_for('admin.notificacoes') }}" class="erp-btn erp-btn-neutral">
+    <i class="ph ph-arrow-left"></i> Voltar
+  </a>
+  <div class="erp-separator"></div>
+  <button type="submit" class="erp-btn erp-btn-primary">
+    <i class="ph ph-floppy-disk"></i> Salvar Alterações
+  </button>
+  {% endset %} {% call render_layout_erp( titulo="Configurar " ~
+  provedor|capitalize, abas=[{'id': 'config', 'label': 'Parâmetros', 'icon':
+  'ph-gear-six'}], toolbar_buttons=toolbar_html ) %}
+
+  <div
+    style="
+      padding: 3rem 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    "
+  >
+    {# --- SEÇÃO TELEGRAM --- #} {% if provedor == 'telegram' %}
+    <div
+      class="glass-panel"
+      style="
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      "
+    >
+      <h4
+        style="
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin-bottom: 2rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        "
+      >
+        <i class="ph ph-paper-plane-tilt text-blue-500 text-lg"></i>
+        Configuração de API Telegram
+      </h4>
+
+      <div class="form-group" style="margin-bottom: 2rem">
+        <label
+          class="form-label"
+          style="
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.75rem;
+            display: block;
+          "
+          >Token do Bot</label
+        >
+        {{ form.telegram_token(class="form-input", style="font-family: 'Fira
+        Code', monospace; background: #f9fafb;", placeholder="Ex:
+        123456:ABC-DEF...", id="token_input") }}
+        <small
+          style="
+            color: #94a3b8;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            display: block;
+          "
+          >Token único fornecido pelo @BotFather.</small
+        >
+      </div>
+
+      <div class="form-group" style="margin-bottom: 2.5rem">
+        <label
+          class="form-label"
+          style="
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.75rem;
+            display: block;
+          "
+          >Chat ID Principal</label
+        >
+        {{ form.telegram_chat_id(class="form-input", style="font-family: 'Fira
+        Code', monospace; background: #f9fafb;", placeholder="Ex: -525...,
+        -100...", id="chat_id_input") }}
+        <small
+          style="
+            color: #94a3b8;
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            display: block;
+          "
+          ><strong>Suporta múltiplos:</strong> Separe os IDs por vírgula ou
+          espaço.</small
+        >
+      </div>
+
+      <div
+        style="
+          padding-top: 2rem;
+          border-top: 1px solid #f3f4f6;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        "
+      >
+        <label
+          style="
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            user-select: none;
+          "
+        >
+          <div style="position: relative; display: flex; align-items: center">
+            {{ form.telegram_ativo(style="width: 1.3rem; height: 1.3rem;
+            accent-color: #2563eb; cursor: pointer;") }}
+          </div>
+          <span style="font-weight: 600; color: #1f2937; font-size: 0.95rem"
+            >Habilitar Canal de Notificações</span
+          >
+        </label>
+
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5rem;
+          "
+        >
+          <button
+            type="button"
+            @click="testTelegram()"
+            class="erp-btn erp-btn-neutral"
+            style="
+              border-color: #dbeafe;
+              color: #2563eb;
+              background: #eff6ff;
+              padding: 8px 20px;
+            "
+          >
+            <i class="ph ph-lightning font-bold"></i> Testar Conexão
+          </button>
+          <small style="font-size: 0.7rem; color: #94a3b8; font-style: italic"
+            >* Lembre-se de salvar após o teste</small
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Box de Ajuda Telegram -->
+    <div
+      style="
+        padding: 1.25rem;
+        background: #f8fafc;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+      "
+    >
+      <i class="ph ph-info text-blue-500 text-xl" style="margin-top: 2px"></i>
+      <div>
+        <h5
+          style="
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.25rem;
+          "
+        >
+          Dica de Implementação
+        </h5>
+        <p
+          style="
+            font-size: 0.8rem;
+            color: #64748b;
+            line-height: 1.5;
+            margin-bottom: 0.75rem;
+          "
+        >
+          Para <strong>Grupos Comuns</strong>, o Chat ID inicia apenas com um
+          sinal de menos (ex: <code>-525...</code>). Em
+          <strong>Supergrupos ou Canais</strong>, ele geralmente inicia com
+          <code>-100</code>.
+        </p>
+        <div
+          style="
+            background: #ffffff;
+            border: 1px dashed #cbd5e1;
+            padding: 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: #475569;
+          "
+        >
+          <strong>Como achar o ID:</strong><br />
+          1. Adicione o bot ao grupo e mande um "Oi".<br />
+          2. Acesse no navegador:<br />
+          <code style="word-break: break-all; color: #2563eb"
+            >https://api.telegram.org/bot<b>SEU_TOKEN</b>/getUpdates</code
+          ><br />
+          3. Procure pelo número após <code>"chat":{"id":</code>
+        </div>
+      </div>
+    </div>
+
+    {# --- SEÇÃO EMAIL --- #} {% elif provedor == 'email' %}
+    <div
+      class="glass-panel"
+      style="
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      "
+    >
+      <h4
+        style="
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin-bottom: 2rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        "
+      >
+        <i class="ph ph-envelope-simple text-blue-500 text-lg"></i>
+        Servidor de Saída (SMTP)
+      </h4>
+
+      {# Alerta de Esclarecimento sobre Remetente vs Destinatário #}
+      <div
+        style="
+          background: #fff7ed;
+          border: 1px solid #ffedd5;
+          padding: 1rem;
+          border-radius: 8px;
+          margin-bottom: 2rem;
+          display: flex;
+          gap: 0.75rem;
+          align-items: center;
+        "
+      >
+        <i class="ph ph-warning-circle text-orange-500 text-xl"></i>
+        <p style="font-size: 0.8rem; color: #9a3412; line-height: 1.4">
+          <strong>Importante:</strong> Ao contrário do Telegram/WhatsApp, esta
+          seção configura apenas a <b>conta que enviará</b> os e-mails. Os
+          destinatários (quem recebe) devem ser configurados individualmente no
+          cadastro de cada <b>Departamento</b>.
+        </p>
+      </div>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 3fr 1fr;
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+        "
+      >
+        <div class="form-group">
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: #374151;
+              margin-bottom: 0.75rem;
+              display: block;
+            "
+            >Host do Servidor</label
+          >
+          {{ form.email_smtp_server(class="form-input", id="smtp_host",
+          style="background: #f9fafb;", placeholder="smtp.exemplo.com") }}
+        </div>
+        <div class="form-group">
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: #374151;
+              margin-bottom: 0.75rem;
+              display: block;
+            "
+            >Porta</label
+          >
+          {{ form.email_smtp_port(class="form-input", id="smtp_port",
+          style="background: #f9fafb;", placeholder="587") }}
+        </div>
+      </div>
+
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+          margin-bottom: 2.5rem;
+        "
+      >
+        <div class="form-group">
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: #374151;
+              margin-bottom: 0.75rem;
+              display: block;
+            "
+            >Usuário / E-mail</label
+          >
+          {{ form.email_user(class="form-input", id="smtp_user",
+          style="background: #f9fafb;", placeholder="exemplo@dominio.com") }}
+        </div>
+        <div class="form-group">
+          <label
+            class="form-label"
+            style="
+              font-weight: 600;
+              color: #374151;
+              margin-bottom: 0.75rem;
+              display: block;
+            "
+            >Senha / App Password</label
+          >
+          {{ form.email_password(class="form-input", id="smtp_pass",
+          type="password", style="background: #f9fafb;", placeholder="••••••••")
+          }}
+        </div>
+      </div>
+
+      <div
+        style="
+          padding-top: 2rem;
+          border-top: 1px solid #f3f4f6;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        "
+      >
+        <label
+          style="
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            user-select: none;
+          "
+        >
+          <div style="position: relative; display: flex; align-items: center">
+            {{ form.email_ativo(style="width: 1.3rem; height: 1.3rem;
+            accent-color: #2563eb; cursor: pointer;") }}
+          </div>
+          <span style="font-weight: 600; color: #1f2937; font-size: 0.95rem"
+            >Habilitar Envio de E-mails Automáticos</span
+          >
+        </label>
+
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5rem;
+          "
+        >
+          <button
+            type="button"
+            @click="testEmail()"
+            class="erp-btn erp-btn-neutral"
+            style="
+              border-color: #dbeafe;
+              color: #2563eb;
+              background: #eff6ff;
+              padding: 8px 20px;
+            "
+          >
+            <i class="ph ph-lightning font-bold"></i> Testar Conexão
+          </button>
+          <small style="font-size: 0.7rem; color: #94a3b8; font-style: italic"
+            >* Lembre-se de salvar após o teste</small
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Box de Ajuda E-mail -->
+    <div
+      style="
+        padding: 1.5rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        gap: 1.25rem;
+        align-items: flex-start;
+      "
+    >
+      <i
+        class="ph ph-shield-check text-blue-500 text-2xl"
+        style="margin-top: 2px"
+      ></i>
+      <div>
+        <h5
+          style="
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+          "
+        >
+          Guia de Configuração SMTP
+        </h5>
+        <p
+          style="
+            font-size: 0.8rem;
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+          "
+        >
+          Para uma conexão segura, recomendamos a porta
+          <strong>587 (STARTTLS)</strong> ou <strong>465 (SSL)</strong>. Além
+          disso, provedores modernos exigem o uso de uma <u>Senha de App</u> em
+          vez da sua senha comum.
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem">
+          <div
+            style="
+              background: #ffffff;
+              border: 1px solid #f1f5f9;
+              padding: 0.75rem;
+              border-radius: 8px;
+              font-size: 0.75rem;
+            "
+          >
+            <strong style="color: #475569; display: block; margin-bottom: 4px"
+              >Gmail / Google</strong
+            >
+            <span style="color: #64748b">Host: <code>smtp.gmail.com</code></span
+            ><br />
+            <span style="color: #64748b">Requer: <b>Senha de App</b></span>
+          </div>
+          <div
+            style="
+              background: #ffffff;
+              border: 1px solid #f1f5f9;
+              padding: 0.75rem;
+              border-radius: 8px;
+              font-size: 0.75rem;
+            "
+          >
+            <strong style="color: #475569; display: block; margin-bottom: 4px"
+              >Outlook / Hotmail</strong
+            >
+            <span style="color: #64748b"
+              >Host: <code>smtp.office365.com</code></span
+            ><br />
+            <span style="color: #64748b">Requer: <b>Senha de App</b></span>
+          </div>
+        </div>
+        <p
+          style="
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 1rem;
+            font-style: italic;
+          "
+        >
+          *A <b>Senha de App</b> deve ser gerada no painel de segurança da sua
+          conta Google ou Microsoft.
+        </p>
+      </div>
+    </div>
+
+    {# --- SEÇÃO WHATSAPP --- #} {% elif provedor == 'whatsapp' %}
+    <div
+      class="glass-panel"
+      style="
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        padding: 2.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      "
+    >
+      <h4
+        style="
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #94a3b8;
+          text-transform: uppercase;
+          letter-spacing: 0.1em;
+          margin-bottom: 2rem;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        "
+      >
+        <i class="ph ph-whatsapp-logo text-green-500 text-lg"></i>
+        Configuração WhatsApp (API)
+      </h4>
+
+      <div
+        style="
+          display: flex;
+          flex-direction: column;
+          gap: 1.5rem;
+          max-width: 600px;
+        "
+      >
+        <div class="form-group">
+          <label
+            class="erp-label"
+            style="
+              font-weight: 600;
+              color: #374151;
+              margin-bottom: 0.75rem;
+              display: block;
+            "
+            >Instância / URL da API</label
+          >
+          {{ form.whatsapp_api_url(class="form-input",
+          placeholder="https://api.sua-instancia.com", id="wa_url",
+          style="background: #f9fafb;") }}
+          <small style="font-size: 0.75rem; color: #94a3b8"
+            >Endereço da Evolution API ou similar.</small
+          >
+        </div>
+        <div class="form-group">
+          <label
+            class="erp-label"
+            style="
+              font-weight: 600;
+              color: #374151;
+              margin-bottom: 0.75rem;
+              display: block;
+            "
+            >Chave de API Secreta</label
+          >
+          {{ form.whatsapp_key(class="form-input", type="password",
+          placeholder="Sua chave secreta", id="wa_key", style="background:
+          #f9fafb;") }}
+        </div>
+      </div>
+
+      <div
+        style="
+          padding-top: 2rem;
+          border-top: 1px solid #f3f4f6;
+          margin-top: 2rem;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        "
+      >
+        <label
+          style="
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            user-select: none;
+          "
+        >
+          <div style="position: relative; display: flex; align-items: center">
+            {{ form.whatsapp_ativo(style="width: 1.3rem; height: 1.3rem;
+            accent-color: #16a34a; cursor: pointer;") }}
+          </div>
+          <span style="font-weight: 600; color: #1f2937; font-size: 0.95rem"
+            >Habilitar Canal de Notificações</span
+          >
+        </label>
+
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.5rem;
+          "
+        >
+          <button
+            type="button"
+            @click="testWhatsapp()"
+            class="erp-btn erp-btn-neutral"
+            style="
+              border-color: #dcfce7;
+              color: #16a34a;
+              background: #f0fdf4;
+              padding: 8px 20px;
+            "
+          >
+            <i class="ph ph-lightning font-bold"></i> Testar Conexão
+          </button>
+          <small style="font-size: 0.7rem; color: #94a3b8; font-style: italic"
+            >* Lembre-se de salvar após o teste</small
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Box de Ajuda WhatsApp -->
+    <div
+      style="
+        padding: 1.5rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        gap: 1.25rem;
+        align-items: flex-start;
+      "
+    >
+      <i class="ph ph-info text-green-500 text-2xl" style="margin-top: 2px"></i>
+      <div>
+        <h5
+          style="
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 0.5rem;
+          "
+        >
+          Guia de Integração WhatsApp
+        </h5>
+        <p
+          style="
+            font-size: 0.8rem;
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 1rem;
+          "
+        >
+          Os campos de URL e Chave acima são <strong>universais</strong>. Embora
+          recomendemos a <strong>Evolution API</strong> (opção gratuita), o
+          HelpHub já está preparado para receber dados de outras APIs do mercado
+          (como <b>Z-API, Twilio</b>, entre outras).
+        </p>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem">
+          <div
+            style="
+              background: #ffffff;
+              border: 1px solid #f1f5f9;
+              padding: 0.75rem;
+              border-radius: 8px;
+              font-size: 0.75rem;
+            "
+          >
+            <strong style="color: #475569; display: block; margin-bottom: 4px"
+              >Evolution API / Z-API</strong
+            >
+            <span style="color: #64748b">Tipo: <b>Instância / QR Code</b></span
+            ><br />
+            <span style="color: #64748b">Custo: <b>Zero ou Assinatura</b></span>
+          </div>
+          <div
+            style="
+              background: #ffffff;
+              border: 1px solid #f1f5f9;
+              padding: 0.75rem;
+              border-radius: 8px;
+              font-size: 0.75rem;
+            "
+          >
+            <strong style="color: #475569; display: block; margin-bottom: 4px"
+              >Twilio / Meta API</strong
+            >
+            <span style="color: #64748b">Tipo: <b>API Oficial (Cloud)</b></span
+            ><br />
+            <span style="color: #64748b">Custo: <b>Pago por Mensagem</b></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endcall %}
+</form>
+
+<script>
+  async function testTelegram() {
+    const token = document.getElementById("token_input").value;
+    const chat_id = document.getElementById("chat_id_input").value;
+
+    if (!token || !chat_id) {
+      showToast("Preencha os campos para testar", "error");
+      return;
+    }
+
+    showToast("Disparando comando de teste...", "info");
+
+    const formData = new FormData();
+    formData.append("token", token);
+    formData.append("chat_id", chat_id);
+    formData.append("csrf_token", "{{ csrf_token() }}");
+
+    try {
+      const response = await fetch("{{ url_for('admin.teste_telegram') }}", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        showToast("Mensagem de teste enviada!", "success");
+      } else {
+        showToast("Falha no teste: " + data.message, "error");
+      }
+    } catch (e) {
+      showToast("Erro técnico de comunicação", "error");
+    }
+  }
+
+  async function testEmail() {
+    const host = document.getElementById("smtp_host").value;
+    const port = document.getElementById("smtp_port").value;
+    const user = document.getElementById("smtp_user").value;
+    const pass = document.getElementById("smtp_pass").value;
+
+    if (!host || !port || !user || !pass) {
+      showToast("Preencha todos os campos do SMTP para testar", "error");
+      return;
+    }
+
+    showToast("Conectando ao servidor SMTP...", "info");
+
+    const formData = new FormData();
+    formData.append("host", host);
+    formData.append("port", port);
+    formData.append("user", user);
+    formData.append("password", pass);
+    formData.append("csrf_token", "{{ csrf_token() }}");
+
+    try {
+      const response = await fetch("{{ url_for('admin.teste_email') }}", {
+        method: "POST",
+        body: formData,
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        showToast(
+          "E-mail de teste enviado para seu próprio endereço!",
+          "success",
+        );
+      } else {
+        showToast("Falha no SMTP: " + data.message, "error");
+      }
+    } catch (e) {
+      showToast("Erro técnico de comunicação", "error");
+    }
+  }
+
+  async function testWhatsapp() {
+    showToast(
+      "Integração com Evolution API em fase de homologação (v4.1)",
+      "info",
+    );
+  }
+</script>
+{% endblock %}

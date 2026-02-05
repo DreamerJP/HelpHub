@@ -1,93 +1,34 @@
-{% extends "layout_base.html" %} {% block title %}Dashboard - HelpHub 4.0{%
+{% extends "layout_base.html" %} {% from "componentes.html" import
+badge_status_chamado, erp_banner %} {% block title %}Dashboard - HelpHub 4.1{%
 endblock %} {% block page_title %}Dashboard{% endblock %} {% block head %}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 {% endblock %} {% block content %}
-<!-- Alertas de Tarefas Atrasadas (Servidor offline) -->
-{% if current_user.is_authenticated and current_user.is_admin and
-TAREFAS_ATRASADAS and not SCHEDULER_ERROR %} {% for tarefa in TAREFAS_ATRASADAS
-%}
-<div
-  style="
-    background: #ecfdf5;
-    border-left: 4px solid #10b981;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  "
->
-  <div style="display: flex; align-items: center; gap: 1rem">
-    <i
-      class="ph ph-calendar-plus"
-      style="color: #059669; font-size: 1.5rem"
-    ></i>
-    <div>
-      <h4
-        style="
-          color: #064e3b;
-          font-weight: 600;
-          font-size: 0.875rem;
-          margin-bottom: 0.25rem;
-        "
-      >
-        Tarefa Pendente: {{ tarefa.tarefa }}
-      </h4>
-      <p style="color: #065f46; font-size: 0.75rem; margin: 0">
-        A rotina agendada para as 03:00 de hoje não foi realizada.
-      </p>
-    </div>
-  </div>
-  <div style="display: flex; gap: 0.5rem">
-    {% if tarefa.id == 'backup_diario' %}
-    <a
-      href="{{ url_for('admin.backups') }}"
-      class="btn btn-soft-success btn-sm"
-    >
-      Ver Backups
-    </a>
-    <a
-      href="{{ url_for('admin.gerar_backup') }}"
-      class="btn btn-primary btn-sm"
-    >
-      <i class="ph ph-play"></i> Fazer Backup
-    </a>
-    {% elif tarefa.id == 'fechar_pendentes' %}
-    <a href="{{ url_for('admin.logs') }}" class="btn btn-soft-success btn-sm">
-      Ver Logs
-    </a>
-    {% endif %}
-  </div>
-</div>
-{% endfor %} {% endif %}
+{# --- ALERTAS DE TAREFAS ATRASADAS (Servidor offline) --- #}
+{% if current_user.is_authenticated and current_user.is_admin and TAREFAS_ATRASADAS and not SCHEDULER_ERROR %}
+{% for tarefa in TAREFAS_ATRASADAS %}
+{% call erp_banner(tipo='warning', titulo='Tarefa Pendente: ' ~ tarefa.tarefa, icon='ph-calendar-plus') %}
+A rotina agendada para as 03:00 de hoje não foi realizada.
+{% endcall %}
+{% endfor %}
+{% endif %}
 
 <!-- Grid Principal -->
-<div
-  style="
+<div style="
     display: grid;
     grid-template-columns: 2fr 1fr;
     gap: 1.5rem;
     margin-bottom: 1.5rem;
-  "
->
+  ">
   <!-- Chamados Recentes -->
   <div class="glass-panel" style="padding: 1.5rem">
-    <div
-      style="
+    <div style="
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 1.5rem;
-      "
-    >
+      ">
       <h3 style="margin: 0">Chamados Recentes</h3>
-      <a
-        href="{{ url_for('chamados.lista') }}"
-        class="btn btn-soft-warning btn-sm"
-      >
+      <a href="{{ url_for('chamados.lista') }}" class="erp-btn erp-btn-neutral">
         Ver Todos
       </a>
     </div>
@@ -95,53 +36,37 @@ TAREFAS_ATRASADAS and not SCHEDULER_ERROR %} {% for tarefa in TAREFAS_ATRASADAS
     {% if chamados_recentes %}
     <div style="display: flex; flex-direction: column; gap: 0.75rem">
       {% for chamado in chamados_recentes %}
-      <a
-        href="{{ url_for('chamados.detalhe', id=chamado.id) }}"
-        style="text-decoration: none; color: inherit"
-      >
-        <div
-          class="card-status-{{ chamado.status | lower }}"
-          style="
+      <a href="{{ url_for('chamados.detalhe', id=chamado.id) }}" style="text-decoration: none; color: inherit">
+        <div class="card-status-{{ chamado.status | lower }}" style="
             padding: 1rem;
             background: #f9fafb;
             border-radius: 8px;
             transition: all 0.2s ease;
-          "
-        >
-          <div
-            style="
+          ">
+          <div style="
               display: flex;
               justify-content: space-between;
               align-items: start;
               margin-bottom: 0.5rem;
-            "
-          >
-            <div style="font-weight: 600; color: var(--text-main)">
+            ">
+            <div
+              style="font-weight: 600; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 600px;"
+              title="{{ chamado.assunto }}">
               {{ chamado.assunto }}
             </div>
-            <span
-              class="badge badge-{% if chamado.status == 'Aberto' %}danger{% elif chamado.status == 'Agendado' %}warning{% elif chamado.status == 'Pendente' %}info{% elif chamado.status == 'Escalonado' %}escalonado{% else %}success{% endif %}"
-            >
-              {{ chamado.status }}
-            </span>
+            {{ badge_status_chamado(chamado.status) }}
           </div>
-          <div
-            style="
+          <div style="
               display: flex;
               gap: 1.5rem;
               font-size: 0.875rem;
               color: var(--text-muted);
-            "
-          >
+            ">
             <span><i class="ph ph-hash"></i> {{ chamado.protocolo }}</span>
-            <span
-              ><i class="ph ph-user"></i> {{ chamado.cliente.nome_razao if
-              chamado.cliente else 'N/A' }}</span
-            >
-            <span
-              ><i class="ph ph-calendar"></i> {{
-              chamado.created_at.strftime('%d/%m/%Y') }}</span
-            >
+            <span><i class="ph ph-user"></i> {{ chamado.cliente.nome_razao if
+              chamado.cliente else 'N/A' }}</span>
+            <span><i class="ph ph-calendar"></i> {{
+              chamado.created_at.strftime('%d/%m/%Y') }}</span>
           </div>
         </div>
       </a>
@@ -156,83 +81,63 @@ TAREFAS_ATRASADAS and not SCHEDULER_ERROR %} {% for tarefa in TAREFAS_ATRASADAS
   </div>
 
   <!-- Agendamentos de Hoje -->
-  <div
-    class="glass-panel"
-    style="padding: 1.5rem; display: flex; flex-direction: column"
-  >
-    <div
-      style="
+  <div class="glass-panel" style="padding: 1.5rem; display: flex; flex-direction: column">
+    <div style="
         display: flex;
         justify-content: space-between;
         align-items: center;
         margin-bottom: 0.5rem;
-      "
-    >
+      ">
       <h3 style="margin: 0">Agenda de Hoje</h3>
-      <a
-        href="{{ url_for('agenda.calendario') }}"
-        class="btn btn-soft-warning btn-sm"
-      >
+      <a href="{{ url_for('agenda.calendario') }}" class="erp-btn erp-btn-neutral">
         Ver Tudo
       </a>
     </div>
 
     <div style="margin-bottom: 1.5rem">
-      <span
-        style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500"
-      >
+      <span style="font-size: 0.75rem; color: var(--text-muted); font-weight: 500">
         <i class="ph ph-check-circle" style="color: var(--success)"></i>
         {{ agenda_concluidos }} de {{ agenda_total }} visitas concluídas
       </span>
     </div>
 
     {% if agendamentos_hoje %}
-    <div
-      style="
+    <div style="
         display: flex;
         flex-direction: column;
         gap: 0.75rem;
         max-height: 480px;
         overflow-y: auto;
         padding-right: 5px;
-      "
-    >
+      ">
       {% for agendamento in agendamentos_hoje %}
-      <div
-        style="
+      <div style="
           padding: 1rem;
           background: #f0f9ff;
           border-radius: 8px;
           border-left: 3px solid var(--primary);
-        "
-      >
-        <div
-          style="
+        ">
+        <div style="
             font-weight: 600;
             color: var(--text-main);
             margin-bottom: 0.5rem;
-          "
-        >
+          ">
           {{ agendamento.data_inicio.strftime('%H:%M') }}
         </div>
         <div style="font-size: 0.875rem; color: var(--text-muted)">
           {% if agendamento.chamado %}
-          <div
-            style="
+          <div style="
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
-            "
-          >
+            ">
             <i class="ph ph-ticket"></i> {{ agendamento.chamado.assunto }}
           </div>
-          <div
-            style="
+          <div style="
               white-space: nowrap;
               overflow: hidden;
               text-overflow: ellipsis;
-            "
-          >
+            ">
             <i class="ph ph-user"></i> {{ agendamento.chamado.cliente.nome_razao
             if agendamento.chamado.cliente else 'N/A' }}
           </div>
@@ -240,15 +145,13 @@ TAREFAS_ATRASADAS and not SCHEDULER_ERROR %} {% for tarefa in TAREFAS_ATRASADAS
         </div>
       </div>
       {% endfor %} {% if agenda_remanescentes > 0 %}
-      <div
-        style="
+      <div style="
           text-align: center;
           padding: 0.5rem;
           color: var(--text-muted);
           font-size: 0.8rem;
           font-style: italic;
-        "
-      >
+        ">
         ... e mais {{ agenda_remanescentes }} visitas agendadas hoje.
       </div>
       {% endif %}
@@ -295,57 +198,57 @@ TAREFAS_ATRASADAS and not SCHEDULER_ERROR %} {% for tarefa in TAREFAS_ATRASADAS
 
   var optionsStatus = {
     series: [
-        {{ stats_status['Aberto'] }},
-        {{ stats_status['Agendado'] }},
-        {{ stats_status['Pendente'] }},
-        {{ stats_status['Escalonado'] }},
-        {{ stats_status['Fechado'] }}
+      {{ stats_status['Aberto'] }},
+      {{ stats_status['Agendado'] }},
+      {{ stats_status['Pendente'] }},
+      {{ stats_status['Escalonado'] }},
+      {{ stats_status['Fechado'] }}
     ],
-    chart: {
-      type: 'donut',
+  chart: {
+    type: 'donut',
       height: 300,
-      events: {
-        dataPointSelection: function(event, chartContext, config) {
-          var filter = statusFilters[config.dataPointIndex];
-          window.location.href = "{{ url_for('chamados.lista') }}?status=" + filter;
-        }
+        events: {
+      dataPointSelection: function(event, chartContext, config) {
+        var filter = statusFilters[config.dataPointIndex];
+        window.location.href = "{{ url_for('chamados.lista') }}?status=" + filter;
       }
-    },
-    labels: statusLabels,
+    }
+  },
+  labels: statusLabels,
     colors: statusColors,
-    legend: { position: 'bottom' },
-    plotOptions: {
-      pie: {
-        donut: {
-          size: '72%',
+      legend: { position: 'bottom' },
+  plotOptions: {
+    pie: {
+      donut: {
+        size: '72%',
           labels: {
-            show: true,
+          show: true,
             total: {
-              show: true,
+            show: true,
               label: 'Total',
-              fontSize: '14px',
-              fontWeight: 600,
-              formatter: function(w) {
-                return w.globals.seriesTotals.reduce((a, b) => a + b, 0)
-              }
-            }
+                fontSize: '14px',
+                  fontWeight: 600,
+                    formatter: function(w) {
+                      return w.globals.seriesTotals.reduce((a, b) => a + b, 0)
+                    }
           }
         }
       }
-    },
-    dataLabels: {
-      enabled: true,
+    }
+  },
+  dataLabels: {
+    enabled: true,
       formatter: function (val) {
         return Math.round(val) + "%"
       }
-    },
-    tooltip: {
-        y: {
-            formatter: function(val) {
-                return val + " chamados"
-            }
-        }
+  },
+  tooltip: {
+    y: {
+      formatter: function(val) {
+        return val + " chamados"
+      }
     }
+  }
   };
   var chartStatus = new ApexCharts(document.querySelector("#chart-status"), optionsStatus);
   chartStatus.render();
@@ -354,7 +257,7 @@ TAREFAS_ATRASADAS and not SCHEDULER_ERROR %} {% for tarefa in TAREFAS_ATRASADAS
   var rawData = {{ tendencia_ano | tojson }};
 
   // Convertemos para o formato que o ApexCharts DateTime gosta
-  var seriesData = rawData.map(function(item) {
+  var seriesData = rawData.map(function (item) {
     return {
       x: new Date(item.iso).getTime(),
       y: item.total
@@ -372,13 +275,13 @@ TAREFAS_ATRASADAS and not SCHEDULER_ERROR %} {% for tarefa in TAREFAS_ATRASADAS
       toolbar: {
         show: true,
         tools: {
-            download: false,
-            selection: true,
-            zoom: '<i class="ph ph-magnifying-glass-plus"></i>',
-            zoomin: true,
-            zoomout: true,
-            pan: true,
-            reset: '<i class="ph ph-arrows-counter-clockwise"></i>'
+          download: false,
+          selection: true,
+          zoom: '<i class="ph ph-magnifying-glass-plus"></i>',
+          zoomin: true,
+          zoomout: true,
+          pan: true,
+          reset: '<i class="ph ph-arrows-counter-clockwise"></i>'
         }
       },
       zoom: {
@@ -446,18 +349,18 @@ TAREFAS_ATRASADAS and not SCHEDULER_ERROR %} {% for tarefa in TAREFAS_ATRASADAS
     colors: ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#10b981'], // Paleta HelpHub
     legend: { show: false }, // Esconde legenda pois nomes ja estao no eixo Y
     tooltip: {
-        y: {
-            formatter: function (val) { return val + " chamados" }
-        }
+      y: {
+        formatter: function (val) { return val + " chamados" }
+      }
     }
   };
 
-  if(deptData.length > 0) {
-      var chartDept = new ApexCharts(document.querySelector("#chart-departamentos"), optionsDept);
-      chartDept.render();
+  if (deptData.length > 0) {
+    var chartDept = new ApexCharts(document.querySelector("#chart-departamentos"), optionsDept);
+    chartDept.render();
   } else {
-      document.querySelector("#chart-departamentos").innerHTML =
-          '<div style="text-align:center; padding: 2rem; color: #9ca3af">Sem dados de departamento ainda.</div>';
+    document.querySelector("#chart-departamentos").innerHTML =
+      '<div style="text-align:center; padding: 2rem; color: #9ca3af">Sem dados de departamento ainda.</div>';
   }
 </script>
 {% endblock %}
